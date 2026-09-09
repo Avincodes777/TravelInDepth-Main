@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../features/auth/useAuth";
 
 function AdminLoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +23,27 @@ function AdminLoginPage() {
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    try {
+      if (!credentialResponse.credential) {
+        throw new Error("No credential received from Google");
+      }
+      const user = await loginWithGoogle(credentialResponse.credential);
+      if (user.role !== "admin") {
+        setError("This account does not have admin access.");
+        return;
+      }
+      navigate("/admin");
+    } catch (err) {
+      setError(err.message || "Google sign in failed. Please try again.");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign in failed. Please try again.");
   };
 
   return (
@@ -51,6 +73,25 @@ function AdminLoginPage() {
         >
           Log In
         </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0", color: "#A07850", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <div style={{ flex: 1, height: 1, background: "rgba(245,166,35,0.3)" }} />
+          <span>or</span>
+          <div style={{ flex: 1, height: 1, background: "rgba(245,166,35,0.3)" }} />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            shape="rectangular"
+            theme="outline"
+            size="large"
+            text="continue_with"
+            width="100%"
+          />
+        </div>
       </form>
     </div>
   );

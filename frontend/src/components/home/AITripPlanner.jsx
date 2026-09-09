@@ -115,7 +115,7 @@ const css = `
   font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(245,166,35,.8);margin-bottom:12px;display:block;
 }
-.atp-dest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:32px;}
+.atp-dest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:24px;}
 .atp-dest-chip{
   padding:10px 16px;background:rgba(253,246,236,.05);border:1px solid rgba(253,246,236,.1);
   border-radius:10px;color:rgba(253,246,236,.7);font-size:13px;cursor:pointer;
@@ -123,6 +123,69 @@ const css = `
 }
 .atp-dest-chip:hover{background:rgba(255,107,26,.12);border-color:rgba(255,107,26,.3);color:#FDF6EC;transform:translateY(-1px);}
 .atp-dest-chip.sel{background:rgba(255,107,26,.2);border-color:#FF6B1A;color:#FF6B1A;font-weight:600;}
+
+/* ── MULTI-CITY QUEUE ── */
+.atp-queue-box{
+  background:rgba(253,246,236,.03);border:1px solid rgba(245,166,35,.15);
+  border-radius:20px;padding:22px 24px;margin-bottom:32px;
+}
+.atp-queue-header{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;
+}
+.atp-queue-title{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#FDF6EC;
+  display:flex;align-items:center;gap:8px;
+}
+.atp-add-city-btn{
+  background:rgba(255,107,26,.12);border:1px solid rgba(255,107,26,.3);
+  color:#FFB347;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;
+}
+.atp-add-city-btn:hover{
+  background:rgba(255,107,26,.25);border-color:#FF6B1A;color:#fff;transform:translateY(-1px);
+}
+.atp-queue-list{display:flex;flex-direction:column;gap:10px;}
+.atp-queue-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(253,246,236,.05);border:1px solid rgba(245,166,35,.12);
+  border-radius:14px;padding:12px 16px;gap:14px;flex-wrap:wrap;transition:all .2s;
+}
+.atp-queue-item:hover{
+  background:rgba(253,246,236,.08);border-color:rgba(255,107,26,.25);
+}
+.atp-queue-left{display:flex;align-items:center;gap:12px;}
+.atp-queue-order{
+  width:26px;height:26px;border-radius:50%;background:rgba(255,107,26,.2);
+  color:#FF6B1A;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;
+}
+.atp-queue-cityname{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#FDF6EC;
+}
+.atp-queue-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.atp-days-control{display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(253,246,236,.75);}
+.atp-days-input{
+  width:52px;padding:5px 8px;background:rgba(45,27,0,.7);border:1px solid rgba(245,166,35,.25);
+  border-radius:8px;color:#FFB347;font-weight:700;text-align:center;font-size:13px;outline:none;
+}
+.atp-days-input:focus{border-color:#FF6B1A;}
+.atp-reorder-btn{
+  background:transparent;border:1px solid rgba(253,246,236,.12);color:rgba(253,246,236,.6);
+  width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;transition:all .2s;
+}
+.atp-reorder-btn:hover:not(:disabled){
+  background:rgba(255,107,26,.15);border-color:#FF6B1A;color:#FDF6EC;
+}
+.atp-reorder-btn:disabled{opacity:.2;cursor:not-allowed;}
+.atp-remove-city-btn{
+  background:transparent;border:none;color:rgba(255,150,150,.6);
+  cursor:pointer;padding:6px;border-radius:6px;transition:all .2s;font-size:14px;
+}
+.atp-remove-city-btn:hover{color:#ff6666;background:rgba(139,26,26,.2);}
+.atp-route-preview{
+  margin-top:14px;padding-top:14px;border-top:1px dashed rgba(245,166,35,.15);
+  font-size:13px;color:rgba(245,166,35,.85);display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
 
 .atp-row2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;}
 .atp-slider-val{font-family:'Playfair Display',serif;font-size:22px;color:#FF6B1A;font-weight:700;margin-bottom:8px;}
@@ -182,12 +245,34 @@ const css = `
 
 .atp-day-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
 .atp-day-tab{
-  width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  min-width:36px;height:36px;padding:0 10px;border-radius:99px;display:flex;align-items:center;justify-content:center;
   font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
   background:rgba(253,246,236,.05);border:1px solid rgba(253,246,236,.12);color:rgba(253,246,236,.6);
 }
 .atp-day-tab:hover{border-color:rgba(255,107,26,.4);color:#FDF6EC;}
 .atp-day-tab.active{background:linear-gradient(135deg,#FF6B1A,#8B1A1A);border-color:transparent;color:#fff;}
+
+/* Multi-city Tab Groups */
+.atp-city-tab-cluster{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+.atp-city-group{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(253,246,236,.03);border:1px solid rgba(245,166,35,.15);
+  border-radius:99px;padding:4px 10px 4px 14px;
+}
+.atp-city-group-label{
+  font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:#F5A623;
+  margin-right:4px;white-space:nowrap;
+}
+.atp-city-group-divider{
+  color:rgba(253,246,236,.2);font-size:16px;font-weight:300;user-select:none;
+}
+.atp-day-tab-pill{
+  width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;
+  background:rgba(253,246,236,.06);border:1px solid rgba(253,246,236,.12);color:rgba(253,246,236,.7);
+}
+.atp-day-tab-pill:hover{border-color:rgba(255,107,26,.4);color:#FDF6EC;transform:translateY(-1px);}
+.atp-day-tab-pill.active{background:linear-gradient(135deg,#FF6B1A,#8B1A1A);border-color:transparent;color:#fff;box-shadow:0 3px 10px rgba(255,107,26,.4);}
 
 .atp-itin{
   background:rgba(253,246,236,.03);border:1px solid rgba(245,166,35,.1);
@@ -226,6 +311,7 @@ const DESTINATIONS = [
   { e:'🏔️', n:'Ladakh' },{ e:'🌴', n:'Kerala' },{ e:'🏰', n:'Rajasthan' },
   { e:'🌊', n:'Goa' },{ e:'⛰️', n:'Himachal' },{ e:'🕌', n:'Varanasi' },
   { e:'🐯', n:'Jim Corbett' },{ e:'🌺', n:'Meghalaya' },{ e:'🏛️', n:'Hampi' },{ e:'🎭', n:'Kolkata' },
+  { e:'🛕', n:'Jaipur' },{ e:'🌅', n:'Udaipur' },{ e:'🏜️', n:'Jodhpur' },{ e:'⛵', n:'Rishikesh' },
 ];
 
 const INTERESTS = [
@@ -255,7 +341,7 @@ function LockedPlanner({ onLogin }) {
           <button className="atp-btn-login" onClick={onLogin}>Sign In/Log In to Unlock</button>
         </div>
         <div className="atp-perks">
-          {['Day-wise itineraries','Local food picks','Budget breakdown','Eco-travel tips'].map(p=>(
+          {['Day-wise itineraries','Multi-city routes','Local food picks','Budget breakdown'].map(p=>(
             <span key={p} className="atp-perk">✦ {p}</span>
           ))}
         </div>
@@ -266,8 +352,10 @@ function LockedPlanner({ onLogin }) {
 
 /* ─── Unlocked ────────────────────────────────────────────────────────────── */
 function UnlockedPlanner({ userName = 'Traveller' }) {
-  const [dest, setDest]   = useState('Rajasthan');
-  const [numDays, setNumDays] = useState(7);
+  // Ordered city queue: Array of { id, name, emoji, days }
+  const [cityQueue, setCityQueue] = useState([
+    { id: 1, name: 'Rajasthan', emoji: '🏰', days: 4 },
+  ]);
   const [budget, setBudget] = useState('mid-range');
   const [style, setStyle]   = useState('cultural');
   const [interests, setInterests] = useState(['Heritage','Food & Cuisine']);
@@ -279,18 +367,82 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved | error
   const [error, setError] = useState(null);
 
+  const totalTripDays = cityQueue.reduce((acc, c) => acc + (Number(c.days) || 1), 0);
+
   const toggleInterest = l => setInterests(p => p.includes(l) ? p.filter(i=>i!==l) : [...p,l]);
+
+  // When clicking a destination chip:
+  // If queue has only 1 item, replace it; if queue already has cities, either add or toggle
+  const handleSelectChip = (d) => {
+    setCityQueue((prev) => {
+      const existsIndex = prev.findIndex((c) => c.name.toLowerCase() === d.n.toLowerCase());
+      if (existsIndex >= 0) {
+        // If already in queue and more than 1 city, remove it
+        if (prev.length > 1) {
+          return prev.filter((_, idx) => idx !== existsIndex);
+        }
+        return prev;
+      }
+      // If only 1 city and user clicks another chip, add it as next stop
+      return [...prev, { id: Date.now() + Math.random(), name: d.n, emoji: d.e, days: 3 }];
+    });
+  };
+
+  const handleAddCity = (cityName = 'Jaipur', emoji = '📍') => {
+    setCityQueue((prev) => [
+      ...prev,
+      { id: Date.now() + Math.random(), name: cityName, emoji, days: 3 },
+    ]);
+  };
+
+  const handleCityDaysChange = (id, newDays) => {
+    const val = Math.min(14, Math.max(1, parseInt(newDays, 10) || 1));
+    setCityQueue((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, days: val } : c))
+    );
+  };
+
+  const handleMoveCity = (index, direction) => {
+    setCityQueue((prev) => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const copy = [...prev];
+      const [moved] = copy.splice(index, 1);
+      copy.splice(targetIndex, 0, moved);
+      return copy;
+    });
+  };
+
+  const handleRemoveCity = (id) => {
+    setCityQueue((prev) => {
+      if (prev.length <= 1) return prev; // keep at least 1 city
+      return prev.filter((c) => c.id !== id);
+    });
+  };
 
   const generate = async () => {
     setLoading(true); setError(null); setItinerary(null); setSaveState('idle'); setIsEditing(false);
     try {
-      const data = await plannerApi.generateItinerary({
-        destination: dest,
-        days: numDays,
-        budget,
-        interests: interests.join(', '),
-        travelStyle: style,
-      });
+      let data;
+      if (cityQueue.length > 1) {
+        const multiPayload = {
+          cities: cityQueue.map(c => ({ destination: c.name, days: c.days })),
+          budget,
+          interests: interests.join(', '),
+          travelStyle: style,
+        };
+        data = await plannerApi.generateMultiCityItinerary(multiPayload);
+      } else {
+        const singlePayload = {
+          destination: cityQueue[0]?.name || 'Rajasthan',
+          days: cityQueue[0]?.days || 7,
+          budget,
+          interests: interests.join(', '),
+          travelStyle: style,
+        };
+        data = await plannerApi.generateItinerary(singlePayload);
+      }
+
       setItinerary(data);
       setActiveDay(1);
     } catch (err) {
@@ -344,28 +496,126 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
         <div className="atp-avatar">✦</div>
         <div style={{flex:1}}>
           <div className="atp-gname">Welcome back, {userName}</div>
-          <div className="atp-gsub">Your AI travel companion is ready</div>
+          <div className="atp-gsub">Your multi-city AI travel companion is ready</div>
         </div>
-        <div className="atp-badge">AI Planner</div>
+        <div className="atp-badge">
+          {cityQueue.length > 1 ? `${cityQueue.length} Cities Route` : 'AI Planner'}
+        </div>
       </div>
 
-      <label className="atp-label">Choose Your Destination</label>
+      {/* Destination Quick-Picks */}
+      <label className="atp-label">
+        Select Destinations (Click to add to your route)
+      </label>
       <div className="atp-dest-grid">
-        {DESTINATIONS.map(d=>(
-          <div key={d.n} className={`atp-dest-chip${dest===d.n?' sel':''}`} onClick={()=>setDest(d.n)}>
-            {d.e} {d.n}
-          </div>
-        ))}
+        {DESTINATIONS.map(d => {
+          const inQueue = cityQueue.some(c => c.name.toLowerCase() === d.n.toLowerCase());
+          return (
+            <div
+              key={d.n}
+              className={`atp-dest-chip${inQueue ? ' sel' : ''}`}
+              onClick={() => handleSelectChip(d)}
+            >
+              {d.e} {d.n} {inQueue && <span style={{fontSize:10, opacity:0.8}}>✓</span>}
+            </div>
+          );
+        })}
       </div>
 
-      <div className="atp-row2">
-        <div>
-          <label className="atp-label">Duration</label>
-          <div className="atp-slider-val">{numDays} Days</div>
-          <input type="range" min="1" max="14" value={numDays} className="atp-slider"
-            style={{'--pct':`${((numDays-1)/13)*100}%`}} onChange={e=>setNumDays(+e.target.value)}/>
-          <div className="atp-slider-labs"><span>1 Day</span><span>14 Days</span></div>
+      {/* Multi-City Ordered Queue */}
+      <div className="atp-queue-box">
+        <div className="atp-queue-header">
+          <div className="atp-queue-title">
+            <span>🗺️ Ordered City Itinerary</span>
+            <span style={{fontSize:12, fontWeight:400, color:'rgba(253,246,236,0.6)'}}>
+              ({totalTripDays} Total Days)
+            </span>
+          </div>
+          <button
+            type="button"
+            className="atp-add-city-btn"
+            onClick={() => handleAddCity('Udaipur', '🌅')}
+          >
+            + Add Another City
+          </button>
         </div>
+
+        <div className="atp-queue-list">
+          {cityQueue.map((c, idx) => (
+            <div key={c.id || idx} className="atp-queue-item">
+              <div className="atp-queue-left">
+                <span className="atp-queue-order">{idx + 1}</span>
+                <span style={{fontSize:18}}>{c.emoji || '📍'}</span>
+                <div>
+                  <div className="atp-queue-cityname">{c.name}</div>
+                  <div style={{fontSize:11, color:'rgba(245,166,35,0.7)'}}>Stop #{idx + 1}</div>
+                </div>
+              </div>
+
+              <div className="atp-queue-right">
+                <div className="atp-days-control">
+                  <span>Days:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="14"
+                    value={c.days}
+                    onChange={(e) => handleCityDaysChange(c.id, e.target.value)}
+                    className="atp-days-input"
+                  />
+                </div>
+
+                <div style={{display:'flex', gap:4}}>
+                  <button
+                    type="button"
+                    title="Move stop earlier"
+                    className="atp-reorder-btn"
+                    disabled={idx === 0}
+                    onClick={() => handleMoveCity(idx, -1)}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    title="Move stop later"
+                    className="atp-reorder-btn"
+                    disabled={idx === cityQueue.length - 1}
+                    onClick={() => handleMoveCity(idx, 1)}
+                  >
+                    ▼
+                  </button>
+                </div>
+
+                {cityQueue.length > 1 && (
+                  <button
+                    type="button"
+                    title="Remove city from route"
+                    className="atp-remove-city-btn"
+                    onClick={() => handleRemoveCity(c.id)}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {cityQueue.length > 1 && (
+          <div className="atp-route-preview">
+            <span style={{fontWeight:600, color:'#FFB347'}}>Route Trail:</span>
+            {cityQueue.map((c, i) => (
+              <React.Fragment key={c.id || i}>
+                <span>{c.name} ({c.days}d)</span>
+                {i < cityQueue.length - 1 && <span style={{color:'rgba(255,107,26,0.8)'}}>➔</span>}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Budget & Style */}
+      <div className="atp-row2">
         <div>
           <label className="atp-label">Budget Tier</label>
           <select className="atp-select" value={budget} onChange={e=>setBudget(e.target.value)}>
@@ -375,18 +625,18 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
             <option value="ultra-luxury">Ultra-Luxury (₹30k+/day)</option>
           </select>
         </div>
+        <div>
+          <label className="atp-label">Travel Style</label>
+          <select className="atp-select" value={style} onChange={e=>setStyle(e.target.value)}>
+            {['Cultural Immersion','Adventure & Trekking','Luxury & Wellness','Family-Friendly',
+              'Solo Explorer','Romantic Getaway','Spiritual Journey','Photography Expedition'].map(s=>(
+              <option key={s} value={s.toLowerCase().split(' ')[0]}>{s}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div style={{marginBottom:32}}>
-        <label className="atp-label">Travel Style</label>
-        <select className="atp-select" value={style} onChange={e=>setStyle(e.target.value)}>
-          {['Cultural Immersion','Adventure & Trekking','Luxury & Wellness','Family-Friendly',
-            'Solo Explorer','Romantic Getaway','Spiritual Journey','Photography Expedition'].map(s=>(
-            <option key={s} value={s.toLowerCase().split(' ')[0]}>{s}</option>
-          ))}
-        </select>
-      </div>
-
+      {/* Interests */}
       <label className="atp-label">Your Interests</label>
       <div className="atp-interests">
         {INTERESTS.map(({e,l})=>(
@@ -396,20 +646,28 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
         ))}
       </div>
 
+      {/* Generate Action Button */}
       <button className={`atp-gen-btn${loading?' loading':''}`} onClick={generate} disabled={loading}>
-        {loading ? <><div className="atp-spinner"/>Crafting Your Journey…</> : <>✦ Generate My Itinerary</>}
+        {loading ? (
+          <><div className="atp-spinner"/>Crafting Your Multi-City Route…</>
+        ) : (
+          <>✦ Generate Full Plan ({totalTripDays} Days across {cityQueue.length} {cityQueue.length > 1 ? 'Cities' : 'City'})</>
+        )}
       </button>
 
       {error && <div className="atp-error">⚠️ {error}</div>}
 
+      {/* Results View */}
       {itinerary && current && (
         <div className="atp-result">
           <div className="atp-res-hdr">
-            <div className="atp-res-title">Your {itinerary.days.length}-Day {itinerary.destination} Journey</div>
+            <div className="atp-res-title">
+              Your {itinerary.days.length}-Day Expedition: {itinerary.destination}
+            </div>
             <div className="atp-res-tags">
               {itinerary.isFallback && (
                 <span className="atp-res-tag" style={{ background: 'rgba(255,107,26,0.15)', borderColor: 'rgba(255,107,26,0.35)', color: '#FFB347' }}>
-                  ✦ Curated Pick
+                  ✦ Curated Route
                 </span>
               )}
               <span className="atp-res-tag">✦ {budget}</span>
@@ -417,30 +675,103 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
             </div>
           </div>
 
-          <div className="atp-day-tabs">
-            {itinerary.days.map(d => (
-              <div
-                key={d.day}
-                className={`atp-day-tab${d.day===activeDay?' active':''}`}
-                onClick={()=>setActiveDay(d.day)}
-              >
-                {d.day}
+          {/* Day Tabs - Multi-City vs Single-City */}
+          {(() => {
+            const uniqueCities = Array.from(new Set(itinerary.days.map(d => d.city).filter(Boolean)));
+            const isMultiCity = (itinerary.cities && itinerary.cities.length > 1) || uniqueCities.length > 1 || (typeof itinerary.destination === 'string' && itinerary.destination.includes('→'));
+
+            if (isMultiCity) {
+              // Group consecutive days by city
+              const cityGroups = [];
+              itinerary.days.forEach(d => {
+                const cityName = d.city || 'City';
+                const last = cityGroups[cityGroups.length - 1];
+                if (last && last.city === cityName) {
+                  last.days.push(d);
+                } else {
+                  cityGroups.push({ city: cityName, days: [d] });
+                }
+              });
+
+              return (
+                <div className="atp-city-tab-cluster">
+                  {cityGroups.map((group, gIdx) => (
+                    <React.Fragment key={group.city + '-' + gIdx}>
+                      <div className="atp-city-group">
+                        <span className="atp-city-group-label">📍 {group.city}:</span>
+                        <div style={{ display: 'inline-flex', gap: '5px' }}>
+                          {group.days.map(d => (
+                            <button
+                              key={d.day}
+                              type="button"
+                              className={`atp-day-tab-pill${d.day === activeDay ? ' active' : ''}`}
+                              onClick={() => setActiveDay(d.day)}
+                              title={`Day ${d.day} (${group.city})`}
+                            >
+                              {d.day}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {gIdx < cityGroups.length - 1 && (
+                        <span className="atp-city-group-divider">|</span>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              );
+            }
+
+            // Single city rendering path unchanged
+            return (
+              <div className="atp-day-tabs">
+                {itinerary.days.map(d => (
+                  <div
+                    key={d.day}
+                    className={`atp-day-tab${d.day === activeDay ? ' active' : ''}`}
+                    onClick={() => setActiveDay(d.day)}
+                  >
+                    Day {d.day}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           <div className="atp-itin">
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18, flexWrap:'wrap', gap:10}}>
               {isEditing ? (
                 <input
                   type="text"
                   value={current.title}
                   onChange={(e) => handleDayFieldChange(current.day, 'title', e.target.value)}
                   className="atp-select"
-                  style={{maxWidth:'300px', fontWeight:600}}
+                  style={{maxWidth:'360px', fontWeight:600}}
                 />
               ) : (
-                <h3 className="atp-day-title" style={{margin:0}}>Day {current.day} — {current.title}</h3>
+                <div>
+                  <div style={{display:'flex', alignItems:'center', gap:10, flexWrap:'wrap'}}>
+                    <h3 className="atp-day-title" style={{margin:0}}>
+                      Day {current.day} — {current.title}
+                    </h3>
+                    {current.city && (
+                      <span style={{
+                        fontSize:12,
+                        color:'#FFB347',
+                        background:'rgba(255,107,26,0.15)',
+                        border:'1px solid rgba(255,107,26,0.3)',
+                        padding:'2px 10px',
+                        borderRadius:99,
+                        fontWeight:600,
+                        display:'inline-flex',
+                        alignItems:'center',
+                        gap:4
+                      }}>
+                        📍 {current.city}
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
               <button
                 className="atp-act-btn sec"

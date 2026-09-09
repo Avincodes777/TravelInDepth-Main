@@ -3,6 +3,10 @@ import { CityContext } from "../context/CityContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
 import { createSubmission, getMySubmissions } from "../api/submissionApi";
+import { Helmet } from "react-helmet-async";
+import WishlistButton from "../components/common/WishlistButton";
+import JournalButton from "../components/common/JournalButton";
+
 
 // ─── REGION BADGE COLORS ──────────────────────────────────────────────────────
 const regionColors = {
@@ -220,10 +224,24 @@ function CityCard({ city, isHighlighted }) {
             {city.region} India
           </span>
 
-          {/* Rating */}
-          <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-[#2D1B00] flex items-center gap-1">
-            ⭐ {city.rating || "4.5"}
-          </span>
+          {/* Top-right action group: Rating + Wishlist + Journal */}
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+            <span className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-[#2D1B00] flex items-center gap-1 shadow-sm">
+              ⭐ {city.rating || "4.5"}
+            </span>
+            <WishlistButton
+              slug={city.slug}
+              className="w-7 h-7 shadow-sm bg-white/95"
+              size={14}
+            />
+            <JournalButton
+              destinationName={city.name}
+              className="w-7 h-7 shadow-sm bg-white/95"
+              size={14}
+              title={`Add journal entry for ${city.name}`}
+            />
+          </div>
+
 
           {/* Eco options - shown on hover */}
           <div
@@ -938,6 +956,14 @@ export default function DestinationPage() {
 
   return (
     <div className="min-h-screen bg-[#FDF6EC] font-montserrat">
+      <Helmet>
+        <title>Explore Destinations in India | Travel In Depth</title>
+        <meta
+          name="description"
+          content="Discover curated destinations across North, South, East, West, and North-East India. Filter by region, budget, and eco-travel options."
+        />
+        <link rel="canonical" href="https://travelindepth.com/destinations" />
+      </Helmet>
       {/* ── PAGE HEADER ─────────────────────────────────────────── */}
       <div className="bg-[#FFF8F0] border-b border-[#F5A623]/20 pt-24 pb-10 px-6">
         <div className="max-w-7xl mx-auto text-center">

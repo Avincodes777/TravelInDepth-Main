@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 /**
  * About page — Travel In Depth
@@ -1096,6 +1097,14 @@ export default function AboutPage() {
     }
   `}</style>
       <div className="about-page" ref={containerRef}>
+        <Helmet>
+          <title>About Us | Travel In Depth — Discover Incredible India</title>
+          <meta
+            name="description"
+            content="Learn about Travel In Depth's mission to make exploring India deeply immersive, culturally rich, authentic, and eco-conscious."
+          />
+          <link rel="canonical" href="https://travelindepth.com/about" />
+        </Helmet>
 
 
   {/* ── 1. HERO ── */}

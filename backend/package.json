@@ -11,12 +11,15 @@
     "migrate-media": "node scripts/migrateMedia.js"
   },
   "dependencies": {
+    "@sentry/node": "^10.73.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "google-auth-library": "^11.0.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.5.0"
+    "mongoose": "^8.5.0",
+    "multer": "^2.3.0"
   },
   "devDependencies": {
     "cloudinary": "^2.11.0",

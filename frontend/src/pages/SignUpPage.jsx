@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../features/auth/useAuth";
 import { getMediaUrl } from "../utils/media";
+import { Helmet } from "react-helmet-async";
+
 
 const INTERESTS = [
   { id: "himalayan", label: "Himalayan Treks", icon: "🏔️" },
@@ -73,13 +76,33 @@ export default function TravelSignup() {
     );
   };
 
-  const { signup } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const locationHook = useLocation();
   const redirectTarget = locationHook.state?.from || "/dashboard";
 
   const [signupError, setSignupError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setSignupError("");
+    setSubmitting(true);
+    try {
+      if (!credentialResponse.credential) {
+        throw new Error("No credential received from Google");
+      }
+      await loginWithGoogle(credentialResponse.credential);
+      navigate(redirectTarget, { replace: true });
+    } catch (err) {
+      setSignupError(err.message || "Google sign in failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setSignupError("Google sign in failed. Please try again.");
+  };
 
   const handleFinalSubmit = async () => {
     setSignupError("");
@@ -101,6 +124,7 @@ export default function TravelSignup() {
       setSubmitting(false);
     }
   };
+
 
   const goNext = (e) => {
     e.preventDefault();
@@ -137,6 +161,13 @@ export default function TravelSignup() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>Create an Account | Travel In Depth</title>
+        <meta
+          name="description"
+          content="Join Travel In Depth to unlock personalized travel recommendations, custom AI itineraries, and exclusive travel guides across India."
+        />
+      </Helmet>
       <style>{`
         
         .page {
@@ -439,12 +470,18 @@ export default function TravelSignup() {
                 </p>
 
                 <div className="social-row">
-                  <button type="button" className="social-btn">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg"alt="Google"
-                      width="20" height="20"/> Continue with Google
-                  </button>
-            
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap={false}
+                    shape="rectangular"
+                    theme="outline"
+                    size="large"
+                    text="continue_with"
+                    width="100%"
+                  />
                 </div>
+
 
                 <div className="divider-line">Or continue with email</div>
 

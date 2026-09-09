@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -119,5 +122,74 @@ export const updateInterests = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Failed to update interests", error: err.message });
+  }
+};
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ message: "Google ID token is required" });
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ message: "Google Client ID is not configured on the server" });
+    }
+
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (verifyErr) {
+      return res.status(401).json({ message: "Invalid or expired Google token", error: verifyErr.message });
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      return res.status(401).json({ message: "Could not retrieve user details from Google token" });
+    }
+
+    const { email, name, sub: googleId } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // If user exists: link googleId if it was a local account without googleId
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+    } else {
+      // Create new user authenticated via Google
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email,
+        googleId,
+        authProvider: "google",
+        role: "user",
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        location: user.location || "",
+        interests: user.interests || [],
+        role: user.role,
+        isContributor: user.isContributor || false,
+        contributions: user.contributions || [],
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Google authentication failed", error: err.message });
   }
 };

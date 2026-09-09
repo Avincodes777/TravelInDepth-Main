@@ -5,6 +5,10 @@ import * as plannerApi from "../api/plannerApi";
 import { fetchWeather } from "../api/weatherApi";
 import { useAuth } from "../features/auth/useAuth";
 import { getMediaUrl } from "../utils/media";
+import { Helmet } from "react-helmet-async";
+import WishlistButton from "../components/common/WishlistButton";
+import JournalButton from "../components/common/JournalButton";
+
 
 /* ─── JAIPUR DATA (swap via CityContext for other cities) ─── */
 const JAIPUR = {
@@ -339,14 +343,37 @@ function Hero({ city }) {
       {/* Main Hero Content */}
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", color: "white", maxWidth: 900, padding: "20px 24px 30px", margin: "auto 0" }}>
         <div style={{
-          display: "inline-flex", alignItems: "center", gap: 10,
-          background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.3)",
-          borderRadius: 50, padding: "7px 22px", fontSize: 13, fontWeight: 600,
+          display: "inline-flex", alignItems: "center", gap: 12,
           marginBottom: 18,
         }}>
-          <span style={{ width: 8, height: 8, background: S.orange, borderRadius: "50%", display: "inline-block" }} />
-          {city.state ? `${city.state}, India` : city.region} · {badge}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: 50, padding: "7px 22px", fontSize: 13, fontWeight: 600,
+          }}>
+            <span style={{ width: 8, height: 8, background: S.orange, borderRadius: "50%", display: "inline-block" }} />
+            {city.state ? `${city.state}, India` : city.region} · {badge}
+          </div>
+          {city.slug && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <WishlistButton
+                slug={city.slug}
+                className="w-9 h-9 !bg-white/20 !border !border-white/30 backdrop-blur-md hover:!bg-white"
+                activeClass="text-red-500 fill-red-500"
+                inactiveClass="text-white hover:text-red-500"
+                size={16}
+              />
+              <JournalButton
+                destinationName={city.name}
+                className="w-9 h-9 !bg-white/20 !border !border-white/30 backdrop-blur-md hover:!bg-white"
+                activeClass="text-[#FF6B1A]"
+                size={16}
+                title={`Write a Journal Entry about ${city.name}`}
+              />
+            </div>
+          )}
         </div>
+
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(46px,7vw,84px)", fontWeight: 800, lineHeight: 1.05, marginBottom: 6 }}>
           {city.name}
         </h1>
@@ -1164,8 +1191,25 @@ export default function CityPage() {
   const tips = city.tips || (JAIPUR.tips);
   const checklist = city.checklist || (JAIPUR.checklist);
 
+  const pageTitle = `${city.name} Travel Guide | Travel In Depth`;
+  const pageDescription =
+    city.subtitle ||
+    city.about ||
+    city.description ||
+    `Explore ${city.name}, ${city.state || city.region}. Discover top attractions, authentic local cuisine, hidden gems, and plan a custom AI itinerary.`;
+  const pageImage = city.image || PLACEHOLDER_IMAGE;
+
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#FDF6EC" }}>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription.slice(0, 160)} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription.slice(0, 200)} />
+        <meta property="og:image" content={pageImage} />
+        <meta property="og:type" content="article" />
+        <link rel="canonical" href={`https://travelindepth.com/destinations/${city.slug}`} />
+      </Helmet>
       <Navbar />
       <Hero city={city} />
       <PlannerSection city={city} />

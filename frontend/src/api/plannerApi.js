@@ -9,6 +9,14 @@ export const generateItinerary = (params) => {
 };
 
 /**
+ * Generate an itinerary across multiple sequential cities in one request
+ * @param {Object} params - { cities: [{ destination, days }], budget, interests, travelStyle }
+ */
+export const generateMultiCityItinerary = (params) => {
+  return apiClient.post("/planner/generate-multi", params);
+};
+
+/**
  * Regenerate a specific day in an existing itinerary
  * @param {Object} params - { destination, dayNumber, totalDays }
  */

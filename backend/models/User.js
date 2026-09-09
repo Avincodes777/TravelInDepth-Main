@@ -5,7 +5,14 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: function () {
+        return this.authProvider === "local";
+      },
+    },
+    googleId: { type: String, unique: true, sparse: true },
+    authProvider: { type: String, enum: ["local", "google"], default: "local" },
     phone: { type: String, default: "" },
     location: { type: String, default: "" },
     interests: { type: [String], default: [] },
@@ -26,13 +33,14 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.password || !this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 userSchema.methods.comparePassword = function (candidatePassword) {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -7,11 +7,12 @@ import {
   rejectSubmission,
 } from "../controllers/submissionController.js";
 import { requireAuth, requireAdmin } from "../middleware/authMiddleware.js";
+import { plannerRateLimit } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // User endpoints (Authenticated)
-router.post("/", requireAuth, createSubmission);
+router.post("/", requireAuth, plannerRateLimit, createSubmission);
 router.get("/my", requireAuth, getMySubmissions);
 
 // Admin endpoints (requireAuth + requireAdmin)

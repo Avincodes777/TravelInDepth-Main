@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import HeroSection from '../components/home/HeroSection';
 import Stats from '../components/stats/Stats';
 import HowItWorks from "../components/home/HowItWorks";
@@ -20,6 +21,14 @@ function HomePage() {
 
     return (
         <>
+        <Helmet>
+            <title>Travel In Depth | Personalized India Travel & AI Itinerary Planner</title>
+            <meta
+                name="description"
+                content="Plan your dream trip across India with AI-powered personalized itineraries, curated cultural experiences, and offbeat hidden gems."
+            />
+            <link rel="canonical" href="https://travelindepth.com/" />
+        </Helmet>
         <HeroSection />
         <Featured/>
         <HowItWorks />

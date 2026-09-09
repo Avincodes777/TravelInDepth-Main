@@ -6,19 +6,22 @@ import Featured from './components/layout/Featured';
 import Stats from './components/stats/Stats';
 import { CityProvider } from './context/CityContext';
 import { AuthProvider } from './features/auth/AuthContext';
-// ...keep your other imports
+import { WishlistProvider } from './features/wishlist/WishlistContext';
 
 export default function App() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-montserrat">
       <AuthProvider>
-        <CityProvider>
-          <Navbar />
-          <AppRouter />
-          <Footer />
-        </CityProvider>
+        <WishlistProvider>
+          <CityProvider>
+            <Navbar />
+            <AppRouter />
+            <Footer />
+          </CityProvider>
+        </WishlistProvider>
       </AuthProvider>
     </div>
   );
 }
+
 

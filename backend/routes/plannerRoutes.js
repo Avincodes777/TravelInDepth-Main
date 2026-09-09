@@ -1,5 +1,8 @@
 import express from "express";
-import { generateItinerary } from "../controllers/plannerController.js";
+import {
+  generateItinerary,
+  generateMultiCityItinerary,
+} from "../controllers/plannerController.js";
 import {
   regenerateDay,
   saveItinerary,
@@ -12,6 +15,7 @@ import { plannerRateLimit } from "../middleware/rateLimiter.js";
 const router = express.Router();
 
 router.post("/generate", optionalAuth, plannerRateLimit, generateItinerary);
+router.post("/generate-multi", optionalAuth, plannerRateLimit, generateMultiCityItinerary);
 router.post("/generate/day", optionalAuth, plannerRateLimit, regenerateDay);
 router.post("/save", requireAuth, saveItinerary);
 router.get("/my", requireAuth, getMyItineraries);

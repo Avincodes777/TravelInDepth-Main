@@ -12,3 +12,6 @@ export const getMe = () => apiClient.get("/auth/me");
 
 export const updateInterests = (interests) =>
   apiClient.put("/auth/interests", { interests });
+
+export const googleAuth = (idToken) =>
+  apiClient.post("/auth/google", { idToken });

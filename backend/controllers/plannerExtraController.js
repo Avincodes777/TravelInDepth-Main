@@ -90,15 +90,26 @@ Respond with ONLY valid JSON, no markdown code fences, no commentary. Use exactl
 
 export const saveItinerary = async (req, res) => {
   try {
-    const { destination, days } = req.body || {};
+    const { destination, cities, days } = req.body || {};
 
     if (!destination || !Array.isArray(days) || days.length === 0) {
       return res.status(400).json({ message: "A valid destination and days array are required" });
     }
 
+    // Determine cities array: either explicit cities array, or parsed from "City1 → City2", or single city
+    let parsedCities = [];
+    if (Array.isArray(cities) && cities.length > 0) {
+      parsedCities = cities.map((c) => (typeof c === "string" ? c.trim() : (c.destination || c.name || "").trim())).filter(Boolean);
+    } else if (typeof destination === "string" && destination.includes("→")) {
+      parsedCities = destination.split("→").map((c) => c.trim()).filter(Boolean);
+    } else if (typeof destination === "string") {
+      parsedCities = [destination.trim()];
+    }
+
     const itinerary = await Itinerary.create({
       userId: req.userId,
       destination,
+      cities: parsedCities,
       days,
     });
 
