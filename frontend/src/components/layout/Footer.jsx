@@ -39,6 +39,7 @@ function Footer() {
                         <li><Link to='/' className='hover:text-[#FF6B1A] transition-colors duration-200'>Home</Link></li>
                         <li><Link to='/destinations' className='hover:text-[#FF6B1A] transition-colors duration-200'>Destinations</Link></li>
                         <li><Link to='/experience' className='hover:text-[#FF6B1A] transition-colors duration-200'>Experience</Link></li>
+                        <li><Link to='/reviews' className='hover:text-[#FF6B1A] transition-colors duration-200'>Reviews & Ratings</Link></li>
                         <li><Link to='/about' className='hover:text-[#FF6B1A] transition-colors duration-200'>About</Link></li>
                     </ul>
                 </div>

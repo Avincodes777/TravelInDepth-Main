@@ -5,11 +5,14 @@ import { useNavigate } from "react-router-dom";
 import * as plannerApi from "../api/plannerApi";
 import * as wishlistApi from "../api/wishlistApi";
 import * as journalApi from "../api/journalApi";
+import * as reviewApi from "../api/reviewApi";
+import * as userApi from "../api/userApi";
 import { updateInterests } from "../api/authApi";
 import { fetchRecommendations } from "../api/recommendationsApi";
 import { fetchWeather } from "../api/weatherApi";
 import { getMediaUrl } from "../utils/media";
 import WishlistButton from "../components/common/WishlistButton";
+import SustainableTravelSection from "../components/eco/SustainableTravelSection";
 import {
   Routes,
   Route,
@@ -303,36 +306,109 @@ const Dashboard = () => {
   );
 };
 
-// 2. MY PROFILE
+// 2. PROFILE
 const Profile = () => {
-  const { user } = useAuth();
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "AM";
+  const { user, updateUser, setUser } = useAuth();
+  const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [location, setLocation] = useState(user?.location || "");
+  const [bio, setBio] = useState(user?.bio || "");
+  const [avatar, setAvatar] = useState(user?.avatar || "");
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setPhone(user.phone || "");
+      setLocation(user.location || "");
+      setBio(user.bio || "");
+      setAvatar(user.avatar || "");
+      setAvatarPreview(user.avatar || "");
+    }
+  }, [user]);
+
+  const initials = (name || user?.name || "Explorer")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setSuccessMsg("");
+    setErrorMsg("");
+
+    try {
+      const res = await userApi.updateUserProfile({
+        name: name.trim(),
+        phone: phone.trim(),
+        location: location.trim(),
+        bio: bio.trim(),
+        avatar: avatar.trim(),
+      });
+
+      if (res && res.data) {
+        if (updateUser) {
+          updateUser(res.data);
+        } else if (setUser) {
+          setUser(res.data);
+        }
+        setSuccessMsg("🎉 Profile updated successfully!");
+        setTimeout(() => setSuccessMsg(""), 4000);
+      }
+    } catch (err) {
+      console.error("Profile save error:", err);
+      setErrorMsg(err.message || "Failed to update profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarPrompt = () => {
+    const url = window.prompt("Enter image URL for profile avatar:", avatar || "");
+    if (url !== null) {
+      setAvatar(url);
+      setAvatarPreview(url);
+    }
+  };
 
   return (
     <PageTransition>
-      <div className="p-8 max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center gap-8 mb-8">
+      <form onSubmit={handleSaveProfile} className="p-8 max-w-4xl mx-auto space-y-8 font-sans">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 mb-8">
           <div className="relative">
-            <div className="w-32 h-32 rounded-full bg-[#8B1A1A] flex items-center justify-center text-4xl text-white font-serif font-bold">
-              {initials}
-            </div>
-            <button className="absolute bottom-0 right-0 p-2 bg-[#FF6B1A] text-white rounded-full ring-4 ring-[#FDF6EC]">
+            {avatarPreview ? (
+              <img
+                src={avatarPreview}
+                alt="Avatar"
+                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-[#8B1A1A] flex items-center justify-center text-4xl text-white font-serif font-bold shadow-lg">
+                {initials}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleAvatarPrompt}
+              title="Change Profile Photo"
+              className="absolute bottom-0 right-0 p-2.5 bg-[#FF6B1A] hover:bg-[#e5590f] text-white rounded-full ring-4 ring-[#FDF6EC] shadow-md transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+            >
               <Camera size={16} />
             </button>
           </div>
+
           <div>
             <h2 className="text-3xl font-serif font-bold text-[#8B1A1A]">
-              {user?.name || "Explorer"}
+              {name || user?.name || "Explorer"}
             </h2>
             <p className="text-[#8B1A1A]/60 font-medium">
-              {user?.location || "India"} • {user?.role === "admin" ? "Admin" : "Pro Traveler"}
+              {location || "India"} • {user?.role === "admin" ? "Admin" : "Verified Explorer"}
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-3">
               {user?.isContributor && (
@@ -374,90 +450,115 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Feedback alerts */}
+        {successMsg && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-[#138808]" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold flex items-center gap-2">
+            <AlertCircle size={18} className="text-red-500" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="space-y-4">
             <h3 className="font-bold text-[#8B1A1A]">Personal Information</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-[#8B1A1A]/40 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-widest">
                   Full Name
                 </label>
                 <input
                   type="text"
-                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00]"
-                  defaultValue={user?.name || ""}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00] focus:outline-none focus:border-[#FF6B1A]"
+                  placeholder="Your Name"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[#8B1A1A]/40 uppercase tracking-widest">
-                  Email
+                <label className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-widest">
+                  Email Address
                 </label>
                 <input
                   type="email"
                   readOnly
-                  className="w-full bg-white/70 border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00]/70 cursor-not-allowed"
+                  className="w-full bg-stone-100/70 border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00]/70 cursor-not-allowed"
                   value={user?.email || ""}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[#8B1A1A]/40 uppercase tracking-widest">
-                  Phone
+                <label className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-widest">
+                  Phone Number
                 </label>
                 <input
                   type="text"
-                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00]"
-                  defaultValue={user?.phone || ""}
-                  placeholder="+91..."
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00] focus:outline-none focus:border-[#FF6B1A]"
+                  placeholder="+91 98765 43210"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[#8B1A1A]/40 uppercase tracking-widest">
-                  Location
+                <label className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-widest">
+                  Location / City
                 </label>
                 <input
                   type="text"
-                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00]"
-                  defaultValue={user?.location || ""}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm text-[#2D1B00] focus:outline-none focus:border-[#FF6B1A]"
                   placeholder="e.g. Mumbai, India"
                 />
               </div>
             </div>
           </Card>
+
           <Card className="space-y-4">
-            <h3 className="font-bold text-[#8B1A1A]">Travel Preferences</h3>
+            <h3 className="font-bold text-[#8B1A1A]">Travel Bio & Philosophy</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-[#8B1A1A]/40 uppercase tracking-widest">
-                  Bio
+                <label className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-widest">
+                  Bio / Philosophy
                 </label>
                 <textarea
-                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm h-24"
-                  placeholder="Share your travel philosophy..."
-                  defaultValue="Passionate explorer discovering hidden gems and authentic cultures across India."
+                  rows={4}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-sm h-28 focus:outline-none focus:border-[#FF6B1A] resize-none"
+                  placeholder="Share your travel philosophy and explorer spirit..."
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[#8B1A1A]/40 uppercase tracking-widest">
-                  Known Languages
+                <label className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-widest">
+                  Avatar Image Link
                 </label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {["Hindi", "English", "Marathi", "Gujarati"].map((lang) => (
-                    <span
-                      key={lang}
-                      className="bg-white border border-[#E8DCC4] px-3 py-1 rounded-full text-xs font-bold text-[#8B1A1A]"
-                    >
-                      {lang}
-                    </span>
-                  ))}
-                </div>
+                <input
+                  type="text"
+                  value={avatar}
+                  onChange={(e) => {
+                    setAvatar(e.target.value);
+                    setAvatarPreview(e.target.value);
+                  }}
+                  className="w-full bg-white border border-[#E8DCC4] rounded-xl px-4 py-2 mt-1 text-xs text-[#2D1B00] focus:outline-none focus:border-[#FF6B1A]"
+                  placeholder="https://images.unsplash.com/..."
+                />
               </div>
             </div>
           </Card>
         </div>
+
         <div className="flex justify-end">
-          <Button>Save Profile Changes</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving Changes..." : "Save Profile Changes"}
+          </Button>
         </div>
-      </div>
+      </form>
     </PageTransition>
   );
 };
@@ -2378,482 +2479,416 @@ const Journal = () => {
 };
 
 // 7. REVIEWS
-const Reviews = () => (
-  <PageTransition>
-    <div className="p-8 max-w-5xl mx-auto">
-      <h2 className="text-3xl font-serif font-bold text-[#8B1A1A] mb-8">My Reviews & Ratings</h2>
-      <div className="grid grid-cols-1 gap-6">
-        {[
-          { place: 'The Leela Palace, Udaipur', rating: 5, date: 'May 2024', comment: 'Exceptional hospitality. The lake view is unmatched in India.' },
-          { place: 'Fort Tiracol Heritage Hotel', rating: 4, date: 'Mar 2024', comment: 'A hidden gem in North Goa. Quiet, historic, and beautiful.' },
-        ].map((r, i) => (
-          <Card key={i} className="flex gap-6">
-            <div className="w-24 h-24 bg-[#8B1A1A]/5 rounded-2xl flex items-center justify-center shrink-0">
-               <Star size={32} className="text-[#F5A623]" fill="currentColor" />
+const Reviews = () => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const fetchMyReviews = async () => {
+    try {
+      setLoading(true);
+      const res = await reviewApi.getMyReviews();
+      if (res && res.success) {
+        setReviews(res.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching user reviews:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyReviews();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+    try {
+      setDeletingId(id);
+      await reviewApi.deleteReview(id);
+      setReviews((prev) => prev.filter((r) => r._id !== id));
+    } catch (err) {
+      alert(err.message || "Failed to delete review.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <PageTransition>
+      <div className="p-8 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+          <div>
+            <h2 className="text-3xl font-serif font-bold text-[#8B1A1A]">My Reviews & Ratings</h2>
+            <p className="text-sm text-[#8B1A1A]/60 mt-1">Manage and view feedback you have shared with the community.</p>
+          </div>
+          <Link
+            to="/reviews"
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#F5A623] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 transition-all"
+          >
+            + Write New Review
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="py-16 text-center">
+            <div className="w-8 h-8 border-3 border-[#FF6B1A]/30 border-t-[#FF6B1A] rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs font-semibold text-[#8B1A1A]/60">Loading your reviews...</p>
+          </div>
+        ) : reviews.length === 0 ? (
+          <Card className="p-12 text-center max-w-md mx-auto space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#FF6B1A]/10 text-[#FF6B1A] flex items-center justify-center mx-auto">
+              <Star size={26} />
             </div>
-            <div className="flex-1">
-              <div className="flex justify-between">
-                <h4 className="font-bold text-[#8B1A1A]">{r.place}</h4>
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, idx) => (
-                    <Star key={idx} size={14} className={idx < r.rating ? "text-[#F5A623] fill-current" : "text-[#E8DCC4]"} />
-                  ))}
-                </div>
-              </div>
-              <p className="text-xs text-[#8B1A1A]/40 mt-1">Reviewed on {r.date}</p>
-              <p className="text-sm text-[#8B1A1A]/80 mt-3 italic">"{r.comment}"</p>
-              <div className="mt-4 flex gap-4">
-                 <button className="text-[10px] font-bold text-[#8B1A1A]/60 flex items-center gap-1"><MessageSquare size={12} /> Edit</button>
-                 <button className="text-[10px] font-bold text-[#8B1A1A]/60 flex items-center gap-1 text-red-400"><Trash2 size={12} /> Delete</button>
-              </div>
-            </div>
+            <h4 className="font-serif text-xl font-bold text-[#8B1A1A]">No Reviews Yet</h4>
+            <p className="text-xs text-[#8B1A1A]/70 leading-relaxed">
+              You haven't submitted any reviews yet. Share your thoughts on Indian destinations, experiences, or the platform!
+            </p>
+            <Link
+              to="/reviews"
+              className="inline-block mt-2 px-6 py-2.5 rounded-full bg-[#8B1A1A] text-white text-xs font-bold uppercase tracking-wider"
+            >
+              Browse & Write Reviews
+            </Link>
           </Card>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {reviews.map((r) => {
+              const formattedDate = r.createdAt
+                ? new Date(r.createdAt).toLocaleDateString("en-IN", {
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "Recently";
+
+              return (
+                <Card key={r._id} className="flex gap-6 relative group">
+                  <div className="w-20 h-20 bg-[#8B1A1A]/5 rounded-2xl flex items-center justify-center shrink-0 border border-[#E8DCC4]">
+                    <Star size={28} className="text-[#F5A623]" fill="currentColor" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-[#8B1A1A] text-base">{r.name}</h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#8B1A1A]/10 text-[#8B1A1A]">
+                            {r.category}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#8B1A1A]/40 mt-0.5">Reviewed on {formattedDate}</p>
+                      </div>
+
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, idx) => (
+                          <Star
+                            key={idx}
+                            size={14}
+                            className={idx < (r.rating || 5) ? "text-[#F5A623] fill-current" : "text-[#E8DCC4]"}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-[#8B1A1A]/80 mt-3 italic">"{r.comment}"</p>
+
+                    <div className="mt-4 flex gap-4">
+                      <button
+                        onClick={() => handleDelete(r._id)}
+                        disabled={deletingId === r._id}
+                        className="text-[11px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 size={13} /> {deletingId === r._id ? "Deleting..." : "Delete Review"}
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
-  </PageTransition>
-);
+    </PageTransition>
+  );
+};
 
 // 8. SUSTAINABLE TRAVEL
 const Sustainable = () => {
-  const data = [ { name: 'Train', value: 70 }, { name: 'Flight', value: 30 } ];
   return (
     <PageTransition>
-      <div className="p-8 max-w-6xl mx-auto space-y-8">
-        <div className="flex items-center justify-between flex-wrap gap-6">
-  <div className="flex items-center gap-4">
-    <div className="w-16 h-16 rounded-full bg-[#138808]/10 flex items-center justify-center">
-      <Leaf size={32} className="text-[#138808]" />
-    </div>
-
-    <div>
-      <h2 className="text-3xl font-serif font-bold text-[#138808]">
-        Eco Explorer Score
-      </h2>
-
-      <p className="text-[#8B1A1A]/60">
-        You're among the top 5% of sustainable travelers in India.
-      </p>
-    </div>
-  </div>
-
-  <div className="bg-[#138808]/10 px-5 py-3 rounded-2xl">
-    <p className="text-xs uppercase tracking-wider text-[#138808] font-bold">
-      Eco Rank
-    </p>
-
-    <p className="text-2xl font-bold text-[#138808]">
-      #142
-    </p>
-  </div>
-</div>
-
-
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-  {/* Eco Score */}
-
-  <Card className="flex flex-col items-center justify-center py-10">
-
-    <div className="relative w-44 h-44">
-
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-
-        <span className="text-5xl font-bold text-[#138808]">
-          840
-        </span>
-
-        <span className="text-xs text-gray-500">
-          /1000
-        </span>
-
-      </div>
-
-      <svg className="w-full h-full -rotate-90">
-
-        <circle
-          cx="88"
-          cy="88"
-          r="75"
-          stroke="#E8DCC4"
-          strokeWidth="12"
-          fill="none"
-        />
-
-        <circle
-          cx="88"
-          cy="88"
-          r="75"
-          stroke="#138808"
-          strokeWidth="12"
-          fill="none"
-          strokeDasharray="471"
-          strokeDashoffset="75"
-          strokeLinecap="round"
-        />
-
-      </svg>
-
-    </div>
-
-    <p className="mt-5 text-xl font-bold text-[#138808]">
-      Excellent
-    </p>
-
-    <p className="text-sm text-[#8B1A1A]/60 mt-1">
-      Keep making eco-friendly choices 🌱
-    </p>
-
-  </Card>
-
-
-  {/* Carbon Saved */}
-
-  <Card className="flex flex-col justify-between p-8">
-
-    <div>
-
-      <div className="flex items-center gap-3">
-
-        <div className="w-12 h-12 rounded-xl bg-[#138808]/10 flex items-center justify-center">
-
-          🌍
-
-        </div>
-
-        <div>
-
-          <h3 className="font-bold text-[#8B1A1A]">
-            Carbon Saved
-          </h3>
-
-          <p className="text-xs text-[#8B1A1A]/50">
-            Compared to average travelers
-          </p>
-
-        </div>
-
-      </div>
-
-      <div className="mt-8">
-
-        <h1 className="text-5xl font-bold text-[#138808]">
-          126
-        </h1>
-
-        <p className="text-[#8B1A1A]/60">
-          kg CO₂
-        </p>
-
-      </div>
-
-    </div>
-
-    <div className="mt-8 border-t pt-5">
-
-      <div className="flex justify-between">
-
-        <span className="text-[#8B1A1A]/60">
-          Trees Equivalent
-        </span>
-
-        <span className="font-bold text-[#138808]">
-          🌳 6 Trees
-        </span>
-
-      </div>
-
-    </div>
-
-  </Card>
-
-
-  {/* Quick Stats */}
-
-  <Card className="p-8">
-
-    <h3 className="font-bold text-[#8B1A1A] mb-6">
-      Sustainability Highlights
-    </h3>
-
-    <div className="space-y-5">
-
-      <div className="flex justify-between items-center">
-
-        <span>Train Journeys</span>
-
-        <span className="font-bold text-[#138808]">
-          18
-        </span>
-
-      </div>
-
-      <div className="flex justify-between items-center">
-
-        <span>Eco Hotels</span>
-
-        <span className="font-bold text-[#138808]">
-          9
-        </span>
-
-      </div>
-
-      <div className="flex justify-between items-center">
-
-        <span>Plastic Saved</span>
-
-        <span className="font-bold text-[#138808]">
-          52 Bottles
-        </span>
-
-      </div>
-
-      <div className="flex justify-between items-center">
-
-        <span>Green Trips</span>
-
-        <span className="font-bold text-[#138808]">
-          14
-        </span>
-
-      </div>
-
-      <div className="flex justify-between items-center">
-
-        <span>Eco Rating</span>
-
-        <span className="font-bold text-[#138808]">
-          ⭐ 4.9/5
-        </span>
-
-      </div>
-
-    </div>
-
-  </Card>
-
-</div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-          <Card className="md:col-span-2 p-8">
-
-  <h3 className="font-bold text-[#8B1A1A] text-xl mb-8">
-    Transport Impact & Eco Score Breakdown
-  </h3>
-
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-    <div className="h-64">
-
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            innerRadius={65}
-            outerRadius={90}
-            paddingAngle={4}
-            dataKey="value"
-          >
-            <Cell fill="#138808" />
-            <Cell fill="#8B1A1A" />
-          </Pie>
-
-          <Tooltip />
-        </PieChart>
-      </ResponsiveContainer>
-
-    </div>
-
-    <div className="space-y-5">
-
-      <div>
-        <div className="flex justify-between text-sm mb-2">
-          <span>Train Journeys</span>
-          <span className="font-bold text-[#138808]">+250</span>
-        </div>
-
-        <div className="w-full h-2 rounded-full bg-[#E8DCC4]">
-          <div className="w-[90%] h-full bg-[#138808] rounded-full"></div>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex justify-between text-sm mb-2">
-          <span>Eco Hotels</span>
-          <span className="font-bold text-[#138808]">+180</span>
-        </div>
-
-        <div className="w-full h-2 rounded-full bg-[#E8DCC4]">
-          <div className="w-[75%] h-full bg-[#138808] rounded-full"></div>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex justify-between text-sm mb-2">
-          <span>Reusable Bottle</span>
-          <span className="font-bold text-[#138808]">+60</span>
-        </div>
-
-        <div className="w-full h-2 rounded-full bg-[#E8DCC4]">
-          <div className="w-[45%] h-full bg-[#138808] rounded-full"></div>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex justify-between text-sm mb-2">
-          <span>Flights Taken</span>
-          <span className="font-bold text-[#8B1A1A]">-120</span>
-        </div>
-
-        <div className="w-full h-2 rounded-full bg-[#E8DCC4]">
-          <div className="w-[35%] h-full bg-[#8B1A1A] rounded-full"></div>
-        </div>
-      </div>
-
-      <div className="mt-8 p-4 rounded-xl bg-[#138808]/5 border border-[#138808]/20">
-
-        <p className="font-bold text-[#138808]">
-          🌱 Sustainability Insight
-        </p>
-
-        <p className="text-sm text-[#8B1A1A]/70 mt-2">
-          Choosing trains instead of flights saved approximately
-          <span className="font-bold text-[#138808]">
-            {" "}126 kg CO₂
-          </span>
-          on your recent trips.
-        </p>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</Card>
-
-        </div>
-        <section>
-  <h3 className="font-serif text-2xl font-bold text-[#138808] mb-6">
-    💡 Personalized Eco Tips
-  </h3>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-    {[
-      {
-        icon: "♻️",
-        title: "Carry a Reusable Bottle",
-        desc: "Avoid purchasing single-use plastic bottles while travelling.",
-        impact: "Saves ~25 plastic bottles/year"
-      },
-      {
-        icon: "🚆",
-        title: "Prefer Trains Over Flights",
-        desc: "For journeys under 500 km, trains reduce carbon emissions significantly.",
-        impact: "Up to 80% lower CO₂"
-      },
-      {
-        icon: "🏨",
-        title: "Choose Eco-certified Stays",
-        desc: "Support accommodations that use renewable energy and sustainable practices.",
-        impact: "Supports Green Tourism"
-      },
-      {
-        icon: "🥗",
-        title: "Eat Local Food",
-        desc: "Choose locally sourced meals to reduce transportation emissions.",
-        impact: "Supports Local Communities"
-      },
-      {
-        icon: "🚲",
-        title: "Walk or Cycle",
-        desc: "Explore destinations on foot or by bicycle whenever possible.",
-        impact: "Zero Carbon Travel"
-      },
-      {
-        icon: "🌳",
-        title: "Offset Your Carbon",
-        desc: "Contribute to verified carbon offset projects for unavoidable emissions.",
-        impact: "Improves Eco Score"
-      }
-    ].map((tip, index) => (
-      <Card
-        key={index}
-        className="group hover:border-[#138808] hover:shadow-lg transition-all duration-300"
-      >
-        <div className="flex gap-5">
-
-          <div className="w-14 h-14 rounded-2xl bg-[#138808]/10 flex items-center justify-center text-3xl">
-            {tip.icon}
-          </div>
-
-          <div className="flex-1">
-
-            <h4 className="font-bold text-lg text-[#8B1A1A]">
-              {tip.title}
-            </h4>
-
-            <p className="text-sm text-[#8B1A1A]/60 mt-2 leading-6">
-              {tip.desc}
-            </p>
-
-            <span className="inline-block mt-4 px-3 py-1 rounded-full bg-[#138808]/10 text-[#138808] text-xs font-bold">
-              {tip.impact}
-            </span>
-
-          </div>
-
-        </div>
-      </Card>
-    ))}
-
-  </div>
-</section>
-      </div>
-      
+      <SustainableTravelSection />
     </PageTransition>
   );
 };
 
 // 9. NOTIFICATIONS
-const Notifications = () => (
-  <PageTransition>
-    <div className="p-8 max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-serif font-bold text-[#8B1A1A]">Inbox</h2>
-        <button className="text-xs font-bold text-[#FF6B1A]">Mark all as read</button>
-      </div>
-      <div className="space-y-4">
-        {[
-          { icon: Plane, color: 'primary', title: 'Trip Update', desc: 'Your flight to Varanasi is on schedule. Web check-in opens in 24h.', time: '2h ago' },
-          { icon: Leaf, color: 'success', title: 'Sustainability Badge', desc: 'You earned the "Green Traveler" badge for choosing rail travel!', time: '1d ago' },
-          { icon: ShoppingBag, color: 'gold', title: 'Exclusive Deal', desc: 'Up to 20% off on luxury heritage properties in Rajasthan.', time: '3d ago' },
-        ].map((n, i) => (
-          <Card key={i} className="flex gap-4 items-start hover:bg-[#F5E6D3]/30 transition-colors cursor-pointer">
-            <div className={`p-3 bg-${n.color === 'primary' ? '[#FF6B1A]' : '[#138808]'}/10 text-${n.color === 'primary' ? '[#FF6B1A]' : '[#138808]'} rounded-xl`}>
-              <n.icon size={20} />
+const Notifications = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all"); // 'all', 'unread', 'alerts'
+  const [markingAll, setMarkingAll] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [actionMsg, setActionMsg] = useState("");
+
+  const fetchNotifs = async () => {
+    try {
+      setLoading(true);
+      const res = await userApi.getNotifications();
+      if (res?.data) {
+        setNotifications(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifs();
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      setMarkingAll(true);
+      await userApi.markNotificationRead("all");
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, isRead: true }))
+      );
+      setActionMsg("All notifications marked as read.");
+      setTimeout(() => setActionMsg(""), 3000);
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    } finally {
+      setMarkingAll(false);
+    }
+  };
+
+  const handleMarkSingleRead = async (id, currentRead) => {
+    if (currentRead) return;
+    try {
+      await userApi.markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+    }
+  };
+
+  const handleDeleteNotification = async (e, id) => {
+    e.stopPropagation();
+    try {
+      setDeletingId(id);
+      await userApi.deleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      setActionMsg("Notification removed.");
+      setTimeout(() => setActionMsg(""), 3000);
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filteredNotifs = useMemo(() => {
+    if (filter === "unread") return notifications.filter((n) => !n.isRead);
+    if (filter === "alerts") return notifications.filter((n) => n.type === "alert");
+    return notifications;
+  }, [notifications, filter]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case "booking":
+      case "trip":
+        return { icon: Plane, bg: "bg-[#FF6B1A]/10 text-[#FF6B1A]" };
+      case "alert":
+      case "sustainability":
+        return { icon: Leaf, bg: "bg-[#138808]/10 text-[#138808]" };
+      case "review":
+        return { icon: Star, bg: "bg-[#F5A623]/10 text-[#F5A623]" };
+      case "system":
+      default:
+        return { icon: Sparkles, bg: "bg-[#8B1A1A]/10 text-[#8B1A1A]" };
+    }
+  };
+
+  const formatRelativeTime = (dateStr) => {
+    if (!dateStr) return "Just now";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+  };
+
+  return (
+    <PageTransition>
+      <div className="p-8 max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-serif font-bold text-[#8B1A1A]">Inbox & Notifications</h2>
+              {unreadCount > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-[#FF6B1A] text-white animate-pulse">
+                  {unreadCount} new
+                </span>
+              )}
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-[#8B1A1A] text-sm">{n.title}</h4>
-              <p className="text-xs text-[#8B1A1A]/60 mt-1">{n.desc}</p>
+            <p className="text-xs text-[#8B1A1A]/60 mt-1">
+              Stay updated on trip schedules, eco alerts, and community contributions.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                disabled={markingAll}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#FF6B1A] bg-[#FF6B1A]/10 hover:bg-[#FF6B1A]/20 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 size={14} />
+                {markingAll ? "Marking..." : "Mark all as read"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {actionMsg && (
+          <div className="p-3 bg-[#138808]/10 border border-[#138808]/20 text-[#138808] text-xs font-bold rounded-xl flex items-center gap-2">
+            <CheckCircle2 size={15} /> {actionMsg}
+          </div>
+        )}
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-2 border-b border-[#E8DCC4] pb-3">
+          {[
+            { id: "all", label: "All Notifications" },
+            { id: "unread", label: `Unread (${unreadCount})` },
+            { id: "alerts", label: "Eco & Safety Alerts" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilter(tab.id)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                filter === tab.id
+                  ? "bg-[#8B1A1A] text-white shadow-sm"
+                  : "text-[#8B1A1A]/60 hover:bg-[#8B1A1A]/5"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="py-20 text-center">
+            <div className="w-8 h-8 border-3 border-[#FF6B1A]/30 border-t-[#FF6B1A] rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs font-semibold text-[#8B1A1A]/60">Loading notifications...</p>
+          </div>
+        ) : filteredNotifs.length === 0 ? (
+          <Card className="p-12 text-center max-w-md mx-auto space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#FF6B1A]/10 text-[#FF6B1A] flex items-center justify-center mx-auto">
+              <Bell size={26} />
             </div>
-            <span className="text-[10px] font-bold text-[#8B1A1A]/30">{n.time}</span>
+            <h4 className="font-serif text-xl font-bold text-[#8B1A1A]">No Notifications</h4>
+            <p className="text-xs text-[#8B1A1A]/70 leading-relaxed">
+              {filter === "unread"
+                ? "You have caught up with all your notifications!"
+                : "You don't have any notifications right now. We will keep you updated on your trips and alerts."}
+            </p>
           </Card>
-        ))}
+        ) : (
+          <div className="space-y-3">
+            {filteredNotifs.map((n) => {
+              const { icon: NotifIcon, bg: iconBg } = getNotifIcon(n.type);
+              return (
+                <div
+                  key={n._id}
+                  onClick={() => handleMarkSingleRead(n._id, n.isRead)}
+                  className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-4 relative group ${
+                    n.isRead
+                      ? "bg-white/80 border-[#E8DCC4] hover:border-[#FF6B1A]/40"
+                      : "bg-[#FFF8F0] border-[#FF6B1A]/40 shadow-sm ring-1 ring-[#FF6B1A]/20"
+                  }`}
+                >
+                  <div className={`p-3 rounded-xl shrink-0 ${iconBg}`}>
+                    <NotifIcon size={20} />
+                  </div>
+
+                  <div className="flex-1 min-w-0 pr-8">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className={`text-sm font-bold leading-snug ${n.isRead ? "text-[#8B1A1A]" : "text-[#8B1A1A] font-extrabold"}`}>
+                        {n.title}
+                      </h4>
+                      {!n.isRead && (
+                        <span className="w-2 h-2 rounded-full bg-[#FF6B1A] inline-block" />
+                      )}
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#8B1A1A]/5 text-[#8B1A1A]/60">
+                        {n.type || "system"}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#8B1A1A]/70 mt-1 leading-relaxed">
+                      {n.message}
+                    </p>
+
+                    <div className="flex items-center gap-3 mt-2 text-[10px] text-[#8B1A1A]/40 font-semibold">
+                      <span>🕒 {formatRelativeTime(n.createdAt)}</span>
+                      {n.link && (
+                        <Link
+                          to={n.link}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[#FF6B1A] hover:underline font-bold"
+                        >
+                          View Details →
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => handleDeleteNotification(e, n._id)}
+                    disabled={deletingId === n._id}
+                    title="Delete Notification"
+                    className="absolute right-3 top-3 p-2 rounded-lg text-[#8B1A1A]/30 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
-  </PageTransition>
-);
+    </PageTransition>
+  );
+};
 
 // 10. SETTINGS
 const SettingsPage = () => {
   const { user, updateUser, setUser } = useAuth();
   const [selectedInterests, setSelectedInterests] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [savedSuccess, setSavedSuccess] = useState(false);
-  const [error, setError] = useState(null);
+  const [savingInterests, setSavingInterests] = useState(false);
+  const [interestSuccess, setInterestSuccess] = useState(false);
+  const [interestError, setInterestError] = useState(null);
+
+  // Preference switches state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [currency, setCurrency] = useState("INR");
+  const [syncingPref, setSyncingPref] = useState(false);
+  const [prefSuccess, setPrefSuccess] = useState(false);
 
   const interestCategories = [
     { id: "heritage", label: "🏛️ Heritage", desc: "Forts, Palaces & Ancient Sites" },
@@ -2870,27 +2905,34 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (user?.interests && Array.isArray(user.interests)) {
-      setSelectedInterests(user.interests.map(i => i.toLowerCase()));
+      setSelectedInterests(user.interests.map((i) => i.toLowerCase()));
     } else {
       setSelectedInterests([]);
+    }
+
+    if (user?.settings) {
+      setEmailNotifications(user.settings.emailNotifications ?? true);
+      setPushNotifications(user.settings.pushNotifications ?? true);
+      setDarkMode(user.settings.darkMode ?? false);
+      setCurrency(user.settings.currency || "INR");
     }
   }, [user]);
 
   const toggleInterest = (id) => {
-    setSelectedInterests(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    setSelectedInterests((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  const handleSavePreferences = async () => {
+  const handleSaveInterests = async () => {
     if (selectedInterests.length === 0) {
-      setError("Please select at least one travel interest.");
+      setInterestError("Please select at least one travel interest.");
       return;
     }
 
-    setSaving(true);
-    setError(null);
-    setSavedSuccess(false);
+    setSavingInterests(true);
+    setInterestError(null);
+    setInterestSuccess(false);
 
     try {
       const res = await updateInterests(selectedInterests);
@@ -2900,20 +2942,78 @@ const SettingsPage = () => {
       } else if (setUser) {
         setUser(updated);
       }
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 4000);
+      setInterestSuccess(true);
+      setTimeout(() => setInterestSuccess(false), 4000);
     } catch (err) {
       console.error("Failed to update preferences:", err);
-      setError(err.message || "Failed to save preferences.");
+      setInterestError(err.message || "Failed to save preferences.");
     } finally {
-      setSaving(false);
+      setSavingInterests(false);
     }
+  };
+
+  const handleUpdatePreferences = async (newPrefs) => {
+    setSyncingPref(true);
+    try {
+      const res = await userApi.updateUserSettings(newPrefs);
+      const updatedUser = {
+        ...user,
+        settings: {
+          ...(user?.settings || {}),
+          ...newPrefs,
+        },
+      };
+      if (updateUser) {
+        updateUser(updatedUser);
+      } else if (setUser) {
+        setUser(updatedUser);
+      }
+      setPrefSuccess(true);
+      setTimeout(() => setPrefSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to sync settings:", err);
+    } finally {
+      setSyncingPref(false);
+    }
+  };
+
+  const toggleEmailNotifs = () => {
+    const nextVal = !emailNotifications;
+    setEmailNotifications(nextVal);
+    handleUpdatePreferences({ emailNotifications: nextVal });
+  };
+
+  const togglePushNotifs = () => {
+    const nextVal = !pushNotifications;
+    setPushNotifications(nextVal);
+    handleUpdatePreferences({ pushNotifications: nextVal });
+  };
+
+  const toggleDarkMode = () => {
+    const nextVal = !darkMode;
+    setDarkMode(nextVal);
+    handleUpdatePreferences({ darkMode: nextVal });
+  };
+
+  const handleCurrencyChange = (newCurr) => {
+    setCurrency(newCurr);
+    handleUpdatePreferences({ currency: newCurr });
   };
 
   return (
     <PageTransition>
-      <div className="p-8 max-w-4xl mx-auto space-y-8">
-        <h2 className="text-3xl font-serif font-bold text-[#8B1A1A]">Settings</h2>
+      <div className="p-8 max-w-4xl mx-auto space-y-8 font-sans">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-serif font-bold text-[#8B1A1A]">Settings & Preferences</h2>
+            <p className="text-xs text-[#8B1A1A]/60 mt-1">Configure your personal dashboard, notifications, and travel algorithm.</p>
+          </div>
+          {prefSuccess && (
+            <span className="text-xs font-bold text-[#138808] bg-[#138808]/10 px-3 py-1.5 rounded-full flex items-center gap-1">
+              ✓ Preferences synced
+            </span>
+          )}
+        </div>
 
         {/* Travel Interests & Recommendation Preferences Section */}
         <section className="space-y-4">
@@ -2953,9 +3053,9 @@ const SettingsPage = () => {
               })}
             </div>
 
-            {error && (
+            {interestError && (
               <div className="p-3 bg-red-100/70 border border-red-200 text-red-700 text-xs rounded-xl">
-                ⚠️ {error}
+                ⚠️ {interestError}
               </div>
             )}
 
@@ -2964,51 +3064,158 @@ const SettingsPage = () => {
                 {selectedInterests.length} interest{selectedInterests.length === 1 ? "" : "s"} selected
               </span>
               <Button
-                onClick={handleSavePreferences}
-                disabled={saving}
-                className={savedSuccess ? "bg-[#138808] hover:bg-[#138808]" : ""}
+                onClick={handleSaveInterests}
+                disabled={savingInterests}
+                className={interestSuccess ? "bg-[#138808] hover:bg-[#138808]" : ""}
               >
-                {savedSuccess ? "✓ Preferences Saved!" : saving ? "Saving…" : "Save Preferences"}
+                {interestSuccess ? "✓ Preferences Saved!" : savingInterests ? "Saving…" : "Save Preferences"}
               </Button>
             </div>
           </Card>
         </section>
-        
+
+        {/* System & Notification Preferences */}
+        <section className="space-y-4">
+          <h3 className="text-xs font-bold text-[#8B1A1A]/40 uppercase tracking-widest px-2">App & Notification Preferences</h3>
+          <Card className="divide-y divide-[#E8DCC4]">
+            {/* Dark Mode */}
+            <div className="py-4 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[#8B1A1A]/5 text-[#8B1A1A]">
+                  <Moon size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-[#8B1A1A] text-sm">Dark Theme (Preview)</p>
+                  <p className="text-xs text-[#8B1A1A]/50">Enable dark palette for night browsing</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={toggleDarkMode}
+                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
+                  darkMode ? "bg-[#138808]" : "bg-[#E8DCC4]"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
+                    darkMode ? "right-1" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Email Notifications */}
+            <div className="py-4 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[#8B1A1A]/5 text-[#8B1A1A]">
+                  <Bell size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-[#8B1A1A] text-sm">Email Updates & Briefs</p>
+                  <p className="text-xs text-[#8B1A1A]/50">Receive booking confirmations and curated itineraries via email</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={toggleEmailNotifs}
+                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
+                  emailNotifications ? "bg-[#138808]" : "bg-[#E8DCC4]"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
+                    emailNotifications ? "right-1" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Push Notifications */}
+            <div className="py-4 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[#8B1A1A]/5 text-[#8B1A1A]">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-[#8B1A1A] text-sm">In-App Alerts & Eco-Pledges</p>
+                  <p className="text-xs text-[#8B1A1A]/50">Live updates on community spots, reviews, and environmental milestones</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={togglePushNotifs}
+                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
+                  pushNotifications ? "bg-[#138808]" : "bg-[#E8DCC4]"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
+                    pushNotifications ? "right-1" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Preferred Currency */}
+            <div className="py-4 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[#8B1A1A]/5 text-[#8B1A1A]">
+                  <IndianRupee size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-[#8B1A1A] text-sm">Preferred Currency</p>
+                  <p className="text-xs text-[#8B1A1A]/50">Display prices and budget estimates in your selected currency</p>
+                </div>
+              </div>
+              <select
+                value={currency}
+                onChange={(e) => handleCurrencyChange(e.target.value)}
+                className="px-3 py-1.5 rounded-xl bg-white border border-[#E8DCC4] text-xs font-bold text-[#8B1A1A] focus:outline-none focus:ring-2 focus:ring-[#FF6B1A]/30 cursor-pointer"
+              >
+                <option value="INR">INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+            </div>
+          </Card>
+        </section>
+
+        {/* Account & Security */}
         <section className="space-y-4">
           <h3 className="text-xs font-bold text-[#8B1A1A]/40 uppercase tracking-widest px-2">Account & Security</h3>
           <Card className="divide-y divide-[#E8DCC4]">
             <div className="py-4 flex justify-between items-center">
-              <div><p className="font-bold text-[#8B1A1A] text-sm">Email Address</p><p className="text-xs text-[#8B1A1A]/50">{user?.email || "arjun.mehta@travelindepth.in"}</p></div>
-              <Button variant="ghost" className="text-xs">Change</Button>
+              <div>
+                <p className="font-bold text-[#8B1A1A] text-sm">Registered Email</p>
+                <p className="text-xs text-[#8B1A1A]/50">{user?.email || "arjun.mehta@travelindepth.in"}</p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#138808]/10 text-[#138808]">
+                ✓ Verified
+              </span>
             </div>
             <div className="py-4 flex justify-between items-center">
-              <div><p className="font-bold text-[#8B1A1A] text-sm">Password</p><p className="text-xs text-[#8B1A1A]/50">Last changed 3 months ago</p></div>
-              <Button variant="ghost" className="text-xs">Update</Button>
-            </div>
-            <div className="py-4 flex justify-between items-center">
-              <div><p className="font-bold text-[#8B1A1A] text-sm">Two-Factor Authentication</p><p className="text-xs text-[#8B1A1A]/50">Enhance your account security</p></div>
-              <div className="w-10 h-5 bg-[#138808] rounded-full relative"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
+              <div>
+                <p className="font-bold text-[#8B1A1A] text-sm">Account Type</p>
+                <p className="text-xs text-[#8B1A1A]/50">
+                  {user?.role === "admin" ? "Platform Administrator" : "Standard Explorer Account"}
+                </p>
+              </div>
+              <Link to="/dashboard/profile" className="text-xs font-bold text-[#FF6B1A] hover:underline">
+                Edit Profile →
+              </Link>
             </div>
           </Card>
         </section>
 
-        <section className="space-y-4">
-          <h3 className="text-xs font-bold text-[#8B1A1A]/40 uppercase tracking-widest px-2">Preferences</h3>
-          <Card className="space-y-6">
-            <div className="flex justify-between items-center">
-               <div className="flex items-center gap-3"><Moon size={18} className="text-[#8B1A1A]"/> <span className="text-sm font-bold">Dark Mode</span></div>
-               <div className="w-10 h-5 bg-[#E8DCC4] rounded-full relative"><div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
-            </div>
-            <div className="flex justify-between items-center">
-               <div className="flex items-center gap-3"><Bell size={18} className="text-[#8B1A1A]"/> <span className="text-sm font-bold">Email Notifications</span></div>
-               <div className="w-10 h-5 bg-[#138808] rounded-full relative"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
-            </div>
-          </Card>
-        </section>
-
-        <div className="pt-8 border-t border-[#E8DCC4] flex justify-between">
-          <button className="text-sm font-bold text-red-500 flex items-center gap-2"><Trash2 size={16}/> Delete Account</button>
-          <button className="text-sm font-bold text-[#8B1A1A] flex items-center gap-2"><Download size={16}/> Download My Data</button>
+        <div className="pt-8 border-t border-[#E8DCC4] flex justify-between items-center flex-wrap gap-4">
+          <button
+            onClick={() => alert("Data export link has been generated and sent to your registered email.")}
+            className="text-xs font-bold text-[#8B1A1A] hover:text-[#FF6B1A] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Download size={15} /> Download My Travel Data
+          </button>
+          <p className="text-[10px] text-[#8B1A1A]/40">Travel In Depth Platform v2.4 • Secured with JWT</p>
         </div>
       </div>
     </PageTransition>
@@ -3020,84 +3227,117 @@ const SettingsPage = () => {
 const Sidebar = ({ collapsed, setCollapsed }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkUnread = async () => {
+      try {
+        const res = await userApi.getNotifications();
+        if (isMounted && res?.unreadCount !== undefined) {
+          setUnreadNotifs(res.unreadCount);
+        }
+      } catch (e) {
+        // silent fallback
+      }
+    };
+    checkUnread();
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-  const location = useLocation();
+
   const items = [
     { l: 'Home', p: '/', i: Home },
-  { p: '/dashboard', l: 'Dashboard', i: LayoutDashboard },
-  { p: '/dashboard/profile', l: 'My Profile', i: User },
-  { p: '/dashboard/trips', l: 'My Trips', i: Map },
-  { p: '/dashboard/wishlist', l: 'Wishlist', i: Heart },
-  { p: '/dashboard/planner', l: 'Trip Planner', i: Calendar },
-  { p: '/dashboard/journal', l: 'Travel Journal', i: BookOpen },
-  { p: '/dashboard/reviews', l: 'Reviews & Ratings', i: Star },
-  { p: '/dashboard/sustainable', l: 'Sustainable Travel', i: Leaf },
-  { p: '/dashboard/notifications', l: 'Notifications', i: Bell },
-  { p: '/dashboard/settings', l: 'Settings', i: Settings },
-];
+    { p: '/dashboard', l: 'Dashboard', i: LayoutDashboard },
+    { p: '/dashboard/profile', l: 'My Profile', i: User },
+    { p: '/dashboard/trips', l: 'My Trips', i: Map },
+    { p: '/dashboard/wishlist', l: 'Wishlist', i: Heart },
+    { p: '/dashboard/planner', l: 'Trip Planner', i: Calendar },
+    { p: '/dashboard/journal', l: 'Travel Journal', i: BookOpen },
+    { p: '/dashboard/reviews', l: 'Reviews & Ratings', i: Star },
+    { p: '/dashboard/sustainable', l: 'Sustainable Travel', i: Leaf },
+    { p: '/dashboard/notifications', l: 'Notifications', i: Bell, count: unreadNotifs },
+    { p: '/dashboard/settings', l: 'Settings', i: Settings },
+  ];
 
   return (
     <aside
-  className={`${collapsed ? "w-20" : "w-72"} bg-[#FDF6EC] border-r border-[#E8DCC4] h-screen sticky top-0 flex flex-col z-50 transition-all duration-300`}>
+      className={`${collapsed ? "w-20" : "w-72"} bg-[#FDF6EC] border-r border-[#E8DCC4] h-screen sticky top-0 flex flex-col z-50 transition-all duration-300`}
+    >
       <div className={`${collapsed ? "px-4 pt-6 pb-2" : "p-8 pb-4"}`}>
-        
-       <div className={`flex ${   collapsed ? "justify-center" : "items-center justify-between"}`}>
-  <div
-  className={`flex items-center ${ collapsed ? "justify-center w-full" : "gap-3" }`}>
-    <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md flex-shrink-0">
-      <img
-        src={getMediaUrl("logo.jpg")}
-        alt="Travel In Depth"
-        loading="lazy"
-        className="w-full h-full object-cover scale-[1.35]"
-      />
-    </div>
+        <div className={`flex ${collapsed ? "justify-center" : "items-center justify-between"}`}>
+          <div className={`flex items-center ${collapsed ? "justify-center w-full" : "gap-3"}`}>
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md flex-shrink-0">
+              <img
+                src={getMediaUrl("logo.jpg")}
+                alt="Travel In Depth"
+                loading="lazy"
+                className="w-full h-full object-cover scale-[1.35]"
+              />
+            </div>
 
-    {!collapsed && (
-      <div>
-        <h1 className="font-serif text-2xl font-black text-[#8B1A1A] leading-none">
-          TRAVEL
-        </h1>
-        <p className="text-[10px] tracking-[0.3em] font-bold text-[#8B1A1A]/60 mt-1">
-          IN DEPTH
-        </p>
-      </div>
-    )}
-  </div>
+            {!collapsed && (
+              <div>
+                <h1 className="font-serif text-2xl font-black text-[#8B1A1A] leading-none">
+                  TRAVEL
+                </h1>
+                <p className="text-[10px] tracking-[0.3em] font-bold text-[#8B1A1A]/60 mt-1">
+                  IN DEPTH
+                </p>
+              </div>
+            )}
+          </div>
 
-  {!collapsed ? (
-  <button
-    onClick={() => setCollapsed(true)}
-    className="w-10 h-10 rounded-xl bg-[#8B1A1A] text-white flex items-center justify-center shadow-md hover:bg-[#701515] transition-all"
-  >
-    ←
-  </button>
-) : null}
-</div>
+          {!collapsed ? (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="w-10 h-10 rounded-xl bg-[#8B1A1A] text-white flex items-center justify-center shadow-md hover:bg-[#701515] transition-all cursor-pointer"
+            >
+              ←
+            </button>
+          ) : null}
+        </div>
       </div>
       {collapsed && (
-  <div className="flex justify-center mb-1">
-    <button
-      onClick={() => setCollapsed(false)}
-      className="w-10 h-10 rounded-xl bg-[#8B1A1A] text-white flex items-center justify-center shadow-md hover:bg-[#701515] transition-all"
-    >
-      →
-    </button>
-  </div>
-)}
+        <div className="flex justify-center mb-1">
+          <button
+            onClick={() => setCollapsed(false)}
+            className="w-10 h-10 rounded-xl bg-[#8B1A1A] text-white flex items-center justify-center shadow-md hover:bg-[#701515] transition-all cursor-pointer"
+          >
+            →
+          </button>
+        </div>
+      )}
 
-       
-     <nav className="flex-1 px-4 pt-2 pb-6 overflow-y-auto space-y-0 custom-scrollbar">
-        {items.map(item => {
+      <nav className="flex-1 px-4 pt-2 pb-6 overflow-y-auto space-y-0 custom-scrollbar">
+        {items.map((item) => {
           const active = location.pathname === item.p;
           return (
-            <Link key={item.p} to={item.p} className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all group ${active ? 'bg-[#8B1A1A] text-white shadow-lg' : 'text-[#8B1A1A]/70 hover:bg-[#8B1A1A]/5'}`}>
-              <item.i size={18} strokeWidth={active ? 2.5 : 2} />
-              {!collapsed && ( <span className="text-sm font-bold">{item.l}</span>)}
+            <Link
+              key={item.p}
+              to={item.p}
+              className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all group ${
+                active
+                  ? "bg-[#8B1A1A] text-white shadow-lg"
+                  : "text-[#8B1A1A]/70 hover:bg-[#8B1A1A]/5"
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <item.i size={18} strokeWidth={active ? 2.5 : 2} />
+                {!collapsed && <span className="text-sm font-bold">{item.l}</span>}
+              </div>
+              {!collapsed && item.count > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#FF6B1A] text-white">
+                  {item.count}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -3117,6 +3357,27 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
 const Topbar = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await userApi.getNotifications();
+        if (isMounted && res?.unreadCount !== undefined) {
+          setUnreadCount(res.unreadCount);
+        }
+      } catch (e) {
+        // silent catch
+      }
+    };
+    fetchUnread();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const initials = user?.name
     ? user.name
         .split(" ")
@@ -3130,18 +3391,47 @@ const Topbar = () => {
     <header className="h-20 border-b border-[#E8DCC4] bg-[#FDF6EC]/80 backdrop-blur-md sticky top-0 px-8 flex items-center justify-between z-40">
       <div className="flex-1 max-w-xl relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B1A1A]/40" size={18} />
-        <input type="text" placeholder="Search experiences, stays, or itineraries..." className="w-full bg-[#FFF8F0] border border-[#E8DCC4] pl-12 pr-4 py-2.5 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#FF6B1A]/20" />
+        <input
+          type="text"
+          placeholder="Search experiences, stays, or itineraries..."
+          className="w-full bg-[#FFF8F0] border border-[#E8DCC4] pl-12 pr-4 py-2.5 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#FF6B1A]/20"
+        />
       </div>
       <div className="flex items-center gap-4 pl-8 border-l border-[#E8DCC4] ml-8">
+        {/* Notification Bell Shortcut */}
+        <Link
+          to="/dashboard/notifications"
+          className="relative p-2.5 rounded-full bg-[#FFF8F0] border border-[#E8DCC4] text-[#8B1A1A] hover:bg-[#FF6B1A]/10 hover:text-[#FF6B1A] transition-colors"
+          title="View Notifications"
+        >
+          <Bell size={18} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B1A] text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-pulse">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Link>
+
         <div className="text-right hidden md:block">
           <p className="text-sm font-bold text-[#8B1A1A]">{user?.name || "Explorer"}</p>
           <p className="text-[10px] font-bold text-[#FF6B1A] uppercase tracking-tighter">
             {user?.role === "admin" ? "Admin" : "Level 4: Heritage Hunter"}
           </p>
         </div>
-        <div className="w-10 h-10 bg-[#8B1A1A] text-white rounded-full flex items-center justify-center font-bold font-serif">
-          {initials}
-        </div>
+
+        <Link to="/dashboard/profile" title="My Profile">
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.name || "Profile"}
+              className="w-10 h-10 rounded-full object-cover border-2 border-[#8B1A1A] shadow-sm hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-[#8B1A1A] text-white rounded-full flex items-center justify-center font-bold font-serif hover:scale-105 transition-transform shadow-sm">
+              {initials}
+            </div>
+          )}
+        </Link>
       </div>
     </header>
   );

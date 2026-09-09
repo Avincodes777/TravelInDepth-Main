@@ -18,6 +18,7 @@ import DashboardPage from "../pages/DashboardPage";
 import AboutPage from "../pages/AboutPage";
 import ExperiencePage from "../pages/ExperiencePage";
 import BookTripPage from "../pages/BookTripPage";
+import ReviewsPage from "../pages/ReviewsPage";
 
 function ScrollToTop() {
   const location = useLocation();
@@ -101,6 +102,7 @@ const AppRouter=()=>{
         <Route path="/about" element={<AboutPage />} />
         <Route path="/experience" element={<ExperiencePage />} />
         <Route path="/book-trip" element={<BookTripPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
         {/* 404 Page for error*/}
         <Route path="*" element={<NotFoundPage />} />
         </Routes>

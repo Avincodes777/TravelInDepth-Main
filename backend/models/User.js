@@ -15,6 +15,14 @@ const userSchema = new mongoose.Schema(
     authProvider: { type: String, enum: ["local", "google"], default: "local" },
     phone: { type: String, default: "" },
     location: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    avatar: { type: String, default: "" },
+    settings: {
+      emailNotifications: { type: Boolean, default: true },
+      pushNotifications: { type: Boolean, default: true },
+      darkMode: { type: Boolean, default: false },
+      currency: { type: String, default: "INR" },
+    },
     interests: { type: [String], default: [] },
     contributions: {
       type: [

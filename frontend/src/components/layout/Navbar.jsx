@@ -52,6 +52,7 @@ function Navbar() {
           <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/'>Home</Link></li>
           <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/destinations'>Destinations</Link></li>
           <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/experience'>Experience</Link></li>
+          <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/reviews'>Reviews</Link></li>
           <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/about'>About</Link></li>
         </ul>
 
@@ -121,6 +122,10 @@ function Navbar() {
       
       <Link to='/experience' onClick={() => setIsOpened(false)} className={isScrolled ? 'text-white hover:text-amber-300' : 'text-black hover:text-amber-600'}>
         Experience
+      </Link>
+      
+      <Link to='/reviews' onClick={() => setIsOpened(false)} className={isScrolled ? 'text-white hover:text-amber-300' : 'text-black hover:text-amber-600'}>
+        Reviews
       </Link>
       
       <Link to='/about' onClick={() => setIsOpened(false)} className={isScrolled ? 'text-white hover:text-amber-300' : 'text-black hover:text-amber-600'}>

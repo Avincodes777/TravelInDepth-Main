@@ -67,8 +67,13 @@ import submissionRoutes from "./routes/submissionRoutes.js";
 import photoRoutes from "./routes/photoRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import journalRoutes from "./routes/journalRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import ecoRoutes from "./routes/ecoRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import { initEcoBackgroundWorker } from "./services/ecoFeedSync.js";
 
 connectDB();
+initEcoBackgroundWorker();
 
 const app = express();
 
@@ -111,6 +116,10 @@ app.use("/api/submissions", submissionRoutes);
 app.use("/api/photos", photoRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/journal", journalRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/eco", ecoRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/notifications", userRoutes);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/destinations", destinationRoutes);
