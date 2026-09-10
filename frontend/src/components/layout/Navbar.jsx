@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Plane, Menu, X, User, Search, LogOut } from 'lucide-react';
+import { Plane, Menu, X, User, Search, LogOut, ArrowRight, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/useAuth';
+import { useTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../ThemeToggle';
 
 function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isOpened, setIsOpened] = useState(false);
     const { user, logout } = useAuth();
+    const { isDarkMode } = useTheme();
     const location = useLocation();
+    const isHomepage = location.pathname === '/';
+    const isDarkActive = !isHomepage && isDarkMode;
 
     // Do not show public fixed navbar on dashboard, admin, or individual city detail pages (which has its own dedicated in-page navigation)
     const isExcludedPage = location.pathname.startsWith('/dashboard') || 
@@ -25,56 +30,73 @@ function Navbar() {
     if (isExcludedPage) {
         return null;
     }
+
+    const navTextColor = isScrolled 
+      ? 'text-white' 
+      : isDarkActive 
+        ? 'text-slate-100' 
+        : 'text-stone-900';
+
+    const navLinkHover = isDarkActive ? 'hover:text-amber-400' : 'hover:text-amber-600';
+
     return (
       <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 px-6 py-4 md:px-12 ${
   isScrolled 
-    ? 'bg-orange-600/90 backdrop-blur-md py-3 border-b border-white/10 shadow-lg text-white' 
-    : 'bg-transparent text-black'
+    ? 'bg-orange-600/95 backdrop-blur-md py-3 border-b border-white/10 shadow-lg text-white' 
+    : isDarkActive
+      ? 'bg-slate-900/80 backdrop-blur-md py-4 border-b border-slate-800/80 text-white'
+      : 'bg-transparent text-stone-900'
 }`}>
       <div className="max-w-8xl mx-auto p-2 flex justify-between items-center h-12">
         
         {/* plane logo */}
         <Link to="/" className="flex items-center gap-2 cursor-pointer group text-decoration-none">
-          <div className="bg-amber-500 p-2 rounded-lg group-hover:rotate-[360deg] transition-all duration-700 shadow-md">
+          <div className="bg-amber-500 p-2 rounded-lg group-hover:rotate-[360deg] transition-all duration-700 shadow-md shadow-amber-500/20">
             <Plane size={20} className="text-black" />
           </div>
-          <span className={`text-2xl font-black tracking-tighter uppercase transition-colors duration-300 ${
-            isScrolled ? 'text-white' : 'text-black'
-          }`}>
-            Travel <span className={isScrolled ? 'text-amber-300 tracking-[0.05em]' : 'text-amber-600'}>In Depth</span>
+          <span className={`text-2xl font-black tracking-tighter uppercase transition-colors duration-300 ${navTextColor}`}>
+            Travel <span className={isScrolled ? 'text-amber-300 tracking-[0.05em]' : 'text-amber-500'}>In Depth</span>
           </span>
         </Link>
 
         {/* navlinks */}
         <ul className={`hidden md:flex items-center gap-8 text-[13px] font-bold tracking-[0.2em] uppercase transition-colors duration-300 ${
-          isScrolled ? 'text-white/90' : 'text-black'
+          isScrolled ? 'text-white/90' : isDarkActive ? 'text-slate-200' : 'text-stone-800'
         }`}>
-          <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/'>Home</Link></li>
-          <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/destinations'>Destinations</Link></li>
-          <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/experience'>Experience</Link></li>
-          <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/reviews'>Reviews</Link></li>
-          <li className="hover:text-amber-500 cursor-pointer transition-colors"><Link to='/about'>About</Link></li>
+          <li className={`${navLinkHover} cursor-pointer transition-colors`}><Link to='/'>Home</Link></li>
+          <li className={`${navLinkHover} cursor-pointer transition-colors`}><Link to='/destinations'>Destinations</Link></li>
+          <li className={`${navLinkHover} cursor-pointer transition-colors`}><Link to='/experience'>Experience</Link></li>
+          <li className={`${navLinkHover} cursor-pointer transition-colors`}><Link to='/reviews'>Reviews</Link></li>
+          <li className={`${navLinkHover} cursor-pointer transition-colors`}><Link to='/about'>About</Link></li>
         </ul>
 
         {/* ACTIONS */}
-        <div className={`flex items-center gap-6 transition-colors duration-300 ${
-          isScrolled ? 'text-white' : 'text-black'
-        }`}>
+        <div className={`flex items-center gap-4 sm:gap-6 transition-colors duration-300 ${navTextColor}`}>
+          {/* Theme Toggle in Navbar */}
+          <ThemeToggle isScrolled={isScrolled} />
           <Search size={18} className="cursor-pointer hover:text-amber-500 transition-colors hidden sm:block" />
           {/* Login User rendering section */}
           {user ? (
             <div className="flex items-center gap-3">
-              <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer hover:text-amber-500 transition-colors">
-                <User size={18} className={isScrolled ? 'text-green-400' : 'text-amber-600'}/>
-                <span className={`text-sm font-bold hidden md:block ${isScrolled ? 'text-green-400' : 'text-black'}`}>
-                  {user.name?.split(" ")[0] || "Dashboard"}
+              <Link to="/dashboard/profile" title="My Profile" className="flex items-center gap-2 cursor-pointer hover:text-amber-500 transition-colors group text-decoration-none">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name || "Profile"}
+                    className="w-7 h-7 rounded-full object-cover border border-amber-500 shadow-sm group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <User size={18} className={isScrolled ? 'text-green-400 group-hover:text-amber-300' : 'text-amber-600 group-hover:text-amber-500'}/>
+                )}
+                <span className={`text-sm font-bold hidden md:block ${isScrolled ? 'text-green-400 group-hover:text-amber-300' : 'text-black group-hover:text-amber-600'}`}>
+                  {user.name?.split(" ")[0] || "Profile"}
                 </span>
               </Link>
               <button
                 onClick={logout}
                 title="Logout"
                 className={`hidden md:flex items-center transition-colors ${
-                  isScrolled ? 'text-white/70 hover:text-red-400' : 'text-black/70 hover:text-red-600'
+                  isScrolled ? 'text-white/70 hover:text-red-400' : isDarkActive ? 'text-slate-300 hover:text-red-400' : 'text-stone-700 hover:text-red-600'
                 }`}
               >
                 <LogOut size={16} />
@@ -85,6 +107,8 @@ function Navbar() {
               <button className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
                 isScrolled
                   ? 'bg-transparent border border-white text-white hover:bg-white hover:text-black'
+                  : isDarkActive
+                  ? 'bg-transparent border border-amber-400/80 text-amber-300 hover:bg-amber-400 hover:text-slate-900'
                   : 'bg-transparent border border-black text-black hover:bg-black hover:text-white'
               }`}>
                 Login
@@ -133,9 +157,17 @@ function Navbar() {
       </Link>
       {user ? (
         <div className="flex flex-col items-center gap-4">
-          <Link to="/dashboard" onClick={() => setIsOpened(false)} className={`flex items-center gap-2 cursor-pointer ${isScrolled ? 'text-green-400' : 'text-amber-600'}`}>
-            <User size={18} />
-            <span>{user.name}</span>
+          <Link to="/dashboard/profile" onClick={() => setIsOpened(false)} className={`flex items-center gap-2 cursor-pointer ${isScrolled ? 'text-green-400' : 'text-amber-600'}`}>
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name || "Profile"}
+                className="w-8 h-8 rounded-full object-cover border border-amber-500 shadow-sm"
+              />
+            ) : (
+              <User size={20} />
+            )}
+            <span>{user.name} (My Profile)</span>
           </Link>
           <button onClick={() => { logout(); setIsOpened(false); }} className="text-red-500 text-xs uppercase tracking-widest">
             Logout
@@ -156,6 +188,18 @@ function Navbar() {
         <button className="bg-amber-500 text-black px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-widest w-fit shadow-xl transition-all duration-300 hover:scale-105 hover:bg-amber-400">
           Book Trip
         </button>
+      </Link>
+
+      <Link 
+        to="/dashboard" 
+        onClick={() => setIsOpened(false)}
+        className="group flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-black/40 hover:bg-black/60 border border-amber-400/60 text-white text-[11px] font-black uppercase tracking-widest transition-all shadow-md hover:scale-105"
+      >
+        <LayoutDashboard size={14} className="text-amber-400" />
+        <span>Dashboard</span>
+        <div className="w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-black group-hover:translate-x-1 transition-transform">
+          <ArrowRight size={12} className="stroke-[3]" />
+        </div>
       </Link>
 
     </div>

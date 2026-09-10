@@ -353,12 +353,16 @@ export default function TrendingExperiences() {
               <p className="te-eyebrow">✦ Trending Now</p>
               <h2 className="te-title">Experiences That <em>Leave a Mark</em></h2>
             </div>
-            <button className="te-view-all">View All Experiences →</button>
+            <a href="/experience" className="te-view-all">View All Experiences →</a>
           </div>
 
           <div className="te-grid">
             {experiences.map((exp, i) => (
-              <div key={exp.id} className={`te-card te-card-${i + 1}`}>
+              <a
+                href={`/coming-soon?feature=${encodeURIComponent(exp.title)}&category=${encodeURIComponent('Trending Experience')}&desc=${encodeURIComponent(`Immerse in ${exp.title} in ${exp.location}. Duration: ${exp.duration} starting at ${exp.price}.`)}`}
+                key={exp.id}
+                className={`te-card te-card-${i + 1} text-decoration-none`}
+              >
                 <div className="te-art" style={{ background: exp.gradient }}>
                   <div className="te-glow" style={{ background: exp.glow }} />
                 </div>
@@ -403,7 +407,7 @@ export default function TrendingExperiences() {
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>

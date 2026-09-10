@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const festivals = [
   {
@@ -98,6 +99,18 @@ export default function FestivalCalendar() {
   }, []);
 
   const fest = festivals[active];
+
+  const navigate = useNavigate();
+
+  const handlePlanFestival = () => {
+    navigate('/coming-soon', {
+      state: {
+        featureName: `${fest.name} Festival Expedition (${fest.dates})`,
+        category: "Festival Concierge & VIP Access",
+        description: `Experience the grandeur of ${fest.name} in ${fest.location} with local hosts, verified heritage homestays, and exclusive festival passes.`
+      }
+    });
+  };
 
   return (
     <>
@@ -472,7 +485,9 @@ export default function FestivalCalendar() {
                     </span>
                   ))}
                 </div>
-                <button className="fc-card-btn">Plan This Festival Trip</button>
+                <button className="fc-card-btn" onClick={handlePlanFestival}>
+                  Plan This Festival Trip
+                </button>
               </div>
             </div>
           </div>

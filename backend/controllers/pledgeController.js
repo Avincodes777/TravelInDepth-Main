@@ -71,12 +71,14 @@ export const createPledge = async (req, res) => {
  */
 export const getUserPledges = async (req, res) => {
   try {
-    let query = {};
-    if (req.userId) {
-      query.user = req.userId;
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. Authentication required to fetch your pledges.",
+      });
     }
 
-    const pledges = await EcoPledge.find(query)
+    const pledges = await EcoPledge.find({ user: req.userId })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();

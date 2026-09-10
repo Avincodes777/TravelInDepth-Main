@@ -1,26 +1,50 @@
-import './App.css'
+import './App.css';
 import Navbar from './components/layout/Navbar';
 import AppRouter from './routes/AppRouter';
 import Footer from './components/layout/Footer';
-import Featured from './components/layout/Featured';
-import Stats from './components/stats/Stats';
 import { CityProvider } from './context/CityContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { WishlistProvider } from './features/wishlist/WishlistContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import ThemeToggle from './components/ThemeToggle';
+import { useLocation } from 'react-router-dom';
+
+function MainAppLayout() {
+  const { isDarkMode } = useTheme();
+  const location = useLocation();
+  const isHomepage = location.pathname === '/';
+  const isDarkActive = !isHomepage && isDarkMode;
+
+  return (
+    <div
+      className={`min-h-screen font-montserrat transition-colors duration-300 ${
+        isDarkActive
+          ? 'dark bg-slate-950 text-slate-100 selection:bg-amber-500/30'
+          : 'bg-[#FAFAFA] text-black selection:bg-orange-500/20'
+      }`}
+    >
+      <Navbar />
+      <div className="min-h-screen">
+        <AppRouter />
+      </div>
+      <Footer />
+      {/* Floating Theme Toggle (accessible across all non-homepage pages, and easily toggleable anywhere) */}
+      <ThemeToggle variant="floating" />
+    </div>
+  );
+}
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-montserrat">
-      <AuthProvider>
+    <AuthProvider>
+      <ThemeProvider>
         <WishlistProvider>
           <CityProvider>
-            <Navbar />
-            <AppRouter />
-            <Footer />
+            <MainAppLayout />
           </CityProvider>
         </WishlistProvider>
-      </AuthProvider>
-    </div>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

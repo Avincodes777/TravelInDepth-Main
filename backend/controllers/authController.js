@@ -9,27 +9,41 @@ const generateToken = (userId) =>
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, password, phone, location, interests } = req.body;
+    const { name, email, password, phone, location, interests } = req.body || {};
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email and password are all required" });
+    if (
+      !name ||
+      !email ||
+      !password ||
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({ message: "Name, email and password must be valid text strings" });
     }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ message: "Please provide a valid email address" });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: cleanEmail });
     if (existing) {
       return res.status(409).json({ message: "An account with this email already exists" });
     }
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: cleanEmail,
       password,
-      phone: phone || "",
-      location: location || "",
-      interests: Array.isArray(interests) ? interests : [],
+      phone: typeof phone === "string" ? phone.trim() : "",
+      location: typeof location === "string" ? location.trim() : "",
+      interests: Array.isArray(interests) ? interests.filter((i) => typeof i === "string") : [],
     });
     const token = generateToken(user._id);
 
@@ -54,13 +68,19 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    if (
+      !email ||
+      !password ||
+      typeof email !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({ message: "Email and password must be valid text strings" });
     }
 
-    const user = await User.findOne({ email });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: "Invalid email or password" });
     }

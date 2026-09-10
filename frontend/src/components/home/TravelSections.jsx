@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
@@ -841,10 +842,10 @@ const SectionEyebrow = ({ text }) => (
 );
 
 const ViewAllBtn = ({ children }) => (
-  <a href="#" className="view-all-btn">
+  <Link to="/experience" className="view-all-btn">
     {children}
     <ArrowIcon />
-  </a>
+  </Link>
 );
 
 // ── SECTION 1: Trending Experiences ────────────────────────────────────────
@@ -927,10 +928,10 @@ const TrendingSection = () => (
                 <span>from</span>
                 <strong>₹3,500</strong>
               </div>
-              <a href="#" className="discover-btn">
+              <Link to="/coming-soon" state={{ featureName: "Desert Safari Adventure", category: "Trending Experience", description: "Camel caravans, golden dunes, and private luxury tents under the starlit desert sky." }} className="discover-btn">
                 Discover Experience
                 <ArrowSmIcon />
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -955,7 +956,7 @@ const TrendingSection = () => (
             </p>
             <div className="exp-card__footer">
               <div className="exp-card__price"><span>from</span><strong>₹8,000</strong></div>
-              <a href="#" className="discover-btn">Discover</a>
+              <Link to="/coming-soon" state={{ featureName: "Kerala Houseboat Stay", category: "Trending Experience", description: "Private eco-friendly houseboats traversing the tranquil backwaters with authentic gourmet meals." }} className="discover-btn">Discover</Link>
             </div>
           </div>
         </div>
@@ -980,7 +981,7 @@ const TrendingSection = () => (
             </p>
             <div className="exp-card__footer">
               <div className="exp-card__price"><span>from</span><strong>₹500</strong></div>
-              <a href="#" className="discover-btn">Discover</a>
+              <Link to="/coming-soon" state={{ featureName: "Ganga Aarti Experience", category: "Spiritual Experience", description: "VIP boat vantage point for the divine evening Ganga Aarti ceremony along the historic ghats." }} className="discover-btn">Discover</Link>
             </div>
           </div>
         </div>
@@ -1005,7 +1006,7 @@ const TrendingSection = () => (
             </p>
             <div className="exp-card__footer">
               <div className="exp-card__price"><span>from</span><strong>₹5,500</strong></div>
-              <a href="#" className="discover-btn">Discover</a>
+              <Link to="/coming-soon" state={{ featureName: "Scuba Diving in Andaman", category: "Adventure Diving", description: "Certified PADI instructor guided reef exploration of pristine coral formations and marine life." }} className="discover-btn">Discover</Link>
             </div>
           </div>
         </div>
@@ -1030,7 +1031,7 @@ const TrendingSection = () => (
             </p>
             <div className="exp-card__footer">
               <div className="exp-card__price"><span>from</span><strong>₹18,000</strong></div>
-              <a href="#" className="discover-btn">Discover</a>
+              <Link to="/coming-soon" state={{ featureName: "Chadar Trek Expedition", category: "Extreme Treks", description: "Walk the legendary frozen Zanskar river gorge with seasoned mountain guides and winter camps." }} className="discover-btn">Discover</Link>
             </div>
           </div>
         </div>
@@ -1055,7 +1056,7 @@ const TrendingSection = () => (
             </p>
             <div className="exp-card__footer">
               <div className="exp-card__price"><span>from</span><strong>₹2,800</strong></div>
-              <a href="#" className="discover-btn">Discover</a>
+              <Link to="/coming-soon" state={{ featureName: "Paragliding in Bir Billing", category: "Aero Adventure", description: "Tandem paragliding flight over the Dhauladhar range with GoPro 4K recording included." }} className="discover-btn">Discover</Link>
             </div>
           </div>
         </div>
@@ -1093,10 +1094,10 @@ const GemCard = ({ cardClass, imgClass, badgeClass, badgeText, showHiddenBadge, 
           </div>
         ))}
       </div>
-      <a href="#" className="gem-cta">
+      <Link to="/coming-soon" state={{ featureName: `${name} — ${region}`, category: "Hidden Gem Expedition", description: tagline }} className="gem-cta">
         Explore Destination
         <ArrowSmIcon />
-      </a>
+      </Link>
     </div>
   </div>
 );

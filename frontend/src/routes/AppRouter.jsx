@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import HomePage from "../pages/HomePage";
 import NotFoundPage from "../pages/NotFoundPage";
 import DestinationPage from "../pages/DestinationPage"
@@ -19,6 +19,8 @@ import AboutPage from "../pages/AboutPage";
 import ExperiencePage from "../pages/ExperiencePage";
 import BookTripPage from "../pages/BookTripPage";
 import ReviewsPage from "../pages/ReviewsPage";
+
+import ComingSoonPage from "../pages/ComingSoonPage";
 
 function ScrollToTop() {
   const location = useLocation();
@@ -98,11 +100,13 @@ const AppRouter=()=>{
             </ProtectedRoute>
           }
         />
+        <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
         <Route path="/forgot-password" element={<ForgotPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/experience" element={<ExperiencePage />} />
         <Route path="/book-trip" element={<BookTripPage />} />
         <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/coming-soon" element={<ComingSoonPage />} />
         {/* 404 Page for error*/}
         <Route path="*" element={<NotFoundPage />} />
         </Routes>

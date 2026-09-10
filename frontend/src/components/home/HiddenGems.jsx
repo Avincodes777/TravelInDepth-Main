@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const gems = [
   {
@@ -98,6 +99,8 @@ export default function HiddenGems() {
 
     return () => observer.disconnect();
   }, []);
+
+  const navigate = useNavigate();
 
   return (
     <>
@@ -371,6 +374,8 @@ export default function HiddenGems() {
         }
 
         .hg-btn {
+          display: inline-block;
+          text-decoration: none;
           font-family: 'Montserrat', sans-serif;
           font-size: 13px;
           font-weight: 700;
@@ -436,7 +441,17 @@ export default function HiddenGems() {
 
           <div className="hg-grid">
             {gems.map((gem) => (
-              <div className="hg-card" key={gem.id}>
+              <div 
+                className="hg-card" 
+                key={gem.id}
+                onClick={() => navigate('/coming-soon', {
+                  state: {
+                    featureName: `${gem.name} — ${gem.state}`,
+                    category: gem.tag,
+                    description: gem.description
+                  }
+                })}
+              >
                 <div className="hg-img-wrap">
                   <img src={gem.image} alt={gem.name} loading="lazy" />
                   <div className="hg-overlay" />
@@ -463,7 +478,17 @@ export default function HiddenGems() {
           </div>
 
           <div className="hg-cta-row">
-            <button className="hg-btn">Explore All Hidden Gems</button>
+            <Link 
+              to="/coming-soon" 
+              state={{
+                featureName: "Hidden Gems Archive & Offline Topo Maps",
+                category: "Uncharted Expeditions",
+                description: "Full curated catalog of 200+ secluded valleys, river islands, living root trails, and tribal homestays with verified routes."
+              }}
+              className="hg-btn"
+            >
+              Explore All Hidden Gems
+            </Link>
           </div>
         </div>
       </section>

@@ -36,27 +36,20 @@ export const getEcoStats = async (req, res) => {
       },
     ]);
 
-    // Baseline stats so new platforms look active & inspiring
-    const baseCarbon = 4280;
-    const baseBottles = 12600;
-    const baseLocalSpent = 18450;
-    const baseActions = 640;
-    const baseUsers = 320;
-
-    let totalCarbonSavedKg = baseCarbon;
-    let totalBottlesPrevented = baseBottles;
-    let totalLocalSpentUSD = baseLocalSpent;
-    let totalActionsLogged = baseActions;
-    let greenExplorersCount = baseUsers;
+    let totalCarbonSavedKg = 0;
+    let totalBottlesPrevented = 0;
+    let totalLocalSpentUSD = 0;
+    let totalActionsLogged = 0;
+    let greenExplorersCount = 0;
 
     if (totalAgg.length > 0) {
       const agg = totalAgg[0];
-      totalCarbonSavedKg += agg.totalCarbonSavedKg || 0;
-      totalBottlesPrevented += agg.totalBottlesPrevented || 0;
-      totalLocalSpentUSD += agg.totalLocalSpentUSD || 0;
-      totalActionsLogged += agg.totalActionsLogged || 0;
+      totalCarbonSavedKg = agg.totalCarbonSavedKg || 0;
+      totalBottlesPrevented = agg.totalBottlesPrevented || 0;
+      totalLocalSpentUSD = agg.totalLocalSpentUSD || 0;
+      totalActionsLogged = agg.totalActionsLogged || 0;
       const validUsers = (agg.uniqueUsers || []).filter(Boolean);
-      greenExplorersCount += validUsers.length;
+      greenExplorersCount = validUsers.length;
     }
 
     // 2. User Specific Metrics (if authenticated)
@@ -168,23 +161,13 @@ export const getEcoStats = async (req, res) => {
       { $limit: 5 },
     ]);
 
-    const fallbackLeaderboard = [
-      { name: "Ananya Deshmukh", score: 480, badge: "Planet Guardian", carbon: 180, bottles: 60 },
-      { name: "Vikramaditya Roy", score: 340, badge: "Planet Guardian", carbon: 120, bottles: 45 },
-      { name: "Sneha Kapur", score: 195, badge: "Planet Guardian", carbon: 75, bottles: 30 },
-      { name: "Rohan Varma", score: 110, badge: "Green Voyager", carbon: 40, bottles: 18 },
-      { name: "Kavita Nair", score: 85, badge: "Green Voyager", carbon: 30, bottles: 15 },
-    ];
-
-    const topLeaderboard = leaderboardAgg.length > 0
-      ? leaderboardAgg.map((item) => ({
-          name: item.name,
-          score: item.totalScore,
-          carbon: item.carbon,
-          bottles: item.bottles,
-          badge: computeBadgeLevel(item.carbon, item.bottles, item.localSpent),
-        }))
-      : fallbackLeaderboard;
+    const topLeaderboard = leaderboardAgg.map((item) => ({
+      name: item.name,
+      score: item.totalScore,
+      carbon: item.carbon,
+      bottles: item.bottles,
+      badge: computeBadgeLevel(item.carbon, item.bottles, item.localSpent),
+    }));
 
     return res.status(200).json({
       success: true,

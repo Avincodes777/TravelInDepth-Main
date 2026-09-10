@@ -1,1 +1,145 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scoped Dark Theme Overrides for luxurious cosmic-slate aesthetic across all inner subpages */
+.dark {
+  color-scheme: dark;
+}
+
+/* 1. MAIN BACKGROUNDS: Deep Cosmic Slate (bg-slate-950 / #090d16) instead of harsh pitch black */
+.dark .bg-\[\#FAFAFA\],
+.dark .bg-\[\#FFFDF9\],
+.dark .bg-\[\#FDF6EC\],
+.dark .bg-\[\#FFF8F0\],
+.dark .bg-\[\#FDFBF7\],
+.dark .bg-stone-50,
+.dark .bg-stone-100 {
+  background-color: #090d16 !important; /* deep cosmic slate-950 */
+}
+
+/* 2. CARDS & CONTAINERS: Rich Matte Charcoal/Slate Surface with soft elevation (bg-slate-900 / #111827) */
+.dark .bg-white,
+.dark .bg-white\/80,
+.dark .bg-white\/85,
+.dark .bg-white\/90,
+.dark .bg-white\/95 {
+  background-color: #111827 !important; /* matte slate-900 card surface */
+}
+
+/* 3. TEXT HIERARCHY */
+/* Primary Headings & Section Titles: Crisp Bright White / Luminous Slate-100 */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark .text-\[\#8B1A1A\],
+.dark .text-\[\#5c1a00\],
+.dark .text-\[\#2D1B00\],
+.dark .text-\[\#120600\],
+.dark .text-\[\#222222\],
+.dark .text-stone-900,
+.dark .text-stone-800,
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  color: #f8fafc !important; /* crisp bright white / slate-100 */
+}
+
+/* Body Text: Clean Soft Gray (slate-300 / #cbd5e1) for high clarity & comfort */
+.dark p,
+.dark span.text-stone-600,
+.dark span.text-stone-700,
+.dark .text-stone-600,
+.dark .text-stone-700,
+.dark .text-stone-500,
+.dark .text-\[\#6B4226\],
+.dark .text-\[\#A07850\],
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #cbd5e1 !important; /* soft readable slate-300 */
+}
+
+/* Muted / Secondary Details (slate-400 / #94a3b8) */
+.dark .text-stone-400,
+.dark .text-gray-400,
+.dark .text-\[\#8B1A1A\]\/60,
+.dark .text-\[\#8B1A1A\]\/50,
+.dark .text-\[\#8B1A1A\]\/40 {
+  color: #94a3b8 !important; /* clean slate-400 */
+}
+
+/* 4. INTERACTIVE ACCENTS & BADGES */
+/* Glowing Warm Amber & Gold Accents for Ratings / Highlights */
+.dark .text-\[\#FF6B1A\],
+.dark .text-amber-600,
+.dark .text-orange-600 {
+  color: #fb923c !important; /* luminous warm amber */
+}
+
+.dark .text-\[\#F5A623\],
+.dark .text-yellow-600,
+.dark .text-amber-500 {
+  color: #fbbf24 !important; /* warm gold star accent */
+}
+
+/* Chips & Badges */
+.dark .bg-\[\#8B1A1A\]\/10,
+.dark .bg-\[\#FF6B1A\]\/10,
+.dark .bg-\[\#FDF6EC\] {
+  background-color: rgba(251, 146, 60, 0.12) !important;
+  color: #fdba74 !important;
+  border-color: rgba(251, 146, 60, 0.25) !important;
+}
+
+/* 5. SUBTLE SLATE BORDERS (border-slate-800 / #1f293d) */
+.dark .border-\[\#E8DCC4\],
+.dark .border-\[\#8B1A1A\]\/20,
+.dark .border-\[\#F5A623\]\/30,
+.dark .border-\[\#F5A623\]\/20,
+.dark .border-\[\#F5A623\]\/40,
+.dark .border-stone-200,
+.dark .border-stone-300,
+.dark .border-gray-200 {
+  border-color: #1f293d !important; /* sleek slate-800 border */
+}
+
+/* 6. FORM INPUTS & SELECTS */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
+.dark select,
+.dark textarea {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+  border-color: #1f293d !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* 7. DASHBOARD SIDEBAR & HEADER */
+.dark aside.bg-\[\#FDF6EC\] {
+  background-color: #0d1322 !important;
+  border-color: #1f293d !important;
+}
+
+.dark header.bg-\[\#FDF6EC\]\/80 {
+  background-color: rgba(13, 19, 34, 0.88) !important;
+  border-color: #1f293d !important;
+}
+
+/* Smooth color transitioning on theme-aware containers */
+.dark,
+.dark header,
+.dark aside,
+.dark nav,
+.dark main,
+.dark div,
+.dark button,
+.dark card {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}

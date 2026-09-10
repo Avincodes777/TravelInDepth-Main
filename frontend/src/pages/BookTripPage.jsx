@@ -1,9 +1,8 @@
-import React from 'react'
+import React from 'react';
+import ComingSoonPage from './ComingSoonPage';
 
 function BookTripPage() {
-    return (
-        <div>Coming soon...</div>
-    )
+  return <ComingSoonPage />;
 }
 
-export default BookTripPage
+export default BookTripPage;

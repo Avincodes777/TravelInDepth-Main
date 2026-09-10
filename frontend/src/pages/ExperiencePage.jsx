@@ -1628,8 +1628,8 @@ export default function ExperiencePage() {
             <h2>Ready to Experience India in Depth?</h2>
             <p>Your next favorite story is still unwritten. Let's go find it.</p>
             <div className="exp-final-cta__btns">
-              <a href="#" className="exp-btn exp-btn--primary">Explore Destinations</a>
-              <a href="#" className="exp-btn exp-btn--outline-light">Book My Trip</a>
+              <Link to="/destinations" className="exp-btn exp-btn--primary">Explore Destinations</Link>
+              <Link to="/coming-soon" state={{ featureName: "Custom Experience Concierge & Booking", category: "Bespoke Trips", description: "Direct VIP booking for authentic homestays, curated local trails, and personalized artisan masterclasses." }} className="exp-btn exp-btn--outline-light">Book My Trip</Link>
             </div>
           </div>
         </section>

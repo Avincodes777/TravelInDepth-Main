@@ -155,18 +155,25 @@ export const deleteReview = async (req, res) => {
     }
 
     // Check authorization:
-    // If the review has a user linked and the request is authenticated:
-    if (review.user && req.userId) {
-      const user = await User.findById(req.userId);
-      const isOwner = review.user.toString() === req.userId.toString();
-      const isAdmin = user && user.role === "admin";
+    // Deletion is denied by default unless the requester is authenticated
+    // and is either an admin or the review's owner.
+    // Guest reviews (no user field) can ONLY be deleted by an admin.
+    if (!req.userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to delete this review.",
+      });
+    }
 
-      if (!isOwner && !isAdmin) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to delete this review.",
-        });
-      }
+    const user = await User.findById(req.userId);
+    const isAdmin = user && user.role === "admin";
+    const isOwner = Boolean(review.user && review.user.toString() === req.userId.toString());
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to delete this review.",
+      });
     }
 
     await Review.findByIdAndDelete(id);

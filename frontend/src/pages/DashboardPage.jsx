@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from "../features/auth/useAuth";
 import { useWishlist } from "../features/wishlist/useWishlist";
+import { useTheme } from "../context/ThemeContext";
+import ThemeToggle from "../components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import * as plannerApi from "../api/plannerApi";
 import * as wishlistApi from "../api/wishlistApi";
@@ -2885,7 +2887,8 @@ const SettingsPage = () => {
   // Preference switches state
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDarkMode, setIsDarkMode } = useTheme();
+  const [darkMode, setDarkMode] = useState(isDarkMode);
   const [currency, setCurrency] = useState("INR");
   const [syncingPref, setSyncingPref] = useState(false);
   const [prefSuccess, setPrefSuccess] = useState(false);
@@ -2904,6 +2907,10 @@ const SettingsPage = () => {
   ];
 
   useEffect(() => {
+    setDarkMode(isDarkMode);
+  }, [isDarkMode]);
+
+  useEffect(() => {
     if (user?.interests && Array.isArray(user.interests)) {
       setSelectedInterests(user.interests.map((i) => i.toLowerCase()));
     } else {
@@ -2913,7 +2920,10 @@ const SettingsPage = () => {
     if (user?.settings) {
       setEmailNotifications(user.settings.emailNotifications ?? true);
       setPushNotifications(user.settings.pushNotifications ?? true);
-      setDarkMode(user.settings.darkMode ?? false);
+      if (user.settings.darkMode !== undefined) {
+        setDarkMode(user.settings.darkMode);
+        setIsDarkMode(user.settings.darkMode);
+      }
       setCurrency(user.settings.currency || "INR");
     }
   }, [user]);
@@ -2992,6 +3002,7 @@ const SettingsPage = () => {
   const toggleDarkMode = () => {
     const nextVal = !darkMode;
     setDarkMode(nextVal);
+    setIsDarkMode(nextVal);
     handleUpdatePreferences({ darkMode: nextVal });
   };
 
@@ -3398,6 +3409,9 @@ const Topbar = () => {
         />
       </div>
       <div className="flex items-center gap-4 pl-8 border-l border-[#E8DCC4] ml-8">
+        {/* Theme Toggle Button */}
+        <ThemeToggle />
+
         {/* Notification Bell Shortcut */}
         <Link
           to="/dashboard/notifications"

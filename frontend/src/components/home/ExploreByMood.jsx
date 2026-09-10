@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const moods = [
   {
@@ -71,6 +72,7 @@ const moods = [
 
 export default function ExploreByMood() {
   const [hovered, setHovered] = useState(null);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -226,6 +228,13 @@ export default function ExploreByMood() {
               <div key={m.id} className="ebm-card"
                 onMouseEnter={() => setHovered(m.id)}
                 onMouseLeave={() => setHovered(null)}
+                onClick={() => navigate('/coming-soon', {
+                  state: {
+                    featureName: `${m.title} Collection`,
+                    category: "Mood-Based Curation",
+                    description: `Experience tailored routes, boutique stays, and curated trails for ${m.title} across ${m.destinations.join(', ')}.`
+                  }
+                })}
               >
                 <div
   className="ebm-bg"

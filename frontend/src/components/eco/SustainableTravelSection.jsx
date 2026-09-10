@@ -62,12 +62,12 @@ const BADGE_TIERS = {
 export default function SustainableTravelSection({ onAuthRequest }) {
   const [data, setData] = useState({
     community: {
-      totalCarbonSavedKg: 4280,
-      totalBottlesPrevented: 12600,
-      totalLocalSpentUSD: 18450,
-      totalActionsLogged: 640,
-      greenExplorersCount: 320,
-      treesEquivalent: 204,
+      totalCarbonSavedKg: 0,
+      totalBottlesPrevented: 0,
+      totalLocalSpentUSD: 0,
+      totalActionsLogged: 0,
+      greenExplorersCount: 0,
+      treesEquivalent: 0,
     },
     userStats: {
       carbonSavedKg: 0,
@@ -428,45 +428,64 @@ export default function SustainableTravelSection({ onAuthRequest }) {
           <span className="text-xs font-semibold text-stone-500">Updated Hourly</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-stone-700">
-            <thead className="bg-[#FFF8F0] uppercase tracking-wider text-[10px] font-bold text-[#8B1A1A] border-b border-[#E8DCC4]">
-              <tr>
-                <th className="py-3.5 px-4">Rank</th>
-                <th className="py-3.5 px-4">Explorer</th>
-                <th className="py-3.5 px-4">Eco Badge</th>
-                <th className="py-3.5 px-4">CO₂ Saved</th>
-                <th className="py-3.5 px-4">Bottles Saved</th>
-                <th className="py-3.5 px-4 text-right">Impact Score</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F0E4D4]">
-              {data.leaderboard.map((member, idx) => (
-                <tr key={idx} className="hover:bg-[#FFFDF9] transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-sm">
-                    {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : `#${idx + 1}`}
-                  </td>
-                  <td className="py-3.5 px-4 font-bold text-stone-900 flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#138808] to-emerald-500 text-white flex items-center justify-center font-bold text-xs">
-                      {member.name.charAt(0)}
-                    </div>
-                    <span>{member.name}</span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#138808]/10 text-[#138808]">
-                      {member.badge}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 font-semibold text-emerald-800">{member.carbon} kg</td>
-                  <td className="py-3.5 px-4 font-semibold text-blue-700">{member.bottles}</td>
-                  <td className="py-3.5 px-4 font-black text-right text-stone-900 text-sm">
-                    {member.score} pts
-                  </td>
+        {data.leaderboard && data.leaderboard.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-stone-700">
+              <thead className="bg-[#FFF8F0] uppercase tracking-wider text-[10px] font-bold text-[#8B1A1A] border-b border-[#E8DCC4]">
+                <tr>
+                  <th className="py-3.5 px-4">Rank</th>
+                  <th className="py-3.5 px-4">Explorer</th>
+                  <th className="py-3.5 px-4">Eco Badge</th>
+                  <th className="py-3.5 px-4">CO₂ Saved</th>
+                  <th className="py-3.5 px-4">Bottles Saved</th>
+                  <th className="py-3.5 px-4 text-right">Impact Score</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#F0E4D4]">
+                {data.leaderboard.map((member, idx) => (
+                  <tr key={idx} className="hover:bg-[#FFFDF9] transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-sm">
+                      {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : `#${idx + 1}`}
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-stone-900 flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#138808] to-emerald-500 text-white flex items-center justify-center font-bold text-xs">
+                        {member.name ? member.name.charAt(0) : "U"}
+                      </div>
+                      <span>{member.name}</span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#138808]/10 text-[#138808]">
+                        {member.badge}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-emerald-800">{member.carbon} kg</td>
+                    <td className="py-3.5 px-4 font-semibold text-blue-700">{member.bottles}</td>
+                    <td className="py-3.5 px-4 font-black text-right text-stone-900 text-sm">
+                      {member.score} pts
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-10 px-4 bg-[#FFFDF9] rounded-2xl border border-dashed border-[#E8DCC4]">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#138808] mx-auto flex items-center justify-center text-xl mb-3">
+              🌱
+            </div>
+            <h4 className="font-serif text-lg font-bold text-stone-800">Be the first Green Voyager!</h4>
+            <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
+              No travelers have logged eco actions yet. Log your sustainable travel actions and take the #1 spot on the leaderboard!
+            </p>
+            <button
+              onClick={() => setIsLogModalOpen(true)}
+              className="mt-4 px-4 py-2 rounded-full bg-[#138808] text-white font-bold text-xs hover:bg-green-700 transition-colors inline-flex items-center gap-1.5"
+            >
+              <PlusCircle size={14} />
+              <span>Log First Action</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
