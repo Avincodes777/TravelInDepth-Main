@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { CityContext } from "../context/CityContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
 import { createSubmission, getMySubmissions } from "../api/submissionApi";
 import { Helmet } from "react-helmet-async";
@@ -934,8 +934,16 @@ export default function DestinationPage() {
   const { cities } = useContext(CityContext);
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState("All");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [hoveredCity, setHoveredCity] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") || "");
+
+  useEffect(() => {
+    const urlQuery = searchParams.get("search");
+    if (urlQuery !== null && urlQuery !== undefined) {
+      setSearchQuery(urlQuery);
+    }
+  }, [searchParams]);
 
   // Suggest modal state
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
@@ -1120,18 +1128,18 @@ export default function DestinationPage() {
                 </div>
 
                 {/* Inline CTA Card */}
-                <div className="mt-8 rounded-2xl p-6 bg-gradient-to-br from-[#FFF8F0] to-[#FDF6EC] border border-[#F5A623]/30 text-center shadow-sm">
+                <div className="mt-8 rounded-2xl p-6 bg-gradient-to-br from-[#FFF8F0] to-[#FDF6EC] dark:from-[#15213b] dark:to-[#0e1628] border border-[#F5A623]/30 dark:border-[#273857] text-center shadow-sm">
                   <span className="text-3xl block mb-2">🧭</span>
-                  <h3 className="text-base font-bold text-[#2D1B00] mb-1">
+                  <h3 className="text-base font-bold text-[#2D1B00] dark:text-[#f8fafc] mb-1">
                     Don't see your favorite destination?
                   </h3>
-                  <p className="text-xs text-[#A07850] max-w-md mx-auto mb-4">
+                  <p className="text-xs text-[#A07850] dark:text-[#cbd5e1] max-w-md mx-auto mb-4 leading-relaxed">
                     Submit your recommendation with coordinates, best seasons, and eco-travel
                     options for admin approval.
                   </p>
                   <button
                     onClick={() => setIsSuggestModalOpen(true)}
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#C94F00] text-white text-xs font-bold shadow-md shadow-[#FF6B1A]/20 hover:from-[#C94F00] hover:to-[#8B1A1A] transition-all"
+                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#FF6B1A] to-[#C94F00] text-white text-xs font-bold shadow-md shadow-[#FF6B1A]/20 hover:from-[#C94F00] hover:to-[#8B1A1A] transition-all cursor-pointer"
                   >
                     Suggest a Destination
                   </button>
@@ -1139,12 +1147,12 @@ export default function DestinationPage() {
               </>
             ) : (
               /* Empty state with CTA */
-              <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-[#F5A623]/20 p-8 shadow-sm">
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-[#121a2d] rounded-3xl border border-[#F5A623]/20 dark:border-[#273857] p-8 shadow-sm">
                 <span className="text-5xl mb-3">🗺️</span>
-                <h3 className="text-lg font-bold text-[#2D1B00] mb-2">
+                <h3 className="text-lg font-bold text-[#2D1B00] dark:text-[#f8fafc] mb-2">
                   No destinations found
                 </h3>
-                <p className="text-sm text-[#A07850] max-w-sm mb-6">
+                <p className="text-sm text-[#A07850] dark:text-[#cbd5e1] max-w-sm mb-6">
                   {searchQuery
                     ? `No destinations matched "${searchQuery}". Suggest adding it to our community travel directory!`
                     : "No destinations found in this filter."}
@@ -1155,13 +1163,13 @@ export default function DestinationPage() {
                       setActiveFilter("All");
                       setSearchQuery("");
                     }}
-                    className="px-5 py-2.5 bg-white border border-[#F5A623]/40 text-[#6B4226] text-xs font-bold rounded-full hover:border-[#FF6B1A]"
+                    className="px-5 py-2.5 bg-white dark:bg-[#18233c] border border-[#F5A623]/40 dark:border-[#273857] text-[#6B4226] dark:text-[#cbd5e1] text-xs font-bold rounded-full hover:border-[#FF6B1A] cursor-pointer"
                   >
                     Clear filters
                   </button>
                   <button
                     onClick={() => setIsSuggestModalOpen(true)}
-                    className="px-5 py-2.5 bg-[#FF6B1A] text-white text-xs font-bold rounded-full shadow-md shadow-[#FF6B1A]/30 hover:bg-[#C94F00]"
+                    className="px-5 py-2.5 bg-[#FF6B1A] text-white text-xs font-bold rounded-full shadow-md shadow-[#FF6B1A]/30 hover:bg-[#C94F00] cursor-pointer"
                   >
                     ✨ Suggest "{searchQuery || "a Destination"}"
                   </button>

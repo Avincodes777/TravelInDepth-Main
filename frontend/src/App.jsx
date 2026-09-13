@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import './App.css';
 import Navbar from './components/layout/Navbar';
 import AppRouter from './routes/AppRouter';
@@ -15,11 +16,19 @@ function MainAppLayout() {
   const isHomepage = location.pathname === '/';
   const isDarkActive = !isHomepage && isDarkMode;
 
+  React.useEffect(() => {
+    if (isDarkActive) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkActive]);
+
   return (
     <div
       className={`min-h-screen font-montserrat transition-colors duration-300 ${
         isDarkActive
-          ? 'dark bg-slate-950 text-slate-100 selection:bg-amber-500/30'
+          ? 'dark bg-[#0a0f1d] text-slate-100 selection:bg-amber-500/30'
           : 'bg-[#FAFAFA] text-black selection:bg-orange-500/20'
       }`}
     >

@@ -8,13 +8,13 @@ import {
   syncFeedsHandler,
 } from "../controllers/ecoSpotController.js";
 import { optionalAuth, requireAuth, requireAdmin } from "../middleware/authMiddleware.js";
-import { ecoActionRateLimit } from "../middleware/rateLimiter.js";
+import { ecoActionRateLimit, submissionRateLimit } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // Community & Personal Impact Metrics
 router.get("/stats", optionalAuth, getEcoStats);
-router.post("/log-action", optionalAuth, ecoActionRateLimit, logEcoAction);
+router.post("/log-action", requireAuth, ecoActionRateLimit, logEcoAction);
 
 // Eco Pledges & Digital Passport Stamps
 router.post("/pledge", optionalAuth, createPledge);
@@ -23,7 +23,7 @@ router.get("/pledge/my", requireAuth, getUserPledges);
 
 // Crowdsourced Green Spots & Eco-Alerts
 router.get("/spots", optionalAuth, getAllEcoSpots);
-router.post("/spots", optionalAuth, createEcoSpot);
+router.post("/spots", requireAuth, submissionRateLimit, createEcoSpot);
 router.post("/spots/:id/upvote", optionalAuth, upvoteEcoSpot);
 
 // Admin-only feed sync

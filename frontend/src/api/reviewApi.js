@@ -23,7 +23,7 @@ export const getMyReviews = async () => {
 
 /**
  * Create a new review
- * @param {Object} data - { name, rating, category, comment }
+ * @param {Object} data - { rating, category, comment }
  */
 export const createReview = async (data) => {
   return apiClient.post("/reviews", data);

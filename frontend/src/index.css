@@ -2,33 +2,99 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Scoped Dark Theme Overrides for luxurious cosmic-slate aesthetic across all inner subpages */
+/* ══════════════════════════════════════════════════════════════════════
+   SCOPED DARK THEME SYSTEM (Non-Homepage Pages)
+   Aesthetic: Ultra-premium Midnight Slate / Obsidian with Warm Amber Accents
+   Ensures zero invisible/faded text, rich contrast, and sleek surfaces.
+══════════════════════════════════════════════════════════════════════ */
+
 .dark {
   color-scheme: dark;
 }
 
-/* 1. MAIN BACKGROUNDS: Deep Cosmic Slate (bg-slate-950 / #090d16) instead of harsh pitch black */
+/* 1. ROOT & MAIN BODY BACKGROUNDS: Deep Midnight Navy / Slate (#0a0f1d) */
+.dark body,
+.dark main,
+.dark #root,
 .dark .bg-\[\#FAFAFA\],
 .dark .bg-\[\#FFFDF9\],
 .dark .bg-\[\#FDF6EC\],
 .dark .bg-\[\#FFF8F0\],
 .dark .bg-\[\#FDFBF7\],
+.dark .bg-\[\#FAF6F0\],
 .dark .bg-stone-50,
-.dark .bg-stone-100 {
-  background-color: #090d16 !important; /* deep cosmic slate-950 */
+.dark .bg-stone-100,
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-amber-50\/40,
+.dark .bg-amber-50\/50,
+.dark .bg-amber-50\/60,
+.dark .bg-orange-50\/40,
+.dark .bg-orange-50\/50 {
+  background-image: none !important;
+  background-color: #0a0f1d !important;
+  color: #f1f5f9 !important;
 }
 
-/* 2. CARDS & CONTAINERS: Rich Matte Charcoal/Slate Surface with soft elevation (bg-slate-900 / #111827) */
+/* 2. ELEVATED CARDS, MODALS & CONTAINERS: Sleek Slate Surface (#121a2d) */
 .dark .bg-white,
 .dark .bg-white\/80,
 .dark .bg-white\/85,
 .dark .bg-white\/90,
-.dark .bg-white\/95 {
-  background-color: #111827 !important; /* matte slate-900 card surface */
+.dark .bg-white\/95,
+.dark .bg-white\/98,
+.dark [style*="background: white"],
+.dark [style*="background: 'white'"],
+.dark [style*="background-color: white"],
+.dark [style*="background: #FDF6EC"],
+.dark [style*="background: #FFF8F0"],
+.dark [style*="background: #FFFDF9"],
+.dark [style*="background: #FAF6F0"] {
+  background-image: none !important;
+  background-color: #121a2d !important;
+  color: #f1f5f9 !important;
 }
 
-/* 3. TEXT HIERARCHY */
-/* Primary Headings & Section Titles: Crisp Bright White / Luminous Slate-100 */
+/* Overwrite all light/skin gradient backgrounds so they never render as light images in dark mode */
+.dark [class*="from-[#FFF"],
+.dark [class*="from-[#FDF"],
+.dark [class*="from-[#FAF"],
+.dark [class*="from-[#F5E"],
+.dark [class*="to-[#FFF"],
+.dark [class*="to-[#FDF"],
+.dark [class*="to-[#FAF"],
+.dark [class*="to-[#F5E"],
+.dark [class*="from-amber-50"],
+.dark [class*="to-amber-50"],
+.dark [class*="from-orange-50"],
+.dark [class*="to-orange-50"],
+.dark [class*="from-stone-50"],
+.dark [class*="to-stone-50"],
+.dark [class*="from-stone-100"],
+.dark [class*="to-stone-100"],
+.dark .bg-gradient-to-br[class*="from-[#FFF"],
+.dark .bg-gradient-to-r[class*="from-[#FFF"] {
+  background-image: none !important;
+  background-color: #15213b !important;
+  border-color: #273857 !important;
+}
+
+/* Sub-card secondary nested containers (#182238) */
+.dark .bg-\[\#FFF2E8\],
+.dark .bg-\[\#FDF6EC\]\/80,
+.dark .bg-\[\#FDF6EC\]\/60,
+.dark .bg-\[\#FDF6EC\]\/40,
+.dark .bg-\[\#FFF8F0\]\/80,
+.dark .bg-stone-100\/80,
+.dark [style*="background: #fff8f4"],
+.dark [style*="background: #FFF3E8"],
+.dark [style*="background: #F3E5D8"] {
+  background-image: none !important;
+  background-color: #182238 !important;
+  color: #f1f5f9 !important;
+}
+
+/* 3. HEADINGS & TITLES: Glowing Pure White & Warm Amber Accents */
 .dark h1,
 .dark h2,
 .dark h3,
@@ -40,78 +106,165 @@
 .dark .text-\[\#2D1B00\],
 .dark .text-\[\#120600\],
 .dark .text-\[\#222222\],
+.dark .text-\[\#1c1917\],
+.dark .text-black,
 .dark .text-stone-900,
 .dark .text-stone-800,
 .dark .text-gray-900,
-.dark .text-gray-800 {
-  color: #f8fafc !important; /* crisp bright white / slate-100 */
+.dark .text-gray-800,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark [style*="color: #5c1a00"],
+.dark [style*="color: #2D0A00"],
+.dark [style*="color: #2D1B00"],
+.dark [style*="color: rgb(92, 26, 0)"] {
+  color: #ffffff !important;
+  font-weight: 700;
 }
 
-/* Body Text: Clean Soft Gray (slate-300 / #cbd5e1) for high clarity & comfort */
+/* 4. BODY & PARAGRAPH TEXT: Clean Bright Soft Slate (#cbd5e1 / #e2e8f0) — NO FADED TEXT */
 .dark p,
 .dark span.text-stone-600,
 .dark span.text-stone-700,
-.dark .text-stone-600,
+.dark span.text-stone-800,
 .dark .text-stone-700,
-.dark .text-stone-500,
-.dark .text-\[\#6B4226\],
-.dark .text-\[\#A07850\],
+.dark .text-stone-600,
+.dark .text-gray-700,
 .dark .text-gray-600,
-.dark .text-gray-500 {
-  color: #cbd5e1 !important; /* soft readable slate-300 */
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-\[\#6B4226\],
+.dark .text-\[\#5a3020\],
+.dark .text-\[\#7A5C3A\],
+.dark [style*="color: #5a3020"],
+.dark [style*="color: #7A5C3A"],
+.dark [style*="color: rgb(90, 48, 32)"] {
+  color: #cbd5e1 !important;
 }
 
-/* Muted / Secondary Details (slate-400 / #94a3b8) */
+/* 5. MUTED DETAILS & CAPTIONS: Luminous Warm Amber Slate (#fdba74 / #94a3b8) */
+.dark .text-stone-500,
 .dark .text-stone-400,
+.dark .text-gray-500,
 .dark .text-gray-400,
+.dark .text-slate-500,
+.dark .text-slate-400,
+.dark .text-\[\#A07850\],
+.dark .text-\[\#9a7060\],
+.dark .text-\[\#8B1A1A\]\/70,
 .dark .text-\[\#8B1A1A\]\/60,
 .dark .text-\[\#8B1A1A\]\/50,
-.dark .text-\[\#8B1A1A\]\/40 {
-  color: #94a3b8 !important; /* clean slate-400 */
+.dark [style*="color: #9a7060"],
+.dark [style*="color: #A07850"] {
+  color: #fdba74 !important; /* Luminous warm amber - bright, colorful & ultra-visible */
 }
 
-/* 4. INTERACTIVE ACCENTS & BADGES */
-/* Glowing Warm Amber & Gold Accents for Ratings / Highlights */
+/* 6. VIBRANT WARM ACCENTS & RATINGS */
 .dark .text-\[\#FF6B1A\],
 .dark .text-amber-600,
-.dark .text-orange-600 {
-  color: #fb923c !important; /* luminous warm amber */
+.dark .text-orange-600,
+.dark .text-orange-500,
+.dark [style*="color: #FF6B1A"] {
+  color: #fb923c !important; /* glowing warm amber */
 }
 
 .dark .text-\[\#F5A623\],
 .dark .text-yellow-600,
-.dark .text-amber-500 {
-  color: #fbbf24 !important; /* warm gold star accent */
+.dark .text-yellow-500,
+.dark .text-amber-500,
+.dark .text-amber-400,
+.dark [style*="color: #F5A623"],
+.dark [style*="color: #FFB347"] {
+  color: #fbbf24 !important; /* radiant gold */
 }
 
-/* Chips & Badges */
-.dark .bg-\[\#8B1A1A\]\/10,
+/* 7. BADGES, CHIPS & STATUS PILLS */
+.dark .bg-stone-100,
+.dark .bg-stone-200,
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
+  background-color: #1a253c !important;
+  color: #cbd5e1 !important;
+  border-color: #273754 !important;
+}
+
+.dark .bg-orange-100,
+.dark .bg-amber-100,
 .dark .bg-\[\#FF6B1A\]\/10,
-.dark .bg-\[\#FDF6EC\] {
-  background-color: rgba(251, 146, 60, 0.12) !important;
+.dark .bg-\[\#F5A623\]\/10,
+.dark .bg-\[\#8B1A1A\]\/10 {
+  background-color: rgba(251, 146, 60, 0.15) !important;
   color: #fdba74 !important;
-  border-color: rgba(251, 146, 60, 0.25) !important;
+  border-color: rgba(251, 146, 60, 0.3) !important;
 }
 
-/* 5. SUBTLE SLATE BORDERS (border-slate-800 / #1f293d) */
+.dark .bg-emerald-50,
+.dark .bg-green-50,
+.dark .bg-emerald-100,
+.dark .bg-\[\#138808\]\/10 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-sky-50,
+.dark .bg-sky-100 {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #7dd3fc !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-100,
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  color: #fda4af !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+/* 8. BORDERS & DIVIDERS: Sleek Modern Slate (#23324d) */
 .dark .border-\[\#E8DCC4\],
+.dark .border-\[\#F0E4D4\],
+.dark .border-\[\#FDF6EC\],
 .dark .border-\[\#8B1A1A\]\/20,
+.dark .border-\[\#8B1A1A\]\/10,
 .dark .border-\[\#F5A623\]\/30,
 .dark .border-\[\#F5A623\]\/20,
 .dark .border-\[\#F5A623\]\/40,
+.dark .border-stone-100,
 .dark .border-stone-200,
 .dark .border-stone-300,
-.dark .border-gray-200 {
-  border-color: #1f293d !important; /* sleek slate-800 border */
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark [style*="border: 1.5px solid #e8d5c4"],
+.dark [style*="borderTop: 1.5px solid #f0e4d8"],
+.dark [style*="borderTop: 1px solid #f0e4d8"] {
+  border-color: #23324d !important;
 }
 
-/* 6. FORM INPUTS & SELECTS */
+.dark .divide-\[\#F0E4D4\] > :not([hidden]) ~ :not([hidden]),
+.dark .divide-stone-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-stone-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #23324d !important;
+}
+
+/* 9. FORM CONTROLS, INPUTS, TEXTAREAS & SELECTS */
 .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
 .dark select,
 .dark textarea {
-  background-color: #090d16 !important;
+  background-color: #0d1527 !important;
   color: #f8fafc !important;
-  border-color: #1f293d !important;
+  border-color: #2a3b5c !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #fb923c !important;
+  box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.25) !important;
 }
 
 .dark input::placeholder,
@@ -119,27 +272,58 @@
   color: #64748b !important;
 }
 
-/* 7. DASHBOARD SIDEBAR & HEADER */
-.dark aside.bg-\[\#FDF6EC\] {
-  background-color: #0d1322 !important;
-  border-color: #1f293d !important;
+.dark select option {
+  background-color: #0d1527 !important;
+  color: #f8fafc !important;
 }
 
-.dark header.bg-\[\#FDF6EC\]\/80 {
-  background-color: rgba(13, 19, 34, 0.88) !important;
-  border-color: #1f293d !important;
+/* 10. TABLES & LIST ROWS */
+.dark table {
+  background-color: #121a2d !important;
+  color: #f1f5f9 !important;
 }
 
-/* Smooth color transitioning on theme-aware containers */
+.dark thead,
+.dark thead tr,
+.dark thead th {
+  background-color: #18233c !important;
+  color: #fb923c !important;
+  border-color: #23324d !important;
+}
+
+.dark tbody tr:hover {
+  background-color: #18233c !important;
+}
+
+/* 11. DASHBOARD SIDEBAR & HEADER OVERRIDES */
+.dark aside,
+.dark aside.bg-\[\#FDF6EC\],
+.dark aside.bg-\[\#FFF8F0\] {
+  background-color: #0e1628 !important;
+  border-color: #23324d !important;
+}
+
+.dark header.bg-\[\#FDF6EC\]\/80,
+.dark header.bg-\[\#FFF8F0\]\/80,
+.dark header.bg-white\/80 {
+  background-color: rgba(14, 22, 40, 0.92) !important;
+  border-color: #23324d !important;
+}
+
+/* 12. SMOOTH THEME TRANSITIONS */
 .dark,
 .dark header,
 .dark aside,
 .dark nav,
 .dark main,
 .dark div,
+.dark section,
 .dark button,
-.dark card {
-  transition-property: color, background-color, border-color;
+.dark input,
+.dark select,
+.dark textarea,
+.dark article {
+  transition-property: color, background-color, border-color, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
 }

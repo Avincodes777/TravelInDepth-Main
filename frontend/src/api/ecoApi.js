@@ -45,7 +45,7 @@ export const getEcoSpots = async (params = {}) => {
 
 /**
  * Submit a new green spot or eco-alert
- * @param {Object} data - { title, category, location, description, submitterName }
+ * @param {Object} data - { title, category, location, description }
  */
 export const createEcoSpot = async (data) => {
   return apiClient.post("/eco/spots", data);

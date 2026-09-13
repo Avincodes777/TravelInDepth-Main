@@ -21,6 +21,13 @@ export const ThemeProvider = ({ children }) => {
     } catch (e) {
       console.error("Failed to save theme in localStorage", e);
     }
+
+    const isHomepage = window.location.pathname === "/";
+    if (isDarkMode && !isHomepage) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, [isDarkMode]);
 
   const toggleTheme = () => {

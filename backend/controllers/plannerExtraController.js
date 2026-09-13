@@ -1,4 +1,5 @@
 import Itinerary from "../models/Itinerary.js";
+import { createNotification } from "../utils/createNotification.js";
 
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
@@ -112,6 +113,16 @@ export const saveItinerary = async (req, res) => {
       cities: parsedCities,
       days,
     });
+
+    if (req.userId) {
+      await createNotification({
+        userId: req.userId,
+        title: "Itinerary saved",
+        message: `Your custom travel plan for "${destination}" has been successfully saved to your profile.`,
+        type: "booking",
+        link: "/dashboard/itineraries",
+      });
+    }
 
     res.status(201).json(itinerary);
   } catch (err) {

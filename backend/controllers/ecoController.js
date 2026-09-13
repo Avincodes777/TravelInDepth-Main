@@ -200,9 +200,24 @@ export const logEcoAction = async (req, res) => {
   try {
     const { actionType, title, carbonSavedKg, bottlesPrevented, localSpentUSD, notes } = req.body;
 
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required to log sustainable travel actions.",
+      });
+    }
+
     const carbon = Number(carbonSavedKg) || 0;
     const bottles = Number(bottlesPrevented) || 0;
     const local = Number(localSpentUSD) || 0;
+
+    // Disallow negative values
+    if (carbon < 0 || bottles < 0 || local < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Eco impact metrics cannot be negative numbers.",
+      });
+    }
 
     if (carbon <= 0 && bottles <= 0 && local <= 0) {
       return res.status(400).json({
@@ -211,12 +226,41 @@ export const logEcoAction = async (req, res) => {
       });
     }
 
+    // Sane upper bounds per single action submission:
+    // - CO2 saved: max 500 kg (equivalent to saving ~2,500km car journey or major rail transition)
+    // - Bottles prevented: max 50 bottles (practical limit for a personal journey/flask refill batch)
+    // - Local spent: max $5,000 USD (typical upper limit for local artisan/homestay stays)
+    const MAX_CARBON_KG = 500;
+    const MAX_BOTTLES = 50;
+    const MAX_LOCAL_SPENT_USD = 5000;
+
+    if (carbon > MAX_CARBON_KG) {
+      return res.status(400).json({
+        success: false,
+        message: `Carbon saved (${carbon} kg) exceeds the maximum allowed per single action (${MAX_CARBON_KG} kg). If this represents an extended multi-destination trip, please log separate entries for individual legs.`,
+      });
+    }
+
+    if (bottles > MAX_BOTTLES) {
+      return res.status(400).json({
+        success: false,
+        message: `Bottles saved (${bottles}) exceeds the maximum allowed per single action (${MAX_BOTTLES}). Please log multiple smaller entries for longer travel periods.`,
+      });
+    }
+
+    if (local > MAX_LOCAL_SPENT_USD) {
+      return res.status(400).json({
+        success: false,
+        message: `Local spending ($${local}) exceeds the maximum allowed per single action ($${MAX_LOCAL_SPENT_USD}). If this includes multiple accommodations or purchases, please log separate entries.`,
+      });
+    }
+
     const calculatedBadge = computeBadgeLevel(carbon, bottles, local);
 
     const newAction = await EcoImpact.create({
-      user: req.userId || null,
+      user: req.userId,
       actionType: actionType || "custom",
-      title: title || "Sustainable Travel Choice",
+      title: title ? title.trim() : "Sustainable Travel Choice",
       carbonSavedKg: carbon,
       bottlesPrevented: bottles,
       localSpentUSD: local,

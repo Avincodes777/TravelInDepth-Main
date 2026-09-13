@@ -9,6 +9,7 @@ import * as wishlistApi from "../api/wishlistApi";
 import * as journalApi from "../api/journalApi";
 import * as reviewApi from "../api/reviewApi";
 import * as userApi from "../api/userApi";
+import * as ecoApi from "../api/ecoApi";
 import { updateInterests } from "../api/authApi";
 import { fetchRecommendations } from "../api/recommendationsApi";
 import { fetchWeather } from "../api/weatherApi";
@@ -91,7 +92,7 @@ const PageTransition = ({ children }) => (
 );
 
 const Card = ({ children, className = "", noPadding = false }) => (
-  <div className={`bg-[#FFF8F0] rounded-[20px] shadow-sm border border-[#E8DCC4] overflow-hidden ${noPadding ? '' : 'p-6'} ${className}`}>
+  <div className={`bg-[#FFF8F0] dark:bg-[#121a2d] rounded-[20px] shadow-sm border border-[#E8DCC4] dark:border-[#23324d] overflow-hidden ${noPadding ? '' : 'p-6'} ${className}`}>
     {children}
   </div>
 );
@@ -132,76 +133,223 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [recommended, setRecommended] = useState([]);
   const [loadingRecs, setLoadingRecs] = useState(true);
-
-  const distanceData = [
-    { name: 'Jan', km: 1200 }, { name: 'Feb', km: 450 }, { name: 'Mar', km: 3400 },
-    { name: 'Apr', km: 890 }, { name: 'May', km: 2100 }, { name: 'Jun', km: 5600 },
-  ];
+  const [trips, setTrips] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [journalEntries, setJournalEntries] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    const loadRecs = async () => {
+    const loadDashboardData = async () => {
       try {
-        const res = await fetchRecommendations({ limit: 4 });
-        if (isMounted && res?.destinations) {
-          setRecommended(res.destinations);
+        setLoadingStats(true);
+        const [recsRes, tripsRes, wishRes, journalRes, reviewsRes] = await Promise.allSettled([
+          fetchRecommendations({ limit: 4 }),
+          plannerApi.fetchMyItineraries(),
+          wishlistApi.getMyWishlist(),
+          journalApi.getMyJournalEntries(),
+          reviewApi.getMyReviews(),
+        ]);
+
+        if (isMounted) {
+          if (recsRes.status === "fulfilled" && recsRes.value?.destinations) {
+            setRecommended(recsRes.value.destinations);
+          }
+          if (tripsRes.status === "fulfilled" && Array.isArray(tripsRes.value)) {
+            setTrips(tripsRes.value);
+          }
+          if (wishRes.status === "fulfilled" && Array.isArray(wishRes.value)) {
+            setWishlistItems(wishRes.value);
+          }
+          if (journalRes.status === "fulfilled" && Array.isArray(journalRes.value)) {
+            setJournalEntries(journalRes.value);
+          }
+          if (reviewsRes.status === "fulfilled" && reviewsRes.value?.data) {
+            setReviews(reviewsRes.value.data);
+          }
         }
       } catch (err) {
-        console.error("Dashboard recs failed:", err);
+        console.error("Dashboard data load error:", err);
       } finally {
-        if (isMounted) setLoadingRecs(false);
+        if (isMounted) {
+          setLoadingRecs(false);
+          setLoadingStats(false);
+        }
       }
     };
-    loadRecs();
+
+    loadDashboardData();
     return () => { isMounted = false; };
   }, [user]);
+
+  // Real Next / Latest Trip
+  const latestTrip = trips.length > 0 ? trips[0] : null;
+
+  // Real Explorer Score Calculation based on user's actual engagements
+  const explorerScore = useMemo(() => {
+    return (
+      (trips.length * 100) +
+      (journalEntries.length * 50) +
+      (reviews.length * 30) +
+      (wishlistItems.length * 10) +
+      (user?.isContributor ? 200 : 0) +
+      ((user?.contributions?.length || 0) * 150)
+    );
+  }, [trips, journalEntries, reviews, wishlistItems, user]);
+
+  // Real Monthly Activity Trend (Last 6 Months)
+  const monthlyActivity = useMemo(() => {
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const name = d.toLocaleString('en-US', { month: 'short' });
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      months.push({ name, key, activities: 0 });
+    }
+
+    const allDates = [
+      ...trips.map(t => t.createdAt),
+      ...journalEntries.map(j => j.createdAt || j.date),
+      ...reviews.map(r => r.createdAt),
+    ].filter(Boolean);
+
+    allDates.forEach(dateStr => {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const k = `${d.getFullYear()}-${d.getMonth()}`;
+        const target = months.find(m => m.key === k);
+        if (target) target.activities += 1;
+      }
+    });
+
+    return months;
+  }, [trips, journalEntries, reviews]);
+
+  const totalActivities = monthlyActivity.reduce((acc, m) => acc + m.activities, 0);
+
+  // Real Badges with dynamic status
+  const badgesList = [
+    {
+      name: "Verified Explorer",
+      icon: Award,
+      unlocked: true,
+      desc: "Registered traveler",
+      color: "primary",
+    },
+    {
+      name: "Trip Architect",
+      icon: Map,
+      unlocked: trips.length > 0,
+      desc: trips.length > 0 ? `${trips.length} Planned` : "Plan 1st itinerary",
+      color: "primary",
+    },
+    {
+      name: "Bucket Lister",
+      icon: Heart,
+      unlocked: wishlistItems.length > 0,
+      desc: wishlistItems.length > 0 ? `${wishlistItems.length} Saved` : "Save 1st destination",
+      color: "gold",
+    },
+    {
+      name: "Storyteller",
+      icon: BookOpen,
+      unlocked: journalEntries.length > 0,
+      desc: journalEntries.length > 0 ? `${journalEntries.length} Stories` : "Log 1st memory",
+      color: "success",
+    },
+  ];
 
   return (
     <PageTransition>
       <div className="p-8 space-y-8 max-w-7xl mx-auto">
-        <Card className="bg-gradient-to-r from-[#8B1A1A] via-[#A32020] to-[#8B1A1A] text-white p-12 min-h-[320px] relative overflow-hidden">
-          <div className="relative z-10">
-            <h2 className="text-4xl font-serif font-bold mb-4">Namaste, {user?.name} 👋</h2>
-            <p className="text-orange-200 italic mb-8 max-w-md">"The world is a book; non-travelers read only one page."</p>
-            <div className="flex gap-4">
-              <Button onClick={() => navigate("/dashboard/planner")}>Start New Plan</Button>
+        <Card className="bg-gradient-to-r from-[#8B1A1A] via-[#A32020] to-[#8B1A1A] text-white p-8 sm:p-12 min-h-[320px] relative overflow-hidden">
+          <div className="relative z-10 max-w-xl">
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold mb-3">Namaste, {user?.name || "Explorer"} 👋</h2>
+            <p className="text-orange-200 italic mb-8 max-w-md text-sm sm:text-base">"The world is a book; non-travelers read only one page."</p>
+            <div className="flex flex-wrap gap-4">
+              <Button onClick={() => navigate("/dashboard/planner")}>Start New AI Plan</Button>
               <Button variant="outline" onClick={() => navigate("/destinations")} className="border-white text-white hover:bg-white hover:text-[#8B1A1A]">Explore Guidebooks</Button>
             </div>
           </div>
           
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute right-[-5%] bottom-[-20%] opacity-20"><Globe size={400} /></div>
-          <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 w-80">
-            <p className="text-orange-300 text-sm font-semibold">NEXT ADVENTURE</p>
-            <h3 className="text-2xl font-serif font-bold mt-2"> Varanasi & Sarnath</h3>
-            <p className="text-orange-100 mt-2">15 July 2026 </p>
-            <div className="mt-4">
-              <div className="flex justify-between text-sm mb-2">
-                <span>Preparation</span> <span>78%</span>
-              </div>
-              <div className="w-full bg-white/20 rounded-full h-2">
-                <div
-                  className="bg-orange-400 h-2 rounded-full"
-                  style={{ width: "78%" }}
-                />
-              </div>
-            </div>
+
+          {/* Real Next Adventure / Quick Plan Banner */}
+          <div className="mt-8 lg:mt-0 lg:absolute right-10 top-1/2 lg:-translate-y-1/2 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 w-full lg:w-80 z-20">
+            {latestTrip ? (
+              <>
+                <p className="text-orange-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Navigation size={13} /> Next / Latest Adventure
+                </p>
+                <h3 className="text-xl font-serif font-bold mt-2 truncate text-white">
+                  {latestTrip.cities && latestTrip.cities.length > 1
+                    ? latestTrip.cities.join(" → ")
+                    : latestTrip.destination}
+                </h3>
+                <p className="text-orange-100 text-xs mt-1">
+                  📅 {new Date(latestTrip.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })} • {latestTrip.days?.length || 1} Days
+                </p>
+                <div className="mt-4 pt-3 border-t border-white/20">
+                  <button
+                    onClick={() => navigate("/dashboard/trips")}
+                    className="w-full py-2.5 px-4 rounded-xl bg-white text-[#8B1A1A] font-bold text-xs hover:bg-orange-50 transition shadow cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    View AI Itinerary <ArrowRight size={14} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-orange-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles size={13} /> Next Adventure
+                </p>
+                <h3 className="text-xl font-serif font-bold mt-2 text-white">
+                  Ready to explore?
+                </h3>
+                <p className="text-orange-100 text-xs mt-1 leading-relaxed">
+                  You haven't planned any trips yet. Generate your first day-by-day itinerary with AI.
+                </p>
+                <div className="mt-4 pt-3 border-t border-white/20">
+                  <button
+                    onClick={() => navigate("/dashboard/planner")}
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#FF6B1A] to-[#F5A623] text-white font-bold text-xs hover:opacity-95 transition shadow cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Plus size={14} /> Plan First Trip
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Real Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Completed', val: '18', icon: CheckCircle2 },
-            { label: 'States', val: '09/28', icon: MapPin },
-            { label: 'Wishlist', val: '12', icon: Heart },
-            { label: 'Eco Score', val: '840', icon: Leaf },
+            { label: 'Saved Itineraries', val: trips.length, icon: Calendar, link: '/dashboard/trips' },
+            { label: 'Bucket List', val: wishlistItems.length, icon: Heart, link: '/dashboard/wishlist' },
+            { label: 'Journal Stories', val: journalEntries.length, icon: BookOpen, link: '/dashboard/journal' },
+            { label: 'Explorer Points', val: explorerScore, icon: Award, link: '/dashboard/settings' },
           ].map((s, i) => (
-            <Card key={i} className="flex items-center gap-4">
-              <div className="p-3 bg-[#FF6B1A]/10 text-[#FF6B1A] rounded-xl"><s.icon size={24} /></div>
-              <div>
-                <p className="text-[10px] font-bold text-[#8B1A1A]/50 uppercase">{s.label}</p>
-                <h4 className="text-xl font-bold text-[#8B1A1A]">{s.val}</h4>
+            <Card
+              key={i}
+              className="flex items-center justify-between p-5 hover:border-[#FF6B1A]/40 transition-all cursor-pointer"
+              onClick={() => navigate(s.link)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-[#FF6B1A]/10 text-[#FF6B1A] rounded-2xl">
+                  <s.icon size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#8B1A1A]/60 uppercase tracking-wider">{s.label}</p>
+                  <h4 className="text-2xl font-bold text-[#8B1A1A] mt-0.5">
+                    {loadingStats ? "…" : s.val}
+                  </h4>
+                </div>
               </div>
+              <ChevronRight size={18} className="text-[#8B1A1A]/30" />
             </Card>
           ))}
         </div>
@@ -245,7 +393,7 @@ const Dashboard = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-black text-[#8B1A1A]">
-                    {d.matchScore}% MATCH
+                    {d.matchScore || 90}% MATCH
                   </div>
                   <div className="absolute bottom-2 left-3 right-3 text-white">
                     <h4 className="font-serif font-bold text-lg leading-tight">{d.name}</h4>
@@ -267,37 +415,76 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* Real Activity Analytics & Real Achievements Badges */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-2">
-            <h3 className="font-serif text-xl font-bold text-[#8B1A1A] mb-6">Travel Analytics</h3>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-[#8B1A1A]">Exploration Activity</h3>
+                <p className="text-xs text-[#8B1A1A]/60">Your travel logging and planning actions over time</p>
+              </div>
+              <span className="text-xs font-bold px-3 py-1 bg-[#FF6B1A]/10 text-[#FF6B1A] rounded-full">
+                {totalActivities} Total Actions
+              </span>
+            </div>
+
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={distanceData}>
-                  <defs>
-                    <linearGradient id="colorKm" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF6B1A" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#FF6B1A" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#8B1A1A50" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="km" stroke="#FF6B1A" strokeWidth={3} fillOpacity={1} fill="url(#colorKm)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {totalActivities === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-white/40 rounded-2xl border border-dashed border-[#E8DCC4]">
+                  <TrendingUp size={32} className="text-[#8B1A1A]/30 mb-2" />
+                  <p className="text-sm font-bold text-[#8B1A1A]">No logged activity yet</p>
+                  <p className="text-xs text-[#8B1A1A]/60 max-w-xs mt-1">
+                    Plan your first trip, save bucket list destinations, or write journal stories to view your monthly exploration analytics.
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyActivity}>
+                    <defs>
+                      <linearGradient id="colorActivities" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FF6B1A" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#FF6B1A" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E8DCC4" vertical={false} />
+                    <XAxis dataKey="name" stroke="#8B1A1A70" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#8B1A1A70" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#FFF8F0", borderColor: "#E8DCC4", borderRadius: "12px" }}
+                      labelStyle={{ color: "#8B1A1A", fontWeight: "bold" }}
+                    />
+                    <Area type="monotone" dataKey="activities" name="Logged Actions" stroke="#FF6B1A" strokeWidth={3} fillOpacity={1} fill="url(#colorActivities)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </Card>
+
           <Card>
-            <h3 className="font-serif text-xl font-bold text-[#8B1A1A] mb-6">Badges</h3>
-            <div className="grid grid-cols-2 gap-4 text-center">
-              {[
-                { n: 'Himalayan Soul', i: Wind, c: 'success' },
-                { n: 'Heritage Hunter', i: Award, c: 'primary' },
-                { n: 'Wild Heart', i: AlertCircle, c: 'gold' },
-                { n: 'Beach Bum', i: Sun, c: 'secondary' },
-              ].map((b, i) => (
-                <div key={i} className="p-4 bg-white/50 rounded-2xl border border-[#E8DCC4] flex flex-col items-center">
-                  <b.i size={32} className={`text-${b.c === 'primary' ? '[#FF6B1A]' : '[#8B1A1A]'}`} />
-                  <p className="text-[10px] font-bold mt-2 uppercase">{b.n}</p>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-[#8B1A1A]">Explorer Badges</h3>
+                <p className="text-xs text-[#8B1A1A]/60">Your verified travel achievements</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3.5">
+              {badgesList.map((b, i) => (
+                <div
+                  key={i}
+                  className={`p-3.5 rounded-2xl border transition-all flex flex-col items-center text-center ${
+                    b.unlocked
+                      ? "bg-white/80 border-[#E8DCC4] shadow-xs"
+                      : "bg-stone-100/60 border-stone-200 opacity-60"
+                  }`}
+                >
+                  <div className={`p-2.5 rounded-xl mb-1.5 ${b.unlocked ? "bg-[#FF6B1A]/10 text-[#FF6B1A]" : "bg-stone-200 text-stone-500"}`}>
+                    <b.icon size={22} />
+                  </div>
+                  <p className="text-[11px] font-bold text-[#8B1A1A] leading-tight mt-1">{b.name}</p>
+                  <p className="text-[9px] font-semibold text-[#8B1A1A]/60 mt-0.5">
+                    {b.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -425,11 +612,12 @@ const Profile = () => {
                   </Badge>
                 ))
               ) : (
-                <>
-                  <Badge>Spiritual</Badge>
-                  <Badge>Adventure</Badge>
-                  <Badge variant="gold">Luxury</Badge>
-                </>
+                <Link
+                  to="/dashboard/settings"
+                  className="text-xs font-semibold text-[#FF6B1A] hover:underline inline-flex items-center gap-1 bg-[#FF6B1A]/10 px-3 py-1 rounded-full border border-[#FF6B1A]/20"
+                >
+                  + Set your travel interests in Settings
+                </Link>
               )}
             </div>
 
@@ -645,12 +833,12 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
   return (
     <PageTransition>
       <div className="p-8 max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex justify-between items-end mb-8 flex-wrap gap-4">
           <div>
-            <h2 className="text-4xl font-serif font-bold text-[#8B1A1A]">
+            <h2 className="text-4xl font-serif font-bold text-[#8B1A1A] dark:text-white">
               My Journeys
             </h2>
-            <p className="text-[#8B1A1A]/60 mt-1">
+            <p className="text-[#8B1A1A]/60 dark:text-[#94a3b8] mt-1">
               Manage your past and future expeditions
             </p>
           </div>
@@ -662,15 +850,15 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
             >
               <Plus size={16} /> Plan New Trip
             </Button>
-            <div className="flex bg-[#F5E6D3] p-1 rounded-xl">
+            <div className="flex bg-[#F5E6D3] dark:bg-[#15213b] dark:border dark:border-[#273857] p-1 rounded-xl">
               {["upcoming", "past"].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`px-6 py-2 rounded-lg font-bold capitalize transition-all ${
+                  className={`px-6 py-2 rounded-lg font-bold capitalize transition-all cursor-pointer ${
                     tab === t
                       ? "bg-[#8B1A1A] text-white shadow"
-                      : "text-[#8B1A1A]/60"
+                      : "text-[#8B1A1A]/60 dark:text-[#94a3b8] hover:text-[#8B1A1A] dark:hover:text-white"
                   }`}
                 >
                   {t}
@@ -680,22 +868,22 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
           </div>
         </div>
 
-        {loading && <div className="text-center py-6 text-[#8B1A1A]/60 font-medium">Loading your journeys…</div>}
+        {loading && <div className="text-center py-6 text-[#8B1A1A]/60 dark:text-[#cbd5e1] font-medium">Loading your journeys…</div>}
         {error && <div className="text-center py-2 text-red-500 text-sm">⚠️ {error}</div>}
 
         {allDisplayTrips.length === 0 && !loading ? (
-          <div className="text-center py-16 px-6 bg-white/70 border border-dashed border-[#E8DCC4] rounded-3xl space-y-4">
-            <div className="w-16 h-16 rounded-full bg-[#FFF2E8] text-[#FF6B1A] flex items-center justify-center mx-auto text-2xl">
+          <div className="text-center py-16 px-6 bg-white dark:bg-[#121a2d] border border-dashed border-[#E8DCC4] dark:border-[#273857] rounded-3xl space-y-4 shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-[#FFF2E8] dark:bg-[#1a253c] text-[#FF6B1A] dark:text-[#fb923c] flex items-center justify-center mx-auto text-2xl shadow-inner">
               🗺️
             </div>
-            <h3 className="text-2xl font-serif font-bold text-[#8B1A1A]">
+            <h3 className="text-2xl font-serif font-bold text-[#8B1A1A] dark:text-white">
               No {tab} trips yet
             </h3>
-            <p className="text-sm text-[#8B1A1A]/60 max-w-md mx-auto">
+            <p className="text-sm text-[#8B1A1A]/70 dark:text-[#cbd5e1] max-w-md mx-auto leading-relaxed">
               You don't have any {tab} travel plans. Use our AI Trip Planner to build and customize your next dream itinerary.
             </p>
             <div className="pt-2">
-              <Button onClick={() => navigate("/dashboard/planner")} className="px-6 py-3">
+              <Button onClick={() => navigate("/dashboard/planner")} className="px-6 py-3 shadow-md">
                 <Plus size={16} className="mr-2 inline" /> Start Planning with AI
               </Button>
             </div>
@@ -709,7 +897,7 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                 onClick={() => setSelectedTrip(trip)}
               >
                 <div>
-                  <div className="h-44 rounded-xl overflow-hidden relative bg-[#E8DCC4]">
+                  <div className="h-44 rounded-xl overflow-hidden relative bg-[#E8DCC4] dark:bg-[#18233c]">
                     <img
                       src={trip.image}
                       alt={trip.destination}
@@ -717,7 +905,7 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                       onError={(e) => { e.target.src = DESTINATION_IMAGES.default; }}
                       className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <div className="absolute top-4 left-4 flex gap-2">
                       <Badge variant={trip.style === "Adventure" ? "primary" : trip.isMultiCity ? "primary" : trip.isAiGenerated ? "gold" : "secondary"}>
                         {trip.style}
@@ -735,15 +923,15 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                   </div>
 
                   <div className="mt-5">
-                    <h3 className="text-xl font-bold text-[#8B1A1A] line-clamp-2">
+                    <h3 className="text-xl font-bold text-[#8B1A1A] dark:text-white line-clamp-2">
                       {trip.title}
                     </h3>
                     {trip.isMultiCity ? (
-                      <div className="flex items-center gap-1.5 mt-2 flex-wrap text-xs font-semibold text-[#FF6B1A]">
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap text-xs font-semibold text-[#FF6B1A] dark:text-[#fb923c]">
                         <span>📍 Route:</span>
                         {trip.cities.map((city, cIdx) => (
                           <span key={cIdx} className="inline-flex items-center gap-1">
-                            <span className="bg-[#FFF2E8] px-2 py-0.5 rounded-md border border-[#E8DCC4]">
+                            <span className="bg-[#FFF2E8] dark:bg-[#1a253c] px-2 py-0.5 rounded-md border border-[#E8DCC4] dark:border-[#273857] text-[#8B1A1A] dark:text-[#f8fafc]">
                               {city}
                             </span>
                             {cIdx < trip.cities.length - 1 && <span>→</span>}
@@ -751,29 +939,29 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-[#8B1A1A]/50 mt-1">
+                      <p className="text-sm text-[#8B1A1A]/60 dark:text-[#94a3b8] mt-1">
                         📍 {trip.destination}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-4 text-sm text-[#8B1A1A]/60">
-                      <Calendar size={15} />
+                    <div className="flex items-center gap-2 mt-4 text-sm text-[#8B1A1A]/60 dark:text-[#cbd5e1]">
+                      <Calendar size={15} className="text-[#FF6B1A] dark:text-[#fb923c]" />
                       {trip.startDate} — {trip.endDate}
                     </div>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-[#8B1A1A]/60">
-                      <Users size={15} />
+                    <div className="flex items-center gap-2 mt-2 text-sm text-[#8B1A1A]/60 dark:text-[#cbd5e1]">
+                      <Users size={15} className="text-[#FF6B1A] dark:text-[#fb923c]" />
                       {trip.travelers} Traveler{trip.travelers > 1 ? 's' : ''}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-[#E8DCC4] flex justify-between items-center">
+                <div className="mt-5 pt-4 border-t border-[#E8DCC4] dark:border-[#23324d] flex justify-between items-center">
                   <div>
-                    <p className="text-xs text-[#8B1A1A]/50">Budget / Day Cost</p>
-                    <p className="font-bold text-[#138808]">
+                    <p className="text-xs text-[#8B1A1A]/50 dark:text-[#94a3b8]">Budget / Day Cost</p>
+                    <p className="font-bold text-[#138808] dark:text-[#4ade80]">
                       {typeof trip.budget === "number" ? `₹${trip.budget.toLocaleString()}` : trip.budget}
                     </p>
                   </div>
-                  <Button variant="ghost" className="text-sm px-4 py-2" onClick={(e) => { e.stopPropagation(); setSelectedTrip(trip); }}>
+                  <Button variant="ghost" className="text-sm px-4 py-2 hover:bg-[#FF6B1A]/10 dark:hover:bg-[#FF6B1A]/20" onClick={(e) => { e.stopPropagation(); setSelectedTrip(trip); }}>
                     View Details
                   </Button>
                 </div>
@@ -782,13 +970,13 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
 
             <Card
               onClick={() => navigate("/dashboard/planner")}
-              className="border-2 border-dashed border-[#E8DCC4] flex flex-col items-center justify-center min-h-[340px] hover:border-[#FF6B1A] transition-all cursor-pointer"
+              className="border-2 border-dashed border-[#E8DCC4] dark:border-[#273857] flex flex-col items-center justify-center min-h-[340px] hover:border-[#FF6B1A] dark:hover:border-[#FF6B1A] transition-all cursor-pointer"
             >
-              <div className="w-20 h-20 rounded-full bg-[#FFF2E8] flex items-center justify-center mb-5">
-                <Plus size={34} className="text-[#FF6B1A]" />
+              <div className="w-20 h-20 rounded-full bg-[#FFF2E8] dark:bg-[#1a253c] flex items-center justify-center mb-5">
+                <Plus size={34} className="text-[#FF6B1A] dark:text-[#fb923c]" />
               </div>
-              <h3 className="text-xl font-bold text-[#8B1A1A]">Plan a New Trip</h3>
-              <p className="text-[#8B1A1A]/50 text-center mt-2 px-6">
+              <h3 className="text-xl font-bold text-[#8B1A1A] dark:text-white">Plan a New Trip</h3>
+              <p className="text-[#8B1A1A]/60 dark:text-[#94a3b8] text-center mt-2 px-6">
                 Create a personalized itinerary and start your next adventure.
               </p>
             </Card>
@@ -797,68 +985,68 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
       </div>
 
       {selectedTrip && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#FFF8F0] border border-[#E8DCC4] rounded-3xl p-6 sm:p-8 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#FFF8F0] dark:bg-[#121a2d] border border-[#E8DCC4] dark:border-[#273857] rounded-3xl p-6 sm:p-8 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl custom-scrollbar">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-[#FF6B1A]">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#FF6B1A] dark:text-[#fb923c]">
                   {selectedTrip.style} Trip
                 </span>
-                <h3 className="text-2xl font-serif font-bold text-[#8B1A1A]">
+                <h3 className="text-2xl font-serif font-bold text-[#8B1A1A] dark:text-white">
                   {selectedTrip.title}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedTrip(null)}
-                className="w-8 h-8 rounded-full bg-[#8B1A1A]/10 text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white font-bold flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#8B1A1A]/10 dark:bg-white/10 text-[#8B1A1A] dark:text-white hover:bg-[#8B1A1A] hover:text-white font-bold flex items-center justify-center transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-[#8B1A1A]/70 mb-6 pb-4 border-b border-[#E8DCC4]">
+            <div className="flex items-center gap-4 text-sm text-[#8B1A1A]/70 dark:text-[#cbd5e1] mb-6 pb-4 border-b border-[#E8DCC4] dark:border-[#23324d] flex-wrap">
               <span>📍 {selectedTrip.destination}</span>
               <span>📅 {selectedTrip.startDate}</span>
-              <span>💰 {typeof selectedTrip.budget === 'number' ? `₹${selectedTrip.budget.toLocaleString()}` : selectedTrip.budget}</span>
+              <span className="text-[#138808] dark:text-[#4ade80] font-bold">💰 {typeof selectedTrip.budget === 'number' ? `₹${selectedTrip.budget.toLocaleString()}` : selectedTrip.budget}</span>
             </div>
 
             {selectedTrip.rawDays && selectedTrip.rawDays.length > 0 ? (
               <div className="space-y-4">
-                <h4 className="font-bold text-[#8B1A1A] uppercase tracking-wider text-xs">
+                <h4 className="font-bold text-[#8B1A1A] dark:text-white uppercase tracking-wider text-xs">
                   Day-by-Day AI Itinerary
                 </h4>
                 {selectedTrip.rawDays.map((d) => (
-                  <div key={d.day} className="bg-white/80 border border-[#E8DCC4] rounded-2xl p-4 space-y-2">
-                    <div className="flex justify-between items-center font-bold text-[#8B1A1A]">
+                  <div key={d.day} className="bg-white/80 dark:bg-[#18233c] border border-[#E8DCC4] dark:border-[#273857] rounded-2xl p-4 space-y-2">
+                    <div className="flex justify-between items-center font-bold text-[#8B1A1A] dark:text-white flex-wrap gap-2">
                       <span className="flex items-center gap-2">
                         <span>Day {d.day} — {d.title}</span>
                         {d.city && (
-                          <span className="text-[10px] bg-[#FF6B1A]/10 text-[#FF6B1A] px-2 py-0.5 rounded-full border border-[#FF6B1A]/20">
+                          <span className="text-[10px] bg-[#FF6B1A]/10 dark:bg-[#FF6B1A]/20 text-[#FF6B1A] dark:text-[#fb923c] px-2 py-0.5 rounded-full border border-[#FF6B1A]/20">
                             📍 {d.city}
                           </span>
                         )}
                       </span>
-                      <span className="text-xs text-[#138808]">{d.estimatedBudgetINR}</span>
+                      <span className="text-xs text-[#138808] dark:text-[#4ade80] font-bold">{d.estimatedBudgetINR}</span>
                     </div>
-                    <div className="text-xs text-[#2D1B00]/80 space-y-1">
+                    <div className="text-xs text-[#2D1B00]/80 dark:text-[#cbd5e1] space-y-1">
                       <p><b>🌅 Morning:</b> {d.morning}</p>
                       <p><b>☀️ Afternoon:</b> {d.afternoon}</p>
                       <p><b>🌆 Evening:</b> {d.evening}</p>
                       <p><b>🍛 Meals:</b> {d.meals}</p>
-                      {d.tips && <p className="text-[#FF6B1A]"><b>💡 Tip:</b> {d.tips}</p>}
+                      {d.tips && <p className="text-[#FF6B1A] dark:text-[#fb923c]"><b>💡 Tip:</b> {d.tips}</p>}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#8B1A1A]/70">
+              <p className="text-sm text-[#8B1A1A]/70 dark:text-[#cbd5e1]">
                 Detailed schedule confirmed with your local guides. Check notifications for live transit updates.
               </p>
             )}
 
             <button
               onClick={() => setSelectedTrip(null)}
-              className="mt-6 w-full bg-[#8B1A1A] text-white font-bold py-3 rounded-xl hover:bg-[#701515] transition-all"
+              className="mt-6 w-full bg-[#8B1A1A] hover:bg-[#701515] text-white font-bold py-3 rounded-xl transition-all cursor-pointer"
             >
               Close
             </button>
@@ -909,41 +1097,41 @@ const Wishlist = () => {
   return (
     <PageTransition>
       <div className="p-8 max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
-            <h2 className="text-4xl font-serif font-bold text-[#8B1A1A]">
+            <h2 className="text-4xl font-serif font-bold text-[#8B1A1A] dark:text-white">
               Travel Bucket List
             </h2>
-            <p className="text-[#8B1A1A]/60 mt-1">
+            <p className="text-[#8B1A1A]/60 dark:text-[#94a3b8] mt-1">
               Save your dream destinations and start planning.
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white/60 border border-[#E8DCC4] rounded-3xl">
+          <div className="flex flex-col items-center justify-center py-20 bg-white/60 dark:bg-[#121a2d] border border-[#E8DCC4] dark:border-[#273857] rounded-3xl">
             <div className="w-10 h-10 border-3 border-[#FF6B1A] border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-sm font-medium text-[#8B1A1A]/70">Loading your bucket list...</p>
+            <p className="text-sm font-medium text-[#8B1A1A]/70 dark:text-[#cbd5e1]">Loading your bucket list...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center bg-red-50 border border-red-200 rounded-3xl">
-            <p className="text-red-700 font-bold mb-2">⚠️ {error}</p>
+          <div className="p-8 text-center bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-3xl">
+            <p className="text-red-700 dark:text-red-300 font-bold mb-2">⚠️ {error}</p>
             <button
               onClick={fetchWishlist}
-              className="px-4 py-2 bg-[#8B1A1A] text-white text-xs font-bold rounded-xl hover:bg-[#701515] transition"
+              className="px-4 py-2 bg-[#8B1A1A] text-white text-xs font-bold rounded-xl hover:bg-[#701515] transition cursor-pointer"
             >
               Retry
             </button>
           </div>
         ) : displayedItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-20 px-6 bg-[#FFF8F0] border border-[#E8DCC4] rounded-3xl shadow-sm">
-            <div className="w-20 h-20 rounded-full bg-[#FF6B1A]/10 flex items-center justify-center mb-4">
-              <Heart size={36} className="text-[#FF6B1A]" />
+          <div className="flex flex-col items-center justify-center text-center py-20 px-6 bg-[#FFF8F0] dark:bg-[#121a2d] border border-[#E8DCC4] dark:border-[#273857] rounded-3xl shadow-sm">
+            <div className="w-20 h-20 rounded-full bg-[#FF6B1A]/10 dark:bg-[#1a253c] text-[#FF6B1A] dark:text-[#fb923c] flex items-center justify-center mb-4 shadow-inner">
+              <Heart size={36} className="text-[#FF6B1A] dark:text-[#fb923c]" />
             </div>
-            <h3 className="text-2xl font-serif font-bold text-[#8B1A1A] mb-2">
+            <h3 className="text-2xl font-serif font-bold text-[#8B1A1A] dark:text-white mb-2">
               Your bucket list is empty
             </h3>
-            <p className="text-sm text-[#8B1A1A]/70 max-w-md mb-6 leading-relaxed">
+            <p className="text-sm text-[#8B1A1A]/70 dark:text-[#cbd5e1] max-w-md mb-6 leading-relaxed">
               Start exploring and tap the heart on any destination you love to build your personalized travel wishlist.
             </p>
             <Link
@@ -3199,7 +3387,7 @@ const SettingsPage = () => {
             <div className="py-4 flex justify-between items-center">
               <div>
                 <p className="font-bold text-[#8B1A1A] text-sm">Registered Email</p>
-                <p className="text-xs text-[#8B1A1A]/50">{user?.email || "arjun.mehta@travelindepth.in"}</p>
+                <p className="text-xs text-[#8B1A1A]/50">{user?.email || "No email on file"}</p>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#138808]/10 text-[#138808]">
                 ✓ Verified
@@ -3370,6 +3558,7 @@ const Topbar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -3396,18 +3585,33 @@ const Topbar = () => {
         .join("")
         .toUpperCase()
         .slice(0, 2)
-    : "AM";
+    : "EX";
+
+  const userRoleBadge = user?.role === "admin"
+    ? "Platform Admin"
+    : user?.isContributor
+    ? "Verified Contributor"
+    : "Verified Explorer";
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/destinations?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header className="h-20 border-b border-[#E8DCC4] bg-[#FDF6EC]/80 backdrop-blur-md sticky top-0 px-8 flex items-center justify-between z-40">
-      <div className="flex-1 max-w-xl relative">
+      <form onSubmit={handleSearch} className="flex-1 max-w-xl relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B1A1A]/40" size={18} />
         <input
           type="text"
-          placeholder="Search experiences, stays, or itineraries..."
-          className="w-full bg-[#FFF8F0] border border-[#E8DCC4] pl-12 pr-4 py-2.5 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#FF6B1A]/20"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search destinations, experiences, or itineraries..."
+          className="w-full bg-[#FFF8F0] border border-[#E8DCC4] pl-12 pr-4 py-2.5 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#FF6B1A]/20 text-[#2D1B00]"
         />
-      </div>
+      </form>
       <div className="flex items-center gap-4 pl-8 border-l border-[#E8DCC4] ml-8">
         {/* Theme Toggle Button */}
         <ThemeToggle />
@@ -3429,7 +3633,7 @@ const Topbar = () => {
         <div className="text-right hidden md:block">
           <p className="text-sm font-bold text-[#8B1A1A]">{user?.name || "Explorer"}</p>
           <p className="text-[10px] font-bold text-[#FF6B1A] uppercase tracking-tighter">
-            {user?.role === "admin" ? "Admin" : "Level 4: Heritage Hunter"}
+            {userRoleBadge}
           </p>
         </div>
 

@@ -81,7 +81,8 @@ export default function ReviewsPage() {
     const res = await createReview(formData);
 
     // Trigger celebratory toast
-    setToastMessage(`🎉 Thank you, ${formData.name}! Your review has been published.`);
+    const reviewerName = res?.data?.name || user?.name || "Explorer";
+    setToastMessage(`🎉 Thank you, ${reviewerName}! Your review has been published.`);
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -455,7 +456,6 @@ export default function ReviewsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmitSuccess={handleReviewSubmit}
-        defaultName={user?.name || ""}
       />
 
       {/* Delete Confirmation Modal */}

@@ -77,13 +77,20 @@ export const getMyReviews = async (req, res) => {
  */
 export const createReview = async (req, res) => {
   try {
-    const { name, rating, category, comment } = req.body;
+    const { rating, category, comment } = req.body;
 
-    // Validation
-    if (!name || !name.trim()) {
-      return res.status(400).json({
+    if (!req.userId) {
+      return res.status(401).json({
         success: false,
-        message: "Please provide your name.",
+        message: "Authentication required to submit a review.",
+      });
+    }
+
+    const user = await User.findById(req.userId).select("name");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
       });
     }
 
@@ -110,18 +117,13 @@ export const createReview = async (req, res) => {
       });
     }
 
-    const reviewData = {
-      name: name.trim(),
+    const review = await Review.create({
+      user: req.userId,
+      name: user.name || "Explorer",
       rating: numRating,
       category,
       comment: comment.trim(),
-    };
-
-    if (req.userId) {
-      reviewData.user = req.userId;
-    }
-
-    const review = await Review.create(reviewData);
+    });
 
     return res.status(201).json({
       success: true,

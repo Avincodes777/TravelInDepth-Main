@@ -1,12 +1,13 @@
 import express from "express";
 import { getAllReviews, getMyReviews, createReview, deleteReview } from "../controllers/reviewController.js";
 import { optionalAuth, requireAuth } from "../middleware/authMiddleware.js";
+import { submissionRateLimit } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // Public / optionally authenticated
 router.get("/", getAllReviews);
-router.post("/", optionalAuth, createReview);
+router.post("/", requireAuth, submissionRateLimit, createReview);
 
 // User specific
 router.get("/my", requireAuth, getMyReviews);

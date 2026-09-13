@@ -12,6 +12,7 @@ export const PRE_SEEDED_ECO_SPOTS = [
     description: "Verified RO cold water dispensing kiosks available for ₹5 per liter across Dashashwamedh and Assi Ghat. Carry your steel flask and avoid single-use plastic bottles!",
     submitterName: "Aarav Sharma",
     isAutomated: false,
+    sourceType: "seeded",
     source: "Community",
     upvotes: 42,
   },
@@ -22,6 +23,7 @@ export const PRE_SEEDED_ECO_SPOTS = [
     description: "100% farm-to-table food with compostable banana leaf packing, solar cooking, and bulk organic teas with zero single-use plastic.",
     submitterName: "Pooja Verma",
     isAutomated: false,
+    sourceType: "seeded",
     source: "Community",
     upvotes: 38,
   },
@@ -32,6 +34,7 @@ export const PRE_SEEDED_ECO_SPOTS = [
     description: "India's first solar-electric water metro transit is now operational across 10 island terminals, reducing diesel emissions by 90% in fragile backwater ecosystems.",
     submitterName: "Green Transit OpenData",
     isAutomated: true,
+    sourceType: "seeded",
     source: "Green Transit OpenData",
     upvotes: 62,
   },
@@ -42,6 +45,7 @@ export const PRE_SEEDED_ECO_SPOTS = [
     description: "Forest departments have enforced strict zero single-use plastic checkpoints at safari entry gates. Travelers must use reusable flasks and return with all personal trash.",
     submitterName: "Eco-Data Network",
     isAutomated: true,
+    sourceType: "seeded",
     source: "Eco-Data Network",
     upvotes: 56,
   },
@@ -52,6 +56,7 @@ export const PRE_SEEDED_ECO_SPOTS = [
     description: "Community-driven eco-camps are distributing biodegradable trash bags at Khardung La & Rohtang Pass. Travelers are requested to pack out all non-biodegradable waste.",
     submitterName: "Himalayan Clean Air Watch",
     isAutomated: true,
+    sourceType: "seeded",
     source: "Himalayan Clean Air Watch",
     upvotes: 78,
   },
@@ -62,6 +67,7 @@ export const PRE_SEEDED_ECO_SPOTS = [
     description: "30+ smart sensor RO drinking water kiosks installed across Johari Bazaar & Hawa Mahal zone to eliminate bottled water trash.",
     submitterName: "Clean India Open Feed",
     isAutomated: true,
+    sourceType: "seeded",
     source: "Clean India Open Feed",
     upvotes: 35,
   },
@@ -86,38 +92,86 @@ export const seedInitialEcoData = async () => {
 };
 
 /**
- * Attempt to sync from open environmental endpoints with seamless fallback
+ * Attempt to sync from open environmental endpoints (NASA EONET) with seamless fallback
  */
 export const syncLiveEcoFeeds = async () => {
-  console.log("🌱 [EcoWorker] Initiating Live Eco-Data Background Sync...");
+  console.log("🌱 [EcoWorker] Initiating Live Eco-Data Background Sync (NASA EONET)...");
   let syncedCount = 0;
 
   try {
     let fetchedItems = [];
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
 
-      const res = await fetch("https://api.spaceflightnewsapi.net/v4/articles/?limit=3&search=climate", {
+      // Fetch natural environmental events from NASA's Earth Observatory Natural Event Tracker (EONET) API
+      const res = await fetch("https://eonet.gsfc.nasa.gov/api/v3/events?limit=10&status=open", {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
         const json = await res.json();
-        if (json.results && Array.isArray(json.results) && json.results.length > 0) {
-          fetchedItems = json.results.map((item) => ({
-            title: item.title?.substring(0, 140) || "Global Climate & Eco-Observation Update",
-            category: "Eco-Alert",
-            location: "Global & South Asia Climate Watch",
-            description: item.summary?.substring(0, 1400) || "Live environmental satellite data update.",
-            source: "Open Planet Feeds",
-            upvotes: Math.floor(Math.random() * 20) + 15,
-          }));
+        if (json.events && Array.isArray(json.events) && json.events.length > 0) {
+          fetchedItems = json.events
+            .map((event) => {
+              const title = event.title?.trim()?.substring(0, 140);
+              if (!title) return null;
+
+              // Derive genuine location from title / geometry
+              let location = "";
+              if (event.title && event.title.includes(",")) {
+                const parts = event.title.split(",");
+                location = parts.slice(1).join(",").trim();
+              }
+              const latestGeo = event.geometry && event.geometry.length > 0
+                ? event.geometry[event.geometry.length - 1]
+                : null;
+
+              if (!location && latestGeo && Array.isArray(latestGeo.coordinates) && latestGeo.coordinates.length >= 2) {
+                const [lon, lat] = latestGeo.coordinates;
+                if (typeof lon === "number" && typeof lat === "number") {
+                  location = `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`;
+                }
+              }
+
+              // If genuine location cannot be determined, omit rather than fabricate
+              if (!location) {
+                location = "Earth Observatory Monitored Region";
+              }
+
+              // Build authentic description
+              const categoryTitle = event.categories?.[0]?.title || "Natural Event";
+              let description = event.description?.trim();
+              if (!description) {
+                const dateStr = latestGeo?.date ? new Date(latestGeo.date).toISOString().split("T")[0] : null;
+                description = `NASA Earth Observatory tracking active ${categoryTitle.toLowerCase()} advisory${dateStr ? ` as of ${dateStr}` : ""}. Event ID: ${event.id || "N/A"}.`;
+              }
+              description = description.substring(0, 1400);
+
+              // Derive authentic source label from NASA EONET source identifiers
+              const sourceIds = event.sources && Array.isArray(event.sources)
+                ? event.sources.map((s) => s.id).filter(Boolean).join(", ")
+                : "";
+              const sourceLabel = sourceIds ? `NASA EONET (${sourceIds})` : "NASA EONET";
+
+              return {
+                title,
+                category: "Eco-Alert",
+                location: location.substring(0, 150),
+                description,
+                submitterName: sourceLabel,
+                isAutomated: true,
+                sourceType: "live-api",
+                source: sourceLabel,
+                upvotes: 0, // Real upvotes starting at 0 for automated items
+              };
+            })
+            .filter(Boolean);
         }
       }
     } catch (fetchErr) {
-      console.log("ℹ️ [EcoWorker] External API timeout or unavailable. Using curated live open eco-data.");
+      console.log("ℹ️ [EcoWorker] External API timeout or unavailable. Using curated fallback eco-data.", fetchErr.message);
     }
 
     // Combine external items with robust pre-seeded items
@@ -133,8 +187,9 @@ export const syncLiveEcoFeeds = async () => {
           description: item.description,
           submitterName: item.submitterName || item.source || "Automated Eco-Watch",
           isAutomated: item.isAutomated !== undefined ? item.isAutomated : true,
-          source: item.source || "Open Eco-Data",
-          upvotes: item.upvotes || 10,
+          sourceType: item.sourceType || (item.isAutomated ? "live-api" : "seeded"),
+          source: item.source || "NASA EONET",
+          upvotes: item.upvotes !== undefined ? item.upvotes : 0,
         });
         syncedCount++;
       }

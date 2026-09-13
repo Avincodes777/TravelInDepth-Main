@@ -271,11 +271,21 @@ export default function EcoSpotsFeed({ userName = "" }) {
                         <span>{spot.category}</span>
                       </span>
 
-                      {/* Automated Feed Badge */}
-                      {spot.isAutomated && (
+                      {/* Source Type Badges */}
+                      {spot.sourceType === "live-api" ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 flex items-center gap-1">
-                          <Globe2 size={11} className="text-teal-600" />
-                          <span>Live OpenData</span>
+                          <Globe2 size={11} className="text-teal-600 animate-pulse" />
+                          <span>🌍 Live Update</span>
+                        </span>
+                      ) : spot.sourceType === "seeded" || (spot.isAutomated && !spot.sourceType) ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                          <Sparkles size={11} className="text-amber-600" />
+                          <span>Curated Tip</span>
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                          <CheckCircle2 size={11} className="text-emerald-600" />
+                          <span>Community Submitted</span>
                         </span>
                       )}
                     </div>
@@ -299,11 +309,13 @@ export default function EcoSpotsFeed({ userName = "" }) {
                 <div className="mt-5 pt-3.5 border-t border-[#F0E4D4] flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-stone-500 text-[11px]">
                     <div className="w-6 h-6 rounded-full bg-[#138808]/10 text-[#138808] font-bold flex items-center justify-center text-[10px]">
-                      {spot.isAutomated ? "🌍" : spot.submitterName?.charAt(0) || "G"}
+                      {spot.sourceType === "live-api" ? "🌍" : spot.sourceType === "seeded" ? "🌿" : spot.submitterName?.charAt(0) || "G"}
                     </div>
                     <span>
-                      {spot.isAutomated ? (
-                        <>Source: <b>{spot.source || "Eco-Watch Network"}</b></>
+                      {spot.sourceType === "live-api" ? (
+                        <>Source: <b>{spot.source || "NASA EONET"}</b></>
+                      ) : spot.sourceType === "seeded" ? (
+                        <>Curated by <b>{spot.source || spot.submitterName || "Travel In Depth"}</b></>
                       ) : (
                         <>Shared by <b>{spot.submitterName || "Explorer"}</b></>
                       )}
@@ -335,7 +347,6 @@ export default function EcoSpotsFeed({ userName = "" }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmitSpot={handleSpotSubmitted}
-        defaultName={userName}
       />
     </div>
   );

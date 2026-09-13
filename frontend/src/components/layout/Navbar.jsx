@@ -4,10 +4,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../ThemeToggle';
+import GlobalSearchModal from '../common/GlobalSearchModal';
 
 function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isOpened, setIsOpened] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const { user, logout } = useAuth();
     const { isDarkMode } = useTheme();
     const location = useLocation();
@@ -27,6 +29,22 @@ function Navbar() {
         return () => { window.removeEventListener('scroll', handleScroll); };
     }, []);
 
+    // Global keyboard shortcut (Ctrl+K or Cmd+K or '/') to trigger search
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setIsSearchOpen((prev) => !prev);
+            } else if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+                e.preventDefault();
+                setIsSearchOpen(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
+
     if (isExcludedPage) {
         return null;
     }
@@ -40,6 +58,7 @@ function Navbar() {
     const navLinkHover = isDarkActive ? 'hover:text-amber-400' : 'hover:text-amber-600';
 
     return (
+      <>
       <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 px-6 py-4 md:px-12 ${
   isScrolled 
     ? 'bg-orange-600/95 backdrop-blur-md py-3 border-b border-white/10 shadow-lg text-white' 
@@ -74,7 +93,21 @@ function Navbar() {
         <div className={`flex items-center gap-4 sm:gap-6 transition-colors duration-300 ${navTextColor}`}>
           {/* Theme Toggle in Navbar */}
           <ThemeToggle isScrolled={isScrolled} />
-          <Search size={18} className="cursor-pointer hover:text-amber-500 transition-colors hidden sm:block" />
+          
+          {/* Search Button with Keyboard Hint */}
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            title="Search destinations (Ctrl+K or /)"
+            className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 hover:text-amber-500 transition-all cursor-pointer flex items-center gap-1.5 group"
+            aria-label="Search destinations"
+          >
+            <Search size={19} className="group-hover:scale-110 transition-transform" />
+            <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 text-xs opacity-75">
+              ⌘K
+            </span>
+          </button>
+
           {/* Login User rendering section */}
           {user ? (
             <div className="flex items-center gap-3">
@@ -116,7 +149,7 @@ function Navbar() {
             </Link>
           )}
           <Link to="/book-trip">
-            <button className="hidden md:block bg-amber-500 hover:bg-amber-600 text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm">
+            <button className="hidden md:block bg-amber-500 hover:bg-amber-600 text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm cursor-pointer">
               Book Trip
             </button>
           </Link>
@@ -130,8 +163,20 @@ function Navbar() {
       </div>
       {isOpened && (
   <div className={`fixed top-0 right-0 w-full h-screen ${isScrolled ? 'bg-orange-600/95 backdrop-blur-xl text-white' : 'bg-white/95 backdrop-blur-xl text-black'} z-[-1] transition-all duration-300`}>
-    <div className='flex flex-col items-center justify-center gap-10 h-full w-full px-6 py-20 text-sm font-bold uppercase tracking-widest'>
+    <div className='flex flex-col items-center justify-center gap-7 h-full w-full px-6 py-16 text-sm font-bold uppercase tracking-widest'>
       
+      {/* Search Button in Mobile Menu */}
+      <button
+        onClick={() => {
+          setIsOpened(false);
+          setIsSearchOpen(true);
+        }}
+        className="w-full max-w-xs flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-amber-500 text-black font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+      >
+        <Search size={16} />
+        <span>Search Destinations</span>
+      </button>
+
       <Link 
         to='/' 
         onClick={() => setIsOpened(false)} 
@@ -169,13 +214,13 @@ function Navbar() {
             )}
             <span>{user.name} (My Profile)</span>
           </Link>
-          <button onClick={() => { logout(); setIsOpened(false); }} className="text-red-500 text-xs uppercase tracking-widest">
+          <button onClick={() => { logout(); setIsOpened(false); }} className="text-red-500 text-xs uppercase tracking-widest cursor-pointer">
             Logout
           </button>
         </div>
       ) : (
         <Link to='/login' onClick={() => setIsOpened(false)}>
-          <button className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all w-fit ${
+          <button className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all w-fit cursor-pointer ${
             isScrolled
               ? 'bg-transparent border border-white text-white hover:bg-white hover:text-black'
               : 'bg-transparent border border-black text-black hover:bg-black hover:text-white'
@@ -185,7 +230,7 @@ function Navbar() {
         </Link>
       )}
       <Link to="/book-trip" onClick={() => setIsOpened(false)}>
-        <button className="bg-amber-500 text-black px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-widest w-fit shadow-xl transition-all duration-300 hover:scale-105 hover:bg-amber-400">
+        <button className="bg-amber-500 text-black px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-widest w-fit shadow-xl transition-all duration-300 hover:scale-105 hover:bg-amber-400 cursor-pointer">
           Book Trip
         </button>
       </Link>
@@ -206,8 +251,11 @@ function Navbar() {
   </div>
 )}
     </nav>
-    
-    )
+
+    {/* Spotlight Global Search Modal */}
+    <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    </>
+    );
 }
 
-export default Navbar
+export default Navbar;

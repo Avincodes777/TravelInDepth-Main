@@ -67,3 +67,25 @@ export const authRateLimit = (req, res, next) => {
   authRequestLog.set(identifier, timestamps);
   next();
 };
+
+const SUBMISSION_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const SUBMISSION_MAX_REQUESTS = 5; // Max 5 submissions per hour per user
+const submissionRequestLog = new Map();
+
+export const submissionRateLimit = (req, res, next) => {
+  const identifier = req.userId ? req.userId.toString() : req.ip || req.headers["x-forwarded-for"] || "guest";
+  const now = Date.now();
+
+  const timestamps = (submissionRequestLog.get(identifier) || []).filter((t) => now - t < SUBMISSION_WINDOW_MS);
+
+  if (timestamps.length >= SUBMISSION_MAX_REQUESTS) {
+    return res.status(429).json({
+      success: false,
+      message: `Submission limit reached (maximum ${SUBMISSION_MAX_REQUESTS} submissions per hour). Please try again later.`,
+    });
+  }
+
+  timestamps.push(now);
+  submissionRequestLog.set(identifier, timestamps);
+  next();
+};

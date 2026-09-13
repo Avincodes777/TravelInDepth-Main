@@ -56,6 +56,11 @@ const ecoSpotSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    sourceType: {
+      type: String,
+      enum: ["seeded", "live-api", "user-submitted"],
+      default: "user-submitted",
+    },
     source: {
       type: String,
       trim: true,

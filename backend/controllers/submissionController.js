@@ -1,6 +1,7 @@
 import DestinationSubmission from "../models/DestinationSubmission.js";
 import Destination from "../models/Destination.js";
 import User from "../models/User.js";
+import { createNotification } from "../utils/createNotification.js";
 
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
@@ -294,6 +295,17 @@ export const approveSubmission = async (req, res) => {
       $set: { isContributor: true },
     });
 
+    // Notify the submitting user
+    if (submission.submittedBy) {
+      await createNotification({
+        userId: submission.submittedBy,
+        title: "Your destination was approved!",
+        message: `Congratulations! "${submission.name}" has been verified and added to the official Travel In Depth destinations.`,
+        type: "system",
+        link: `/destinations/${slug}`,
+      });
+    }
+
     return res.status(200).json({
       message: "Destination submission approved and added to active destinations.",
       submission,
@@ -328,6 +340,16 @@ export const rejectSubmission = async (req, res) => {
     submission.reviewedBy = req.userId;
     submission.reviewedAt = new Date();
     await submission.save();
+
+    // Notify the submitting user
+    if (submission.submittedBy) {
+      await createNotification({
+        userId: submission.submittedBy,
+        title: "Update on your submission",
+        message: `Thank you for sharing "${submission.name}". It was not approved for listing at this time.`,
+        type: "system",
+      });
+    }
 
     return res.status(200).json({
       message: "Destination submission has been rejected.",

@@ -106,22 +106,34 @@ export const createEcoSpot = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please provide details and description." });
     }
 
-    let resolvedName = submitterName ? submitterName.trim() : "Green Explorer";
-    if (req.userId) {
-      const user = await User.findById(req.userId).select("name");
-      if (user?.name) resolvedName = user.name;
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required to submit an eco spot.",
+      });
     }
+
+    const user = await User.findById(req.userId).select("name");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
+      });
+    }
+
+    const resolvedName = user.name || "Green Explorer";
 
     const newSpot = await EcoSpot.create({
       title: title.trim(),
       category,
       location: location.trim(),
       description: description.trim(),
-      submittedBy: req.userId || null,
+      submittedBy: req.userId,
       submitterName: resolvedName,
       upvotes: 1,
-      upvotedBy: req.userId ? [req.userId.toString()] : [],
+      upvotedBy: [req.userId.toString()],
       isAutomated: false,
+      sourceType: "user-submitted",
       source: "Community",
     });
 
