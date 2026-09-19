@@ -333,6 +333,46 @@ export default function TravelSignup() {
           .social-row{grid-template-columns:1fr}
           .stepper{justify-content:space-between}
         }
+
+        /* Dark Theme Parity */
+        .dark, .dark .tid-root, :root.dark {
+          --cream:       #0a0f1d;
+          --ivory:       #0a0f1d;
+          --text-dark:   #ffffff;
+          --text-mid:    #cbd5e1;
+          --text-light:  #94a3b8;
+          --border:      #23324d;
+          --border-hover:#fb923c;
+        }
+
+        .dark .right-panel {
+          background: #0a0f1d !important;
+        }
+
+        .dark .input-wrap input,
+        .dark .interest-pill,
+        .dark .btn-back {
+          background: #0d1527 !important;
+          color: #f8fafc !important;
+          border-color: #2a3b5c !important;
+        }
+
+        .dark .interest-pill:hover,
+        .dark .btn-back:hover {
+          border-color: #fb923c !important;
+        }
+
+        .dark .step-circle {
+          background: #121a2d !important;
+          border-color: #23324d !important;
+          color: #94a3b8 !important;
+        }
+
+        .dark .step-circle.active,
+        .dark .step-circle.done {
+          background: #FF6B1A !important;
+          color: #ffffff !important;
+        }
       `}</style>
 
       {/* LEFT PANEL */}

@@ -346,6 +346,27 @@ const styles = `
     .left-headline { font-size: 2.2rem; }
     .right-panel { padding: 2rem 1.5rem; }
   }
+
+  /* Dark Theme Parity */
+  .dark, .dark .tid-root, :root.dark {
+    --cream:       #0a0f1d;
+    --ivory:       #0a0f1d;
+    --text-dark:   #ffffff;
+    --text-mid:    #cbd5e1;
+    --text-light:  #94a3b8;
+    --border:      #23324d;
+    --border-hover:#fb923c;
+  }
+
+  .dark .right-panel {
+    background: #0a0f1d !important;
+  }
+
+  .dark .input-wrap input {
+    background: #0d1527 !important;
+    color: #f8fafc !important;
+    border-color: #2a3b5c !important;
+  }
 `;
 
 function EyeIcon({ open }) {

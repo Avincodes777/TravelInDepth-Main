@@ -1095,6 +1095,73 @@ export default function AboutPage() {
       .about-page .ap-reveal { opacity:1; transform:none; transition: none; }
       .about-page .ap-mandala-wrap svg { animation: none; }
     }
+
+    /* ══════════════════════════════════════════
+       DARK THEME SYSTEM (Parity with Dashboard)
+    ══════════════════════════════════════════ */
+    .dark .about-page,
+    :root.dark .about-page,
+    .about-page.dark {
+      --cream: #0a0f1d;
+      --cream-dark: #121a2d;
+      --dark-brown: #ffffff;
+      --maroon-deep: #162036;
+      --saffron-light: #1e293b;
+      --shadow-warm: 0 8px 32px rgba(0,0,0,.4);
+      --shadow-card: 0 4px 20px rgba(0,0,0,.3);
+      background: #0a0f1d !important;
+      color: #cbd5e1 !important;
+    }
+
+    .dark .about-page .ap-hero {
+      background: #0a0f1d !important;
+    }
+
+    .dark .about-page h1,
+    .dark .about-page h2,
+    .dark .about-page h3,
+    .dark .about-page h4 {
+      color: #ffffff !important;
+    }
+
+    .dark .about-page p {
+      color: #cbd5e1 !important;
+    }
+
+    .dark .about-page .ap-mission-card,
+    .dark .about-page .ap-diff-card,
+    .dark .about-page .ap-num-cell,
+    .dark .about-page .ap-vis-card,
+    .dark .about-page .ap-story-card {
+      background: #121a2d !important;
+      border: 1px solid #23324d !important;
+      color: #cbd5e1 !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,.3) !important;
+    }
+
+    .dark .about-page .ap-diff-card:hover,
+    .dark .about-page .ap-num-cell:hover {
+      background: #18233c !important;
+      border-color: #FF6B1A !important;
+    }
+
+    .dark .about-page .ap-diff-title,
+    .dark .about-page .ap-num-title,
+    .dark .about-page .ap-vis-title {
+      color: #ffffff !important;
+    }
+
+    .dark .about-page .ap-story-badge {
+      background: rgba(18, 26, 45, 0.9) !important;
+      border-color: #23324d !important;
+      color: #ffffff !important;
+    }
+
+    .dark .about-page .ap-badge {
+      background: rgba(255, 107, 26, 0.15) !important;
+      color: #fb923c !important;
+      border-color: rgba(255, 107, 26, 0.3) !important;
+    }
   `}</style>
       <div className="about-page" ref={containerRef}>
         <Helmet>

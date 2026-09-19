@@ -942,13 +942,90 @@ const EXPERIENCE_PAGE_STYLES = `
   }
 }
 
-@media (max-width: 420px) {
-  .experience-page .exp-container {
-    padding: 0 18px;
-  }
-  .experience-page .exp-hero__title {
-    font-size: 34px;
-  }
+/* =====================================================================
+   DARK THEME SYSTEM (Parity with Dashboard Midnight Slate)
+   ===================================================================== */
+.dark .experience-page,
+:root.dark .experience-page {
+  --exp-cream: #0a0f1d;
+  --exp-brown: #ffffff;
+  --exp-text: #cbd5e1;
+  --exp-text-soft: #94a3b8;
+  background: #0a0f1d !important;
+  color: #cbd5e1 !important;
+}
+
+.dark .experience-page .exp-hero {
+  background: linear-gradient(180deg, #0a0f1d 0%, #121a2d 100%) !important;
+}
+
+.dark .experience-page .exp-hero::before {
+  opacity: 0.05 !important;
+}
+
+.dark .experience-page h1,
+.dark .experience-page h2,
+.dark .experience-page h3,
+.dark .experience-page h4 {
+  color: #ffffff !important;
+}
+
+.dark .experience-page p {
+  color: #cbd5e1 !important;
+}
+
+.dark .experience-page .exp-cat-card,
+.dark .experience-page .exp-feat-card,
+.dark .experience-page .exp-why-card,
+.dark .experience-page .exp-sus-card,
+.dark .experience-page .exp-story-card,
+.dark .experience-page .exp-modal__content {
+  background: #121a2d !important;
+  border-color: #23324d !important;
+  color: #cbd5e1 !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3) !important;
+}
+
+.dark .experience-page .exp-filter-btn {
+  background: #121a2d !important;
+  border-color: #23324d !important;
+  color: #cbd5e1 !important;
+}
+
+.dark .experience-page .exp-filter-btn.is-active,
+.dark .experience-page .exp-filter-btn:hover {
+  background: #FF6B1A !important;
+  border-color: #FF6B1A !important;
+  color: #ffffff !important;
+}
+
+.dark .experience-page .exp-cat-card__content,
+.dark .experience-page .exp-feat-card__body,
+.dark .experience-page .exp-why-card__body,
+.dark .experience-page .exp-story-card__body {
+  background: #121a2d !important;
+}
+
+.dark .experience-page .exp-cat-card__title,
+.dark .experience-page .exp-feat-card__title,
+.dark .experience-page .exp-why-card__title,
+.dark .experience-page .exp-story-card__title {
+  color: #ffffff !important;
+}
+
+.dark .experience-page .exp-badge {
+  background: #18233c !important;
+  color: #fb923c !important;
+  border-color: #273754 !important;
+}
+
+.dark .experience-page .exp-stats {
+  background: #0d1527 !important;
+  border-color: #23324d !important;
+}
+
+.dark .experience-page .exp-reel {
+  border-color: #23324d !important;
 }
 `;
 

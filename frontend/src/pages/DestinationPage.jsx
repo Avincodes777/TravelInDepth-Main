@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { CityContext } from "../context/CityContext";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
+import { useTheme } from "../context/ThemeContext";
 import { createSubmission, getMySubmissions } from "../api/submissionApi";
 import { Helmet } from "react-helmet-async";
 import WishlistButton from "../components/common/WishlistButton";
@@ -28,35 +29,48 @@ const BUDGET_OPTIONS = [
   { value: "Budget", label: "Budget (₹2k–4k/day)" },
   { value: "Mid-Range", label: "Mid-Range (₹5k–10k/day)" },
   { value: "Luxury", label: "Luxury (₹15k–30k/day)" },
-  { value: "Ultra-Luxury", label: "Ultra-Luxury (₹30k+/day)" },
 ];
 
-// ─── PRESET ECO SUGGESTIONS ───────────────────────────────────────────────────
+// ─── PRESET ECO OPTIONS ───────────────────────────────────────────────────────
 const PRESET_ECO_OPTIONS = [
-  "🚲 Cycling Tours",
-  "🚶 Walking Trails",
-  "🛺 E-Rickshaw",
-  "🌱 Organic Dining",
-  "🏡 Eco Homestay",
-  "⚡ Solar Powered",
-  "♻️ Zero Waste",
-  "🛶 Local Boat Ride",
+  "Homestay / Village Stay",
+  "Electric Vehicle Rentals",
+  "Public Transport Friendly",
+  "Organic Dining",
+  "Plastic-Free Zone",
+  "Solar-Powered Stays",
+  "Local Guide Support",
+  "Zero Waste Trails",
 ];
 
-// ─── SIMPLE INDIA MAP SVG ─────────────────────────────────────────────────────
-function IndiaMap({ activeRegion, onRegionClick, cities, onCityHover, hoveredCity }) {
+// ─── INDIA MAP SVG COMPONENT ──────────────────────────────────────────────────
+function IndiaMap({
+  activeRegion,
+  onRegionClick,
+  cities = [],
+  hoveredCity,
+  onCityHover,
+}) {
+  const { isDarkMode } = useTheme();
+  // Simplified regional outline paths for India
   const regionPaths = {
-    North: "M 100 20 L 200 10 L 260 40 L 280 80 L 240 100 L 200 110 L 160 100 L 120 80 L 90 60 Z",
-    West: "M 60 100 L 120 80 L 160 100 L 170 140 L 160 180 L 130 200 L 90 190 L 60 160 L 50 130 Z",
-    South: "M 130 200 L 160 180 L 200 190 L 220 220 L 210 260 L 180 290 L 150 300 L 120 280 L 110 250 L 120 220 Z",
-    East: "M 200 110 L 260 100 L 300 120 L 310 160 L 280 190 L 240 200 L 200 190 L 180 160 L 190 130 Z",
-    "North-East": "M 300 120 L 350 110 L 355 145 L 330 170 L 305 155 Z",
+    North:
+      "M 140 20 L 190 20 L 220 60 L 210 110 L 170 120 L 130 100 L 120 60 Z",
+    West:
+      "M 90 120 L 150 120 L 160 180 L 130 220 L 90 210 L 70 160 Z",
+    East:
+      "M 210 110 L 270 115 L 280 180 L 230 200 L 190 170 L 170 120 Z",
+    South:
+      "M 130 220 L 190 200 L 210 240 L 180 310 L 150 330 L 130 290 Z",
+    "North-East":
+      "M 280 100 L 340 90 L 350 140 L 310 160 L 275 140 Z",
   };
 
+  // Label centers for regions
   const regionCenters = {
-    North: { x: 185, y: 65 },
-    West: { x: 110, y: 155 },
-    South: { x: 165, y: 245 },
+    North: { x: 168, y: 70 },
+    West: { x: 112, y: 165 },
+    South: { x: 168, y: 265 },
     East: { x: 248, y: 155 },
     "North-East": { x: 325, y: 135 },
   };
@@ -88,13 +102,13 @@ function IndiaMap({ activeRegion, onRegionClick, cities, onCityHover, hoveredCit
                   ? "#8B1A1A"
                   : "#0284C7"
                 : activeRegion === "All"
-                ? "#FDF6EC"
-                : "#f5ede0"
+                ? (isDarkMode ? "#162036" : "#FDF6EC")
+                : (isDarkMode ? "#101828" : "#f5ede0")
             }
             stroke="#FF6B1A"
             strokeWidth={activeRegion === region ? "2.5" : "1.5"}
-            strokeOpacity={activeRegion === region ? 1 : 0.4}
-            fillOpacity={activeRegion === region ? 0.9 : 0.5}
+            strokeOpacity={activeRegion === region ? 1 : (isDarkMode ? 0.6 : 0.4)}
+            fillOpacity={activeRegion === region ? 0.9 : (isDarkMode ? 0.75 : 0.5)}
             className="cursor-pointer transition-all duration-300"
             onClick={() => onRegionClick(region)}
           />
@@ -110,7 +124,7 @@ function IndiaMap({ activeRegion, onRegionClick, cities, onCityHover, hoveredCit
             fontSize={region === "North-East" ? "9" : "11"}
             fontWeight="600"
             fontFamily="Montserrat"
-            fill={activeRegion === region ? "white" : "#8B1A1A"}
+            fill={activeRegion === region ? "white" : (isDarkMode ? "#cbd5e1" : "#8B1A1A")}
             className="cursor-pointer select-none"
             onClick={() => onRegionClick(region)}
           >
@@ -145,8 +159,8 @@ function IndiaMap({ activeRegion, onRegionClick, cities, onCityHover, hoveredCit
                 cx={x}
                 cy={y}
                 r={isHovered ? 7 : 5}
-                fill={isActiveRegion ? "#FF6B1A" : "#ccc"}
-                stroke="white"
+                fill={isActiveRegion ? "#FF6B1A" : (isDarkMode ? "#475569" : "#ccc")}
+                stroke={isDarkMode ? "#0a0f1d" : "white"}
                 strokeWidth="2"
                 className="cursor-pointer transition-all duration-200"
                 onMouseEnter={() => onCityHover(cityKey)}
@@ -160,7 +174,7 @@ function IndiaMap({ activeRegion, onRegionClick, cities, onCityHover, hoveredCit
                   fontSize="9"
                   fontWeight="700"
                   fontFamily="Montserrat"
-                  fill="#2D1B00"
+                  fill={isDarkMode ? "#ffffff" : "#2D1B00"}
                 >
                   {city.name}
                 </text>

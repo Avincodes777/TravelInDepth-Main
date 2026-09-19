@@ -214,8 +214,13 @@ const S = {
   orange: "#FF6B1A",
   orangeDark: "#e05a10",
   cream: "var(--city-bg, #FDF6EC)",
+  cardBg: "var(--city-card-bg, #ffffff)",
+  cardAlt: "var(--city-card-alt, #FFFBF7)",
+  border: "var(--city-border, #F0E2D2)",
+  borderLight: "var(--city-border-light, #f0e4d8)",
+  chipBg: "var(--city-chip-bg, #fff8f4)",
   darkBrown: "var(--city-heading, #5c1a00)",
-  midBrown: "var(--city-subheading, #8B2500)",
+  subBrown: "var(--city-subheading, #8B2500)",
   maroon: "#5c1212",
   textMid: "var(--city-text, #5a3020)",
   textMuted: "var(--city-text-muted, #9a7060)",
@@ -501,7 +506,7 @@ function PlannerSection({ city }) {
   };
 
   return (
-    <section id="plan-trip" style={{ padding: "80px 0", background: "#FDF6EC" }}>
+    <section id="plan-trip" style={{ padding: "80px 0", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: S.orange, textAlign: "center", marginBottom: 10 }}>SMART PLANNER</p>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,46px)", fontWeight: 800, color: S.darkBrown, textAlign: "center", marginBottom: 10 }}>
@@ -512,7 +517,7 @@ function PlannerSection({ city }) {
           Tell us how you travel, and our AI will craft a day-by-day plan tailored just for you.
         </p>
 
-        <div style={{ background: "white", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 40px rgba(90,20,0,0.08)" }}>
+        <div style={{ background: S.cardBg, borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 40px rgba(0,0,0,0.12)", border: `1.5px solid ${S.border}` }}>
           {/* Dark header */}
           <div style={{ background: "#5c1212", padding: "28px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
@@ -550,8 +555,8 @@ function PlannerSection({ city }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>TRAVEL STYLE</div>
               <select value={style} onChange={e => setStyle(e.target.value)} style={{
-                width: "100%", padding: "13px 16px", borderRadius: 12, border: "1.5px solid #e8d5c4",
-                fontSize: 14, fontFamily: "'DM Sans', sans-serif", background: "#fff8f4",
+                width: "100%", padding: "13px 16px", borderRadius: 12, border: `1.5px solid ${S.border}`,
+                fontSize: 14, fontFamily: "'DM Sans', sans-serif", background: S.chipBg,
                 color: S.darkBrown, cursor: "pointer", outline: "none", fontWeight: 500,
               }}>
                 {["Couple / Honeymoon", "Solo Explorer", "Family with Kids", "Friends Group", "Cultural Enthusiast"].map(s => (
@@ -562,8 +567,8 @@ function PlannerSection({ city }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>BUDGET LEVEL</div>
               <select value={budget} onChange={e => setBudget(e.target.value)} style={{
-                width: "100%", padding: "13px 16px", borderRadius: 12, border: "1.5px solid #e8d5c4",
-                fontSize: 14, fontFamily: "'DM Sans', sans-serif", background: "#fff8f4",
+                width: "100%", padding: "13px 16px", borderRadius: 12, border: `1.5px solid ${S.border}`,
+                fontSize: 14, fontFamily: "'DM Sans', sans-serif", background: S.chipBg,
                 color: S.darkBrown, cursor: "pointer", outline: "none", fontWeight: 500,
               }}>
                 <option value="budget">Budget (₹2,000–4,000/day) 💰</option>
@@ -592,7 +597,7 @@ function PlannerSection({ city }) {
               const daysList = itinerary.days || itinerary;
               const isFallback = Boolean(itinerary.isFallback);
               return (
-                <div style={{ marginTop: 44, textAlign: "left", borderTop: "1.5px solid #f0e4d8", paddingTop: 36 }}>
+                <div style={{ marginTop: 44, textAlign: "left", borderTop: `1.5px solid ${S.border}`, paddingTop: 36 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                       <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, color: S.darkBrown, margin: 0, fontWeight: 800 }}>
@@ -643,12 +648,12 @@ function PlannerSection({ city }) {
                         .trim();
 
                       return (
-                        <div key={d.day} style={{ background: "#FFFBF7", border: "1.5px solid #F0E2D2", borderRadius: 20, padding: "32px", boxShadow: "0 4px 20px rgba(90,20,0,0.04)" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12, borderBottom: "1px solid #F3E5D8", paddingBottom: 16 }}>
+                        <div key={d.day} style={{ background: S.cardAlt, border: `1.5px solid ${S.border}`, borderRadius: 20, padding: "32px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12, borderBottom: `1px solid ${S.borderLight}`, paddingBottom: 16 }}>
                             <h4 style={{ fontFamily: "'Playfair Display', serif", color: S.orange, fontSize: 20, fontWeight: 800, margin: 0 }}>
                               Day {d.day}: {cleanTitle || `Exploring ${city.name}`}
                             </h4>
-                            <span style={{ fontSize: 13.5, color: "#138808", fontWeight: 800, background: "#E8F5E9", padding: "5px 14px", borderRadius: 50 }}>
+                            <span style={{ fontSize: 13.5, color: "#138808", fontWeight: 800, background: "rgba(34, 197, 94, 0.15)", border: "1px solid rgba(34, 197, 94, 0.3)", padding: "5px 14px", borderRadius: 50 }}>
                               {d.estimatedBudgetINR}
                             </span>
                           </div>
@@ -670,7 +675,7 @@ function PlannerSection({ city }) {
                               <span>{d.meals}</span>
                             </div>
                             {d.tips && (
-                              <div style={{ marginTop: 10, padding: "14px 18px", background: "#FFF3E8", borderLeft: `4px solid ${S.orange}`, borderRadius: 10, fontSize: 14, color: S.midBrown }}>
+                              <div style={{ marginTop: 10, padding: "14px 18px", background: S.chipBg, borderLeft: `4px solid ${S.orange}`, borderRadius: 10, fontSize: 14, color: S.textMid, border: `1px solid ${S.borderLight}`, borderLeftWidth: 4 }}>
                                 <b>💡 Insider Tip:</b> {d.tips}
                               </div>
                             )}
@@ -699,8 +704,8 @@ function AttractionCard({ a }) {
   const fallback = PLACEHOLDER_ATTRACTION;
 
   return (
-    <div style={{ background: "white", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 20px rgba(90,20,0,0.06)", display: "flex", flexDirection: "column" }}>
-      <div style={{ position: "relative", height: 220, background: "#F3E5D8" }}>
+    <div style={{ background: S.cardBg, borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", border: `1px solid ${S.border}` }}>
+      <div style={{ position: "relative", height: 220, background: S.chipBg }}>
         <img
           src={a.image || fallback}
           alt={a.name}
@@ -719,10 +724,10 @@ function AttractionCard({ a }) {
         </div>
       </div>
       <div style={{ padding: "20px 22px 22px", flex: 1, display: "flex", flexDirection: "column" }}>
-        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.midBrown, marginBottom: 8 }}>{a.name}</h3>
+        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.darkBrown, marginBottom: 8 }}>{a.name}</h3>
         <p style={{ fontSize: 14, color: S.textMid, lineHeight: 1.75, flex: 1, marginBottom: 18 }}>{desc}</p>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f0e4d8", paddingTop: 14 }}>
-          <span style={{ fontSize: 14, color: "#b37a00", fontWeight: 600 }}>⭐ {rating} ({reviews} reviews)</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${S.borderLight}`, paddingTop: 14 }}>
+          <span style={{ fontSize: 14, color: "#fbbf24", fontWeight: 600 }}>⭐ {rating} ({reviews} reviews)</span>
           <span style={{ fontSize: 13, color: S.textMuted, display: "flex", alignItems: "center", gap: 5 }}>🕐 {hours}</span>
         </div>
       </div>
@@ -735,7 +740,7 @@ function AttractionsSection({ city }) {
   if (attractions.length === 0) return null;
 
   return (
-    <section id="attractions" style={{ padding: "80px 0", background: "#FDF6EC" }}>
+    <section id="attractions" style={{ padding: "80px 0", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: S.orange, textAlign: "center", marginBottom: 10 }}>MUST-VISIT</p>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,46px)", fontWeight: 800, color: S.darkBrown, textAlign: "center", marginBottom: 10 }}>
@@ -759,21 +764,21 @@ function FoodSection({ city }) {
   const fallback = PLACEHOLDER_FOOD;
 
   return (
-    <section id="food" style={{ padding: "80px 0", background: "#FDF6EC" }}>
+    <section id="food" style={{ padding: "80px 0", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: S.orange, textAlign: "center", marginBottom: 10 }}>WHERE TO EAT</p>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,42px)", fontWeight: 800, color: S.orange, textAlign: "center", marginBottom: 10 }}>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,42px)", fontWeight: 800, color: S.darkBrown, textAlign: "center", marginBottom: 10 }}>
           Famous Local Food & Spots
         </h2>
         <div style={{ width: 60, height: 3, background: S.orange, margin: "0 auto 52px", borderRadius: 2 }} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
           {food.map(f => (
-            <div key={f.name} style={{ background: "white", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", gap: 0, boxShadow: "0 2px 12px rgba(90,20,0,0.06)" }}>
+            <div key={f.name} style={{ background: S.cardBg, borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", gap: 0, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: `1px solid ${S.border}` }}>
               <img
                 src={f.image || fallback}
                 alt={f.name}
                 loading="lazy"
-                style={{ width: 110, height: 110, objectFit: "cover", flexShrink: 0, background: "#F3E5D8" }}
+                style={{ width: 110, height: 110, objectFit: "cover", flexShrink: 0, background: S.chipBg }}
                 onError={(e) => {
                   if (e.target.src !== fallback) {
                     e.target.src = fallback;
@@ -847,7 +852,7 @@ function HiddenGemsSection({ city }) {
   const fallback = PLACEHOLDER_ATTRACTION;
 
   return (
-    <section style={{ padding: "80px 0", background: "#FDF6EC" }}>
+    <section style={{ padding: "80px 0", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: S.orange, textAlign: "center", marginBottom: 10 }}>OFF THE BEATEN PATH</p>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,46px)", fontWeight: 800, color: S.darkBrown, textAlign: "center", marginBottom: 10 }}>
@@ -859,12 +864,12 @@ function HiddenGemsSection({ city }) {
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 22 }}>
           {hiddenGems.map(gem => (
-            <div key={gem.name} style={{ background: "white", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 16px rgba(90,20,0,0.07)" }}>
+            <div key={gem.name} style={{ background: S.cardBg, borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: `1px solid ${S.border}` }}>
               <img
                 src={gem.image || fallback}
                 alt={gem.name}
                 loading="lazy"
-                style={{ width: "100%", height: 190, objectFit: "cover", display: "block", background: "#F3E5D8" }}
+                style={{ width: "100%", height: 190, objectFit: "cover", display: "block", background: S.chipBg }}
                 onError={(e) => {
                   if (e.target.src !== fallback) {
                     e.target.src = fallback;
@@ -873,10 +878,10 @@ function HiddenGemsSection({ city }) {
               />
               <div style={{ padding: "18px 18px 20px" }}>
                 <div style={{ fontSize: 26, marginBottom: 10 }}>{gem.icon || "💎"}</div>
-                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: S.midBrown, marginBottom: 8, lineHeight: 1.3 }}>{gem.name}</h3>
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: S.darkBrown, marginBottom: 8, lineHeight: 1.3 }}>{gem.name}</h3>
                 <p style={{ fontSize: 13, color: S.textMid, lineHeight: 1.7, marginBottom: 16 }}>{gem.desc || gem.description}</p>
                 {gem.location && (
-                  <span style={{ background: "#fde8e8", color: "#c0392b", fontSize: 12, fontWeight: 500, borderRadius: 50, padding: "4px 12px", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ background: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", fontSize: 12, fontWeight: 500, borderRadius: 50, padding: "4px 12px", display: "inline-flex", alignItems: "center", gap: 4, border: "1px solid rgba(239, 68, 68, 0.25)" }}>
                     📍 {gem.location}
                   </span>
                 )}
@@ -895,7 +900,7 @@ function NearbySection({ city }) {
   const fallback = PLACEHOLDER_ATTRACTION;
 
   return (
-    <section style={{ padding: "80px 0", background: "#FDF6EC" }}>
+    <section style={{ padding: "80px 0", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,50px)", fontWeight: 800, color: S.darkBrown, textAlign: "center", marginBottom: 10 }}>
           Nearby Destinations
@@ -906,8 +911,8 @@ function NearbySection({ city }) {
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
           {nearby.map(n => (
-            <div key={n.name} style={{ background: "white", borderRadius: 18, overflow: "hidden", boxShadow: "0 2px 20px rgba(90,20,0,0.07)" }}>
-              <div style={{ position: "relative", height: 220, background: "#F3E5D8" }}>
+            <div key={n.name} style={{ background: S.cardBg, borderRadius: 18, overflow: "hidden", boxShadow: "0 2px 20px rgba(0,0,0,0.07)", border: `1px solid ${S.border}` }}>
+              <div style={{ position: "relative", height: 220, background: S.chipBg }}>
                 <img
                   src={n.image || fallback}
                   alt={n.name}
@@ -964,36 +969,36 @@ function BestTimeSection({ city }) {
   }, [city.slug, city.lat, city.lng]);
 
   const typeStyles = {
-    best: { bg: "#e8f5e9", text: "#2e7d32", icon: "✅" },
-    good: { bg: "#e8f5e9", text: "#2e7d32", icon: "✅" },
-    warn: { bg: "#fff8e1", text: "#b37a00", icon: "⚠️" },
-    bad:  { bg: "#fdecea", text: "#b71c1c", icon: "🌧" },
+    best: { bg: "rgba(34, 197, 94, 0.15)", text: "#86efac", icon: "✅" },
+    good: { bg: "rgba(34, 197, 94, 0.15)", text: "#86efac", icon: "✅" },
+    warn: { bg: "rgba(234, 179, 8, 0.15)", text: "#fde047", icon: "⚠️" },
+    bad:  { bg: "rgba(239, 68, 68, 0.15)", text: "#fca5a5", icon: "🌧" },
   };
 
   const months = city.months || [];
   const tips = city.tips || [];
 
   return (
-    <section id="best-time" style={{ padding: "80px 0", background: "#FDF6EC" }}>
+    <section id="best-time" style={{ padding: "80px 0", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         {/* Live Weather Forecast Widget */}
         <div style={{
-          background: "linear-gradient(135deg, #2D1B00 0%, #4D2600 60%, #1A0A00 100%)",
+          background: "linear-gradient(135deg, #121a2d 0%, #162036 60%, #0a0f1d 100%)",
           borderRadius: 24,
           padding: "36px 40px",
           color: "white",
           marginBottom: 60,
-          boxShadow: "0 20px 50px rgba(45,27,0,0.25)",
-          border: "1px solid rgba(245,166,35,0.2)",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
+          border: `1px solid ${S.border}`,
           position: "relative",
           overflow: "hidden"
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20, marginBottom: 28 }}>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#F5A623" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#fb923c" }}>
                 📡 LIVE CLIMATE RADAR
               </span>
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: "#FDF6EC", marginTop: 4 }}>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: "#ffffff", marginTop: 4 }}>
                 Real-Time Weather in {city.name}
               </h3>
             </div>
@@ -1065,7 +1070,7 @@ function BestTimeSection({ city }) {
             {months.map(m => {
               const st = typeStyles[m.type] || typeStyles.good;
               return (
-                <div key={m.m} style={{ background: st.bg, borderRadius: 12, padding: "18px 16px", textAlign: "center" }}>
+                <div key={m.m} style={{ background: st.bg, borderRadius: 12, padding: "18px 16px", textAlign: "center", border: `1px solid ${S.borderLight}` }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: st.text, marginBottom: 4 }}>{m.m}</div>
                   <div style={{ fontSize: 13, color: S.textMid, marginBottom: 8 }}>{m.range}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: st.text, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
@@ -1080,7 +1085,7 @@ function BestTimeSection({ city }) {
         {tips.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
             {tips.map(tip => (
-              <div key={tip.title} style={{ background: "white", borderRadius: 14, padding: "20px 18px", boxShadow: "0 2px 12px rgba(90,20,0,0.06)" }}>
+              <div key={tip.title} style={{ background: S.cardBg, borderRadius: 14, padding: "20px 18px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: `1px solid ${S.border}` }}>
                 <div style={{ fontSize: 28, marginBottom: 10 }}>{tip.icon || "💡"}</div>
                 <h4 style={{ fontSize: 15, fontWeight: 700, color: S.darkBrown, marginBottom: 8 }}>{tip.title}</h4>
                 <p style={{ fontSize: 13, color: S.textMid, lineHeight: 1.7 }}>{tip.desc}</p>
@@ -1104,7 +1109,7 @@ function ChecklistSection({ city }) {
   const items = checklistObj[activeTab] || [];
 
   return (
-    <section style={{ padding: "80px 0 100px", background: "#FDF6EC" }}>
+    <section style={{ padding: "80px 0 100px", background: S.cream }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: S.orange, textAlign: "center", marginBottom: 10 }}>PACK SMART</p>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px,4vw,46px)", fontWeight: 800, color: S.darkBrown, textAlign: "center", marginBottom: 10 }}>
@@ -1118,8 +1123,8 @@ function ChecklistSection({ city }) {
           {tabs.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
               padding: "11px 28px", borderRadius: 50, fontSize: 14, fontWeight: 700, cursor: "pointer",
-              border: activeTab === tab ? "none" : "1.5px solid #E8DCC4",
-              background: activeTab === tab ? S.orange : "white",
+              border: activeTab === tab ? "none" : `1.5px solid ${S.border}`,
+              background: activeTab === tab ? S.orange : S.cardBg,
               color: activeTab === tab ? "white" : S.textMid,
               boxShadow: activeTab === tab ? "0 4px 14px rgba(255,107,26,0.3)" : "none",
               transition: "all 0.25s ease",
@@ -1132,20 +1137,20 @@ function ChecklistSection({ city }) {
           {items.map(item => (
             <label key={item} onClick={() => toggle(item)} style={{
               display: "flex", alignItems: "flex-start", gap: 14, cursor: "pointer",
-              background: checked[item] ? "#FFF3EB" : "white",
-              border: checked[item] ? `1.5px solid ${S.orange}` : "1.5px solid #EDE2D4",
+              background: checked[item] ? S.chipBg : S.cardBg,
+              border: checked[item] ? `1.5px solid ${S.orange}` : `1.5px solid ${S.border}`,
               borderRadius: 14, padding: "16px 20px",
-              boxShadow: "0 2px 8px rgba(90,20,0,0.03)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               transition: "all 0.2s ease",
             }}>
               <div style={{
-                width: 22, height: 22, border: `2px solid ${checked[item] ? S.orange : "#CBD5E1"}`,
+                width: 22, height: 22, border: `2px solid ${checked[item] ? S.orange : "#64748b"}`,
                 borderRadius: 6, flexShrink: 0, marginTop: 1,
-                background: checked[item] ? S.orange : "white",
+                background: checked[item] ? S.orange : "transparent",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 13, color: "white", fontWeight: 800,
               }}>{checked[item] ? "✓" : ""}</div>
-              <span style={{ fontSize: 14, color: checked[item] ? S.darkBrown : S.textMid, lineHeight: 1.5, fontWeight: checked[item] ? 600 : 500 }}>{item}</span>
+              <span style={{ fontSize: 14, color: checked[item] ? S.orange : S.textMid, lineHeight: 1.5, fontWeight: checked[item] ? 700 : 500 }}>{item}</span>
             </label>
           ))}
         </div>
@@ -1162,8 +1167,8 @@ function ComingSoonGuideBanner({ city }) {
   return (
     <div style={{ maxWidth: 1180, margin: "20px auto 40px", padding: "0 40px" }}>
       <div style={{
-        background: "#FFF8F0",
-        border: "1.5px dashed #E8DCC4",
+        background: S.cardAlt,
+        border: `1.5px dashed ${S.border}`,
         borderRadius: 16,
         padding: "32px",
         textAlign: "center",

@@ -47,9 +47,9 @@ function AdminLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FDF6EC" }}>
-      <form onSubmit={handleSubmit} style={{ background: "#fff", padding: 32, borderRadius: 12, width: 320, display: "flex", flexDirection: "column", gap: 16 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#8B1A1A" }}>Admin Login</h1>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--city-bg, #FDF6EC)" }}>
+      <form onSubmit={handleSubmit} style={{ background: "var(--city-card-bg, #ffffff)", border: "1px solid var(--city-border, #E8DCC4)", padding: 32, borderRadius: 12, width: 320, display: "flex", flexDirection: "column", gap: 16 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--city-heading, #8B1A1A)" }}>Admin Login</h1>
         <input
           type="email"
           placeholder="Email"
