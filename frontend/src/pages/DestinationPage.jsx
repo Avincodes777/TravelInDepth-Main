@@ -45,32 +45,29 @@ const PRESET_ECO_OPTIONS = [
 
 // ─── INDIA MAP SVG COMPONENT ──────────────────────────────────────────────────
 function IndiaMap({
-  activeRegion,
-  onRegionClick,
+  activeRegion = "All",
+  onRegionClick = () => {},
   cities = [],
-  hoveredCity,
-  onCityHover,
+  hoveredCity = null,
+  onCityHover = () => {},
 }) {
   const { isDarkMode } = useTheme();
+  const safeCities = Array.isArray(cities) ? cities : [];
+
   // Simplified regional outline paths for India
   const regionPaths = {
-    North:
-      "M 140 20 L 190 20 L 220 60 L 210 110 L 170 120 L 130 100 L 120 60 Z",
-    West:
-      "M 90 120 L 150 120 L 160 180 L 130 220 L 90 210 L 70 160 Z",
-    East:
-      "M 210 110 L 270 115 L 280 180 L 230 200 L 190 170 L 170 120 Z",
-    South:
-      "M 130 220 L 190 200 L 210 240 L 180 310 L 150 330 L 130 290 Z",
-    "North-East":
-      "M 280 100 L 340 90 L 350 140 L 310 160 L 275 140 Z",
+    North: "M 100 20 L 200 10 L 260 40 L 280 80 L 240 100 L 200 110 L 160 100 L 120 80 L 90 60 Z",
+    West: "M 60 100 L 120 80 L 160 100 L 170 140 L 160 180 L 130 200 L 90 190 L 60 160 L 50 130 Z",
+    South: "M 130 200 L 160 180 L 200 190 L 220 220 L 210 260 L 180 290 L 150 300 L 120 280 L 110 250 L 120 220 Z",
+    East: "M 200 110 L 260 100 L 300 120 L 310 160 L 280 190 L 240 200 L 200 190 L 180 160 L 190 130 Z",
+    "North-East": "M 300 120 L 350 110 L 355 145 L 330 170 L 305 155 Z",
   };
 
   // Label centers for regions
   const regionCenters = {
-    North: { x: 168, y: 70 },
-    West: { x: 112, y: 165 },
-    South: { x: 168, y: 265 },
+    North: { x: 185, y: 65 },
+    West: { x: 110, y: 155 },
+    South: { x: 165, y: 245 },
     East: { x: 248, y: 155 },
     "North-East": { x: 325, y: 135 },
   };
@@ -133,10 +130,11 @@ function IndiaMap({
         ))}
 
         {/* City dots */}
-        {cities.map((city) => {
-          const x = ((city.mapX || 50) / 100) * 360;
-          const y = ((city.mapY || 50) / 100) * 340;
-          const cityKey = city._id || city.id || city.slug;
+        {safeCities.map((city) => {
+          if (!city) return null;
+          const x = (((city.mapX != null ? Number(city.mapX) : 50)) / 100) * 360;
+          const y = (((city.mapY != null ? Number(city.mapY) : 50)) / 100) * 340;
+          const cityKey = city._id || city.id || city.slug || Math.random().toString();
           const isHovered = hoveredCity === cityKey;
           const isActiveRegion = activeRegion === "All" || activeRegion === city.region;
 
@@ -176,7 +174,7 @@ function IndiaMap({
                   fontFamily="Montserrat"
                   fill={isDarkMode ? "#ffffff" : "#2D1B00"}
                 >
-                  {city.name}
+                  {city.name || "Destination"}
                 </text>
               )}
             </g>
@@ -189,10 +187,10 @@ function IndiaMap({
           y="320"
           textAnchor="middle"
           fontSize="10"
-          fontWeight="500"
+          fontWeight="600"
           fontFamily="Montserrat"
-          fill="#A07850"
-          opacity="0.7"
+          fill={isDarkMode ? "#fdba74" : "#A07850"}
+          opacity={isDarkMode ? 0.9 : 0.7}
         >
           INDIA
         </text>
@@ -963,12 +961,15 @@ export default function DestinationPage() {
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   // Filter cities based on region + search
-  const filteredCities = (cities || []).filter((city) => {
+  const filteredCities = (Array.isArray(cities) ? cities : []).filter((city) => {
+    if (!city) return false;
     const matchesRegion = activeFilter === "All" || city.region === activeFilter;
-    const matchesSearch =
-      city.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (city.state && city.state.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesRegion && matchesSearch;
+    const q = (searchQuery || "").toLowerCase().trim();
+    if (!q) return matchesRegion;
+    const nameMatch = (city.name || "").toLowerCase().includes(q);
+    const stateMatch = (city.state || "").toLowerCase().includes(q);
+    const regionMatch = (city.region || "").toLowerCase().includes(q);
+    return matchesRegion && (nameMatch || stateMatch || regionMatch);
   });
 
   // Handle map region click
