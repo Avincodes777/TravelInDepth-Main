@@ -1,6 +1,4 @@
-import { apiClient } from "./client";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { apiClient, BASE_URL } from "./client";
 
 /**
  * Get all journal entries for the logged-in user

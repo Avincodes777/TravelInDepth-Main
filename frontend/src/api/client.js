@@ -1,4 +1,18 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, ""); // Trim trailing slash
+  }
+  if (import.meta.env.PROD) {
+    console.error(
+      "❌ CRITICAL CONFIGURATION ERROR: VITE_API_URL is missing in production environment variables! API requests will fail."
+    );
+    return ""; // In production, don't silently fallback to localhost:5000
+  }
+  return "http://localhost:5000/api";
+};
+
+export const BASE_URL = getApiBaseUrl();
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("token");
