@@ -8,6 +8,8 @@ import { getMediaUrl } from "../utils/media";
 import { Helmet } from "react-helmet-async";
 import WishlistButton from "../components/common/WishlistButton";
 import JournalButton from "../components/common/JournalButton";
+import ThemeToggle from "../components/ThemeToggle";
+import { useTheme } from "../context/ThemeContext";
 
 
 /* ─── JAIPUR DATA (swap via CityContext for other cities) ─── */
@@ -211,21 +213,19 @@ const JAIPUR = {
 const S = {
   orange: "#FF6B1A",
   orangeDark: "#e05a10",
-  cream: "#FDF6EC",
-  darkBrown: "#5c1a00",
-  midBrown: "#8B2500",
+  cream: "var(--city-bg, #FDF6EC)",
+  darkBrown: "var(--city-heading, #5c1a00)",
+  midBrown: "var(--city-subheading, #8B2500)",
   maroon: "#5c1212",
-  textMid: "#5a3020",
-  textMuted: "#9a7060",
+  textMid: "var(--city-text, #5a3020)",
+  textMuted: "var(--city-text-muted, #9a7060)",
 };
 
 const globalStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700;1,800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'DM Sans', sans-serif; background: #FDF6EC; color: #2D0A00; }
   html { scroll-behavior: smooth; }
   ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #FDF6EC; }
+  ::-webkit-scrollbar-track { background: var(--city-bg, #FDF6EC); }
   ::-webkit-scrollbar-thumb { background: #FF6B1A; border-radius: 3px; }
   @keyframes float {
     0% { transform: translateY(0px); }
@@ -238,18 +238,37 @@ const globalStyles = `
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const { isDarkMode } = useTheme();
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  const navBg = scrolled 
+    ? "rgba(234, 88, 12, 0.95)" 
+    : isDarkMode 
+      ? "rgba(10, 15, 29, 0.75)" 
+      : "transparent";
+
+  const navTextColor = scrolled 
+    ? "#FFFFFF" 
+    : isDarkMode 
+      ? "#F1F5F9" 
+      : "#1c1917";
+
   return (
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-      background: scrolled ? "rgba(234, 88, 12, 0.92)" : "transparent",
-      backdropFilter: scrolled ? "blur(12px)" : "none",
-      borderBottom: scrolled ? "1px solid rgba(255,255,255,0.15)" : "1px solid transparent",
-      boxShadow: scrolled ? "0 8px 30px rgba(0,0,0,0.12)" : "none",
+      background: navBg,
+      backdropFilter: (scrolled || isDarkMode) ? "blur(12px)" : "none",
+      borderBottom: scrolled 
+        ? "1px solid rgba(255,255,255,0.15)" 
+        : isDarkMode 
+          ? "1px solid rgba(255,255,255,0.08)" 
+          : "1px solid transparent",
+      boxShadow: scrolled ? "0 8px 30px rgba(0,0,0,0.18)" : "none",
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "0 48px", height: 64,
       transition: "all 0.4s ease",
@@ -273,42 +292,45 @@ function Navbar() {
           fontFamily: "'DM Sans', sans-serif",
           fontSize: 18,
           fontWeight: 700,
-          color: scrolled ? "#FFFFFF" : "#000000",
+          color: navTextColor,
           transition: "color 0.3s ease",
         }}>
-          Travel in <span style={{ color: scrolled ? "#FDE68A" : S.orange }}>Depth</span>
+          Travel in <span style={{ color: scrolled ? "#FDE68A" : "#FF6B1A" }}>Depth</span>
         </span>
       </a>
-      <ul style={{ display: "flex", gap: 36, listStyle: "none" }}>
+      <ul style={{ display: "flex", gap: 36, listStyle: "none", alignItems: "center" }}>
         {["Plan Trip", "Attractions", "Food", "Experiences", "Best Time"].map(item => (
           <li key={item}>
             <a href={`#${item.toLowerCase().replace(" ", "-")}`} style={{
               textDecoration: "none",
-              color: scrolled ? "rgba(255,255,255,0.95)" : "#000000",
+              color: navTextColor,
               fontSize: 14,
               fontWeight: 700,
               transition: "color 0.2s",
             }}
-            onMouseEnter={e => e.target.style.color = scrolled ? "#FDE68A" : S.orange}
-            onMouseLeave={e => e.target.style.color = scrolled ? "rgba(255,255,255,0.95)" : "#000000"}
+            onMouseEnter={e => e.target.style.color = scrolled ? "#FDE68A" : "#FF6B1A"}
+            onMouseLeave={e => e.target.style.color = navTextColor}
             >{item}</a>
           </li>
         ))}
       </ul>
-      <button
-        onClick={() => document.getElementById("plan-trip")?.scrollIntoView({ behavior: "smooth" })}
-        style={{
-          background: scrolled ? "#FFFFFF" : S.orange,
-          color: scrolled ? "#000000" : "#FFFFFF",
-          border: "none", borderRadius: 50,
-          padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 6,
-          boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
-          transition: "all 0.3s ease",
-        }}
-      >
-        ✦ Plan My Trip
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <ThemeToggle isScrolled={scrolled} />
+        <button
+          onClick={() => document.getElementById("plan-trip")?.scrollIntoView({ behavior: "smooth" })}
+          style={{
+            background: scrolled ? "#FFFFFF" : "#FF6B1A",
+            color: scrolled ? "#000000" : "#FFFFFF",
+            border: "none", borderRadius: 50,
+            padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 6,
+            boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+            transition: "all 0.3s ease",
+          }}
+        >
+          ✦ Plan My Trip
+        </button>
+      </div>
     </nav>
   );
 }
@@ -1180,8 +1202,8 @@ export default function CityPage() {
 
   if (!city) {
     return (
-      <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#FDF6EC" }}>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#5c1a00" }}>Destination not found</h2>
+      <div className="city-page-root min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: "var(--city-bg, #FDF6EC)" }}>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "var(--city-heading, #5c1a00)" }}>Destination not found</h2>
         <Link to="/destinations" style={{ marginTop: 16, color: "#FF6B1A", fontWeight: 700 }}>Back to Destinations Map</Link>
       </div>
     );
@@ -1200,7 +1222,7 @@ export default function CityPage() {
   const pageImage = city.image || PLACEHOLDER_IMAGE;
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#FDF6EC" }}>
+    <div className="city-page-root min-h-screen transition-colors duration-300" style={{ fontFamily: "'DM Sans', sans-serif", background: "var(--city-bg, #FDF6EC)", color: "var(--city-text, #5a3020)" }}>
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription.slice(0, 160)} />

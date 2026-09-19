@@ -8,8 +8,33 @@
    Ensures zero invisible/faded text, rich contrast, and sleek surfaces.
 ══════════════════════════════════════════════════════════════════════ */
 
+:root {
+  --city-bg: #FDF6EC;
+  --city-card-bg: #ffffff;
+  --city-card-alt: #FFFBF7;
+  --city-border: #F0E2D2;
+  --city-border-light: #f0e4d8;
+  --city-heading: #5c1a00;
+  --city-subheading: #8B2500;
+  --city-text: #5a3020;
+  --city-text-muted: #9a7060;
+  --city-chip-bg: #fff8f4;
+  --city-accent: #FF6B1A;
+}
+
 .dark {
   color-scheme: dark;
+  --city-bg: #0a0f1d;
+  --city-card-bg: #121a2d;
+  --city-card-alt: #162036;
+  --city-border: #23324d;
+  --city-border-light: #1f2c44;
+  --city-heading: #ffffff;
+  --city-subheading: #fb923c;
+  --city-text: #cbd5e1;
+  --city-text-muted: #fdba74;
+  --city-chip-bg: #0d1527;
+  --city-accent: #fb923c;
 }
 
 /* 1. ROOT & MAIN BODY BACKGROUNDS: Deep Midnight Navy / Slate (#0a0f1d) */
@@ -310,7 +335,51 @@
   border-color: #23324d !important;
 }
 
-/* 12. SMOOTH THEME TRANSITIONS */
+/* 12. CITY DETAIL PAGE SPECIFIC DARK THEME REFINEMENTS */
+.dark .city-page-root {
+  background-color: #0a0f1d !important;
+  color: #f1f5f9 !important;
+}
+
+.dark [style*="border: 1.5px solid #F0E2D2"],
+.dark [style*="border: 1.5px solid #EDE2D4"],
+.dark [style*="border: 1.5px solid #E8DCC4"],
+.dark [style*="border: 1.5px dashed #E8DCC4"],
+.dark [style*="borderBottom: 1px solid #F3E5D8"],
+.dark [style*="borderBottom: 1px solid #f0e4d8"] {
+  border-color: #23324d !important;
+}
+
+.dark [style*="background: #FFFBF7"],
+.dark [style*="background: #FFF8F0"],
+.dark [style*="background: #FFF3EB"],
+.dark [style*="background: #FFF3E8"] {
+  background-color: #162036 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark [style*="background: #fde8e8"] {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  color: #fca5a5 !important;
+}
+
+.dark [style*="background: #e8f5e9"],
+.dark [style*="background: #E8F5E9"] {
+  background-color: rgba(34, 197, 94, 0.18) !important;
+  color: #86efac !important;
+}
+
+.dark [style*="background: #fff8e1"] {
+  background-color: rgba(234, 179, 8, 0.18) !important;
+  color: #fde047 !important;
+}
+
+.dark [style*="background: #fdecea"] {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  color: #fca5a5 !important;
+}
+
+/* 13. SMOOTH THEME TRANSITIONS */
 .dark,
 .dark header,
 .dark aside,
