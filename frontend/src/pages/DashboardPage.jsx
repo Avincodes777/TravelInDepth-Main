@@ -30,7 +30,7 @@ import {
   Star, Leaf, Bell, Settings, Search, LogOut, ChevronRight, 
   MapPin, Plus, Filter, Trash2, Camera, Wind, Plane, 
   Navigation, Award, TrendingUp, Info, ShoppingBag, 
-  ArrowRight, CheckCircle2, AlertCircle, Clock, Users, 
+  ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Clock, Users, 
   IndianRupee, CloudSun, Share2, MessageSquare, ShieldCheck, 
   Eye, Download, Moon, Sun, Globe,Sparkles
 } from 'lucide-react';
@@ -3483,13 +3483,24 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             </div>
 
             {!collapsed && (
-              <div>
-                <h1 className="font-serif text-2xl font-black text-[#8B1A1A] leading-none">
-                  TRAVEL
-                </h1>
-                <p className="text-[10px] tracking-[0.3em] font-bold text-[#8B1A1A]/60 mt-1">
-                  IN DEPTH
-                </p>
+              <div className="flex flex-col items-start">
+                <Link to="/" className="text-left group">
+                  <h1 className="font-serif text-2xl font-black text-[#8B1A1A] dark:text-[#f8fafc] leading-none group-hover:text-[#FF6B1A] transition-colors">
+                    TRAVEL
+                  </h1>
+                  <p className="text-[10px] tracking-[0.3em] font-bold text-[#8B1A1A]/60 dark:text-slate-400 mt-1">
+                    IN DEPTH
+                  </p>
+                </Link>
+                {/* Back button below site title */}
+                <button
+                  onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+                  title="Go back to previous page"
+                  className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white dark:bg-[#121a2d] hover:bg-[#FF6B1A] dark:hover:bg-[#FF6B1A] text-[#8B1A1A] dark:text-slate-200 hover:text-white dark:hover:text-white border border-[#E8DCC4] dark:border-[#23324d] hover:border-[#FF6B1A] transition-all duration-200 shadow-sm cursor-pointer"
+                >
+                  <ArrowLeft size={10} />
+                  <span>Back</span>
+                </button>
               </div>
             )}
           </div>

@@ -278,31 +278,81 @@ function Navbar() {
       padding: "0 48px", height: 64,
       transition: "all 0.4s ease",
     }}>
-      <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img 
-          src={getMediaUrl("logo.jpg")} 
-          alt="logo" 
-          loading="lazy"
-          style={{ 
-           width: 40, height: 40, 
-           transition: "transform 0.5s ease",
-           border: "none",
-           outline: "none",
-           borderRadius: 10,
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <img 
+            src={getMediaUrl("logo.jpg")} 
+            alt="logo" 
+            loading="lazy"
+            style={{ 
+             width: 36, height: 36, 
+             transition: "transform 0.5s ease",
+             border: "none",
+             outline: "none",
+             borderRadius: 8,
+            }}
+            onMouseEnter={e => e.target.style.transform = "rotate(360deg)"}
+            onMouseLeave={e => e.target.style.transform = "rotate(0deg)"}
+          />
+          <span style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 17,
+            fontWeight: 700,
+            color: navTextColor,
+            transition: "color 0.3s ease",
+          }}>
+            Travel in <span style={{ color: scrolled ? "#FDE68A" : "#FF6B1A" }}>Depth</span>
+          </span>
+        </a>
+
+        {/* Back toggle button below site name */}
+        <button
+          onClick={() => (window.history.length > 1 ? window.history.back() : window.location.assign('/destinations'))}
+          title="Go back to previous page"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "2px 9px",
+            borderRadius: 9999,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            border: scrolled
+              ? "1px solid rgba(255,255,255,0.3)"
+              : isDarkMode
+                ? "1px solid #23324d"
+                : "1px solid rgba(245,166,35,0.3)",
+            background: scrolled
+              ? "rgba(255,255,255,0.2)"
+              : isDarkMode
+                ? "#121a2d"
+                : "#FFFFFF",
+            color: scrolled
+              ? "#FFFFFF"
+              : isDarkMode
+                ? "#CBD5E1"
+                : "#8B1A1A",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            transition: "all 0.2s ease",
           }}
-          onMouseEnter={e => e.target.style.transform = "rotate(360deg)"}
-          onMouseLeave={e => e.target.style.transform = "rotate(0deg)"}
-        />
-        <span style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: 18,
-          fontWeight: 700,
-          color: navTextColor,
-          transition: "color 0.3s ease",
-        }}>
-          Travel in <span style={{ color: scrolled ? "#FDE68A" : "#FF6B1A" }}>Depth</span>
-        </span>
-      </a>
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "#FF6B1A";
+            e.currentTarget.style.color = "#FFFFFF";
+            e.currentTarget.style.borderColor = "#FF6B1A";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = scrolled ? "rgba(255,255,255,0.2)" : (isDarkMode ? "#121a2d" : "#FFFFFF");
+            e.currentTarget.style.color = scrolled ? "#FFFFFF" : (isDarkMode ? "#CBD5E1" : "#8B1A1A");
+            e.currentTarget.style.borderColor = scrolled ? "rgba(255,255,255,0.3)" : (isDarkMode ? "#23324d" : "rgba(245,166,35,0.3)");
+          }}
+        >
+          <span style={{ fontSize: 11 }}>←</span>
+          <span>Back</span>
+        </button>
+      </div>
       <ul style={{ display: "flex", gap: 36, listStyle: "none", alignItems: "center" }}>
         {["Plan Trip", "Attractions", "Food", "Experiences", "Best Time"].map(item => (
           <li key={item}>

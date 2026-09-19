@@ -47,7 +47,44 @@ const AdminSidebar = () => {
   return (
     <aside style={{ width: 220, borderRight: "1px solid #E8DCC4", padding: "24px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "100vh" }}>
       <div>
-        <h2 style={{ fontWeight: 700, marginBottom: 24 }}>Admin Panel</h2>
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontWeight: 700, margin: 0, fontSize: "1.25rem" }}>Admin Panel</h2>
+          <button
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
+            title="Go back to previous page"
+            style={{
+              marginTop: 8,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "2px 10px",
+              borderRadius: 9999,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              border: "1px solid #E8DCC4",
+              background: "#FFFFFF",
+              color: "#8B1A1A",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#FF6B1A";
+              e.currentTarget.style.color = "#FFFFFF";
+              e.currentTarget.style.borderColor = "#FF6B1A";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#FFFFFF";
+              e.currentTarget.style.color = "#8B1A1A";
+              e.currentTarget.style.borderColor = "#E8DCC4";
+            }}
+          >
+            <span style={{ fontSize: 11 }}>←</span>
+            <span>Back</span>
+          </button>
+        </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {navLinks.map((link) => {
             const isActive = location.pathname === link.to;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Plane, Menu, X, User, Search, LogOut, ArrowRight, LayoutDashboard } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Plane, Menu, X, User, Search, LogOut, ArrowRight, ArrowLeft, LayoutDashboard } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../ThemeToggle';
@@ -13,6 +13,7 @@ function Navbar() {
     const { user, logout } = useAuth();
     const { isDarkMode } = useTheme();
     const location = useLocation();
+    const navigate = useNavigate();
     const isHomepage = location.pathname === '/';
     const isDarkActive = !isHomepage && isDarkMode;
 
@@ -59,24 +60,44 @@ function Navbar() {
 
     return (
       <>
-      <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 px-6 py-4 md:px-12 ${
+      <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 px-6 py-3 md:px-12 ${
   isScrolled 
-    ? 'bg-orange-600/95 backdrop-blur-md py-3 border-b border-white/10 shadow-lg text-white' 
+    ? 'bg-orange-600/95 backdrop-blur-md py-2.5 border-b border-white/10 shadow-lg text-white' 
     : isDarkActive
-      ? 'bg-slate-900/80 backdrop-blur-md py-4 border-b border-slate-800/80 text-white'
+      ? 'bg-slate-900/85 backdrop-blur-md py-3.5 border-b border-slate-800/80 text-white'
       : 'bg-transparent text-stone-900'
 }`}>
-      <div className="max-w-8xl mx-auto p-2 flex justify-between items-center h-12">
+      <div className="max-w-8xl mx-auto p-1 flex justify-between items-center">
         
-        {/* plane logo */}
-        <Link to="/" className="flex items-center gap-2 cursor-pointer group text-decoration-none">
-          <div className="bg-amber-500 p-2 rounded-lg group-hover:rotate-[360deg] transition-all duration-700 shadow-md shadow-amber-500/20">
-            <Plane size={20} className="text-black" />
-          </div>
-          <span className={`text-2xl font-black tracking-tighter uppercase transition-colors duration-300 ${navTextColor}`}>
-            Travel <span className={isScrolled ? 'text-amber-300 tracking-[0.05em]' : 'text-amber-500'}>In Depth</span>
-          </span>
-        </Link>
+        {/* Brand & Back Button */}
+        <div className="flex flex-col items-start gap-1">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer group text-decoration-none">
+            <div className="bg-amber-500 p-2 rounded-lg group-hover:rotate-[360deg] transition-all duration-700 shadow-md shadow-amber-500/20">
+              <Plane size={20} className="text-black" />
+            </div>
+            <span className={`text-2xl font-black tracking-tighter uppercase transition-colors duration-300 ${navTextColor}`}>
+              Travel <span className={isScrolled ? 'text-amber-300 tracking-[0.05em]' : 'text-amber-500'}>In Depth</span>
+            </span>
+          </Link>
+
+          {/* Back button below site name */}
+          {!isHomepage && (
+            <button
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+              title="Go back to previous page"
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 shadow-sm cursor-pointer border ${
+                isScrolled
+                  ? 'bg-white/20 hover:bg-white text-white hover:text-orange-600 border-white/30'
+                  : isDarkActive
+                    ? 'bg-[#121a2d] hover:bg-[#FF6B1A] text-slate-300 hover:text-white border-[#23324d] hover:border-[#FF6B1A]'
+                    : 'bg-white hover:bg-[#FF6B1A] text-[#8B1A1A] hover:text-white border-[#F5A623]/30 hover:border-[#FF6B1A]'
+              }`}
+            >
+              <ArrowLeft size={11} className="transition-transform group-hover:-translate-x-0.5" />
+              <span>Back</span>
+            </button>
+          )}
+        </div>
 
         {/* navlinks */}
         <ul className={`hidden md:flex items-center gap-8 text-[13px] font-bold tracking-[0.2em] uppercase transition-colors duration-300 ${
