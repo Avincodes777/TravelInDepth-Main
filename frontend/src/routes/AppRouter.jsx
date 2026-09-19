@@ -6,6 +6,7 @@ import DestinationPage from "../pages/DestinationPage"
 import LoginPage from "../pages/LoginPage";
 import SignUpPage from "../pages/SignUpPage";
 import ForgotPage from "../pages/ForgotPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 
 import AdminLoginPage from "../pages/admin/AdminLoginPage";
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
@@ -102,6 +103,7 @@ const AppRouter=()=>{
         />
         <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
         <Route path="/forgot-password" element={<ForgotPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/experience" element={<ExperiencePage />} />
         <Route path="/book-trip" element={<BookTripPage />} />

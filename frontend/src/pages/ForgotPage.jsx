@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plane, ArrowLeft, MailCheck } from 'lucide-react';
+import { Plane, ArrowLeft, MailCheck, Loader2 } from 'lucide-react';
+import { forgotPassword } from '../api/authApi';
 
 const ForgotPage = () => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Reset link sent to:", email);
-    setIsSubmitted(true);
+    if (!email.trim()) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await forgotPassword(email.trim());
+      setIsSubmitted(true);
+    } catch (err) {
+      console.error("Forgot password request failed:", err);
+      setError(err.message || "Failed to process request. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,6 +60,13 @@ const ForgotPage = () => {
               </p>
             </div>
 
+            {/* Error Banner */}
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                <span>⚠️ {error}</span>
+              </div>
+            )}
+
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div className="flex flex-col gap-1.5">
@@ -57,15 +79,24 @@ const ForgotPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@email.com"
                   required 
-                  className="w-full px-5 py-3.5 rounded-xl border border-[#F5A623]/40 bg-[#FDF6EC]/30 text-sm outline-none focus:border-[#FF6B1A] focus:ring-2 focus:ring-[#FF6B1A]/20 transition-all font-medium" 
+                  disabled={loading}
+                  className="w-full px-5 py-3.5 rounded-xl border border-[#F5A623]/40 bg-[#FDF6EC]/30 text-sm outline-none focus:border-[#FF6B1A] focus:ring-2 focus:ring-[#FF6B1A]/20 transition-all font-medium disabled:opacity-60" 
                 />
               </div>
 
               <button 
                 type="submit"
-                className="w-full bg-[#FF6B1A] hover:bg-[#8B1A1A] text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all duration-300 active:scale-95 shadow-lg shadow-orange-500/20"
+                disabled={loading}
+                className="w-full bg-[#FF6B1A] hover:bg-[#8B1A1A] text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all duration-300 active:scale-95 shadow-lg shadow-orange-500/20 disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Send Reset Link
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Sending Link...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
               </button>
             </form>
           </>

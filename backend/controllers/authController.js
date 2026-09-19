@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
+import { sendPasswordResetEmail } from "../services/emailService.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -211,5 +213,118 @@ export const googleAuth = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Google authentication failed", error: err.message });
+  }
+};
+
+/**
+ * Initiates the password reset process by generating a token and dispatching an email.
+ * POST /api/auth/forgot-password
+ * Body: { email }
+ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body || {};
+
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ message: "Please provide a valid email address." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+
+    // For privacy and security, don't disclose whether an email is registered or not
+    if (!user) {
+      return res.status(200).json({
+        message: "If an account with that email exists, we have sent a password reset link.",
+      });
+    }
+
+    if (user.authProvider === "google" && !user.password) {
+      return res.status(400).json({
+        message: "This account is signed in with Google. Please use Google Login to sign in.",
+      });
+    }
+
+    // Generate a secure 32-byte hex token (valid for 1 hour)
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+    await user.save();
+
+    // Dispatch email
+    const emailResult = await sendPasswordResetEmail(user.email, resetToken, user.name);
+
+    return res.status(200).json({
+      message: "If an account with that email exists, we have sent a password reset link.",
+      // In dev mode when SMTP is missing, send back indicator for easy testing
+      isDev: process.env.NODE_ENV !== "production" && Boolean(emailResult?.isDevFallback),
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({
+      message: "Failed to process forgot password request",
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Resets the password using the provided reset token.
+ * POST /api/auth/reset-password
+ * Body: { token, password }
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body || {};
+
+    if (!token || !password) {
+      return res.status(400).json({ message: "Reset token and new password are required." });
+    }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Password reset token is invalid or has expired. Please request a new one.",
+      });
+    }
+
+    // Update password and clear reset fields
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    // Automatically issue a fresh JWT so user is immediately logged in
+    const jwtToken = generateToken(user._id);
+
+    return res.status(200).json({
+      message: "Password has been successfully reset.",
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        location: user.location || "",
+        interests: user.interests || [],
+        role: user.role,
+        isContributor: user.isContributor || false,
+        contributions: user.contributions || [],
+      },
+    });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    return res.status(500).json({
+      message: "Failed to reset password",
+      error: err.message,
+    });
   }
 };

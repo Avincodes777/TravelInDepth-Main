@@ -14,4 +14,10 @@ export const updateInterests = (interests) =>
   apiClient.put("/auth/interests", { interests });
 
 export const googleAuth = (idToken) =>
-  apiClient.post("/auth/google", { idToken });
+  apiClient.post("/auth/google", { idToken });
+
+export const forgotPassword = (email) =>
+  apiClient.post("/auth/forgot-password", { email });
+
+export const resetPassword = (token, password) =>
+  apiClient.post("/auth/reset-password", { token, password });
