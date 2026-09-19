@@ -1,83 +1,106 @@
+import Destination from "../models/Destination.js";
+
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
 
 /* ─── SINGLE-CITY PROMPT & CURATED FALLBACK ─── */
-const buildSingleCityPrompt = ({ destination, days, budget, interests, travelStyle }) => `
-You are an expert Indian travel planner. Create a realistic, high-quality ${days}-day itinerary for ${destination}, India.
-Budget Tier: ${budget || "mid-range"}.
-Traveler Interests: ${interests || "sightseeing, food, culture"}.
-Style: ${travelStyle || "balanced"}.
+const buildSingleCityPrompt = ({ destination, days, budget, interests, travelStyle, destData }) => {
+  let contextSnippet = "";
+  if (destData) {
+    const attractionsStr = (destData.attractions || []).map(a => a.name).join(", ");
+    const foodStr = (destData.foodRecommendations || []).map(f => f.name).join(", ");
+    const activitiesStr = (destData.activities || []).map(act => act.name).join(", ");
+    const gemsStr = (destData.hiddenGems || []).map(g => g.name).join(", ");
 
-Respond with ONLY valid JSON without markdown fences. Follow this structure:
+    contextSnippet = `
+DESTINATION KNOWLEDGE FOR ${destination}:
+- State / Region: ${destData.state || ""}, ${destData.region || ""}
+- Famous Landmarks & Attractions: ${attractionsStr || "Major cultural landmarks"}
+- Local Cuisines & Specialities: ${foodStr || "Authentic local dishes"}
+- Top Activities & Experiences: ${activitiesStr || "Guided heritage and nature walks"}
+- Hidden Gems / Offbeat Spots: ${gemsStr || "Quaint courtyard spots and local quarters"}
+`;
+  }
+
+  return `
+You are a deeply knowledgeable Indian travel expert and itinerary planner.
+Create an authentic, non-generic, highly realistic ${days}-day itinerary specifically for "${destination}, India".
+
+CRITICAL INSTRUCTIONS:
+1. DO NOT give generic advice like "Visit city's most renowned heritage landmark" or "Enjoy authentic regional thali".
+2. YOU MUST explicitly name real, authentic, specific monuments, ghats, forts, temples, markets, bazaars, cafes, and street food dishes found in "${destination}".
+${contextSnippet}
+3. Tailor the activities to:
+   - Budget Tier: ${budget || "mid-range"}
+   - Traveler Interests: ${interests || "sightseeing, food, culture"}
+   - Travel Style: ${travelStyle || "balanced"}
+
+Respond with ONLY valid JSON without markdown code fences in this exact shape:
 {
   "destination": "${destination}",
   "days": [
     {
       "day": 1,
-      "title": "short day theme (do not repeat 'Day 1:' in title, just theme like 'Iconic Landmarks & Heritage')",
-      "morning": "specific activity at landmark with timing",
-      "afternoon": "specific activity or market with lunch",
-      "evening": "sunset/cultural experience and dinner",
-      "meals": "authentic local delicacies recommendation",
-      "estimatedBudgetINR": "e.g. ₹2,500",
-      "tips": "practical local advice"
+      "title": "Specific day theme mentioning exact places in ${destination} (e.g., 'Amber Fort, Jal Mahal & Johari Bazaar Walk')",
+      "morning": "Specific activity with real monument/place name and optimal morning timing in ${destination}",
+      "afternoon": "Specific lunch recommendation, culinary specialty, and afternoon heritage/museum/market visit in ${destination}",
+      "evening": "Specific sunset viewpoint, cultural show, ghat ceremony, or vibrant night market with dinner in ${destination}",
+      "meals": "Named authentic local dishes and recommended food spots in ${destination} (e.g., 'Poha-Jalebi breakfast, Dal Baati Churma lunch, Ghevar dessert')",
+      "estimatedBudgetINR": "e.g. ₹2,500 - ₹3,800",
+      "tips": "Specific insider tip unique to ${destination} (e.g., ticket booking, photography timing, dress code, local transport like auto/e-rickshaw)"
     }
   ]
 }
-Include exactly ${days} entries in "days" array numbered 1 to ${days}. Keep descriptions crisp.`;
+Include exactly ${days} entries in "days" array numbered 1 to ${days}. Keep descriptions vivid, accurate, and inspiring.`;
+};
 
-const generateCuratedSingleFallback = ({ destination, days, budget, travelStyle }) => {
-  const dayTemplates = [
-    {
-      title: "Iconic Landmarks & Heritage Exploration",
-      morning: `Begin early at ${destination}'s most renowned heritage landmark and historic core to beat the afternoon crowds.`,
-      afternoon: `Enjoy authentic regional thali lunch at a heritage cafe in ${destination} followed by artisan bazaars.`,
-      evening: `Capture panoramic golden hour views from a scenic vantage point, followed by local live musical performance.`,
-      meals: "Local special breakfast & traditional regional dinner",
-      estimatedBudgetINR: budget === "budget" ? "₹1,200 - ₹2,000" : budget === "luxury" ? "₹8,000 - ₹15,000" : "₹3,000 - ₹5,000",
-      tips: "Wear comfortable walking shoes and carry cash for local craft shopping.",
-    },
-    {
-      title: "Cultural Immersion & Food Trail",
-      morning: `Explore sacred temples, historic ghats, or royal palaces in ${destination} with an expert local heritage storyteller.`,
-      afternoon: `Guided culinary tasting trail sampling century-old family recipes and street delicacies.`,
-      evening: `Evening boat ride or rooftop dinner overlooking the illuminated city skyline under the stars.`,
-      meals: "Culinary tasting tour with authentic street delicacies and dinner",
-      estimatedBudgetINR: budget === "budget" ? "₹1,500 - ₹2,200" : budget === "luxury" ? "₹9,000 - ₹18,000" : "₹3,500 - ₹5,500",
-      tips: "Book cultural shows or entry passes in advance.",
-    },
-    {
-      title: "Nature, Eco-Trails & Scenic Serenity",
-      morning: `Peaceful sunrise walk through lush botanical gardens, lake reserves, or ancient stepwells.`,
-      afternoon: `Visit local artisan village workshops to observe traditional handicrafts.`,
-      evening: `Farewell dinner at a celebrated open-air rooftop restaurant with folk music.`,
-      meals: "Organic farm-to-table lunch & celebrated dessert specialties",
-      estimatedBudgetINR: budget === "budget" ? "₹1,200 - ₹1,800" : budget === "luxury" ? "₹7,500 - ₹14,000" : "₹2,800 - ₹4,800",
-      tips: "Carry sunscreen, a reusable bottle, and keep a camera ready.",
-    },
-    {
-      title: "Offbeat Secrets & Hidden Neighborhoods",
-      morning: `Discover hidden courtyard havelis and quieter historic quarters before standard tour buses arrive.`,
-      afternoon: `Browse contemporary art galleries, boutique souvenir shops, and quiet garden cafes.`,
-      evening: `Stargazing or relaxing twilight stroll through vibrant night markets and illuminated fountains.`,
-      meals: "Regional heritage dishes and specialty desserts",
-      estimatedBudgetINR: budget === "budget" ? "₹1,400 - ₹2,200" : budget === "luxury" ? "₹8,500 - ₹16,000" : "₹3,200 - ₹5,200",
-      tips: "Respect local customs and photography restrictions inside inner sanctums.",
-    },
-  ];
+const generateCuratedSingleFallback = ({ destination, days, budget, travelStyle, destData }) => {
+  const attractions = destData?.attractions || [];
+  const food = destData?.foodRecommendations || [];
+  const activities = destData?.activities || [];
+  const hiddenGems = destData?.hiddenGems || [];
 
   const generatedDays = [];
   for (let i = 0; i < days; i++) {
-    const template = dayTemplates[i % dayTemplates.length];
+    const dayNum = i + 1;
+    const a1 = attractions[i % (attractions.length || 1)]?.name;
+    const a2 = attractions[(i + 1) % (attractions.length || 1)]?.name;
+    const f1 = food[i % (food.length || 1)]?.name;
+    const act = activities[i % (activities.length || 1)]?.name;
+    const gem = hiddenGems[i % (hiddenGems.length || 1)]?.name;
+
+    const title = a1 && a2 ? `${a1}, ${a2} & Local Quarters` : a1 ? `${a1} & Highlights of ${destination}` : `Exploring the Heritage & Wonders of ${destination}`;
+
+    const morning = a1
+      ? `Start your morning exploring ${a1} early to beat the crowds and capture scenic sunrise lighting.`
+      : `Begin your morning discovering ${destination}'s prime historic quarter and architecture.`;
+
+    const afternoon = f1
+      ? `Savor authentic ${f1} for lunch, followed by a visit to ${a2 || "the vibrant local artisan bazaars"} to observe local craftsmanship.`
+      : `Enjoy an authentic regional thali lunch followed by visiting the heritage craft markets of ${destination}.`;
+
+    const evening = act
+      ? `Experience ${act}, followed by evening tea and traditional dining under the stars.`
+      : gem
+      ? `Visit ${gem} during golden hour, followed by evening riverside/hilltop views and cultural dinner.`
+      : `Capture sunset panoramic views across ${destination} and enjoy live cultural music with regional dinner.`;
+
+    const meals = f1
+      ? `${f1}, local morning specialties & regional dinner thali`
+      : `Traditional ${destination} breakfast delicacies & authentic regional dinner`;
+
+    const tips = destData?.tips?.[i % (destData.tips?.length || 1)]?.desc || `Hire a licensed local heritage storyteller for deeper insights in ${destination}.`;
+
     generatedDays.push({
-      day: i + 1,
-      title: template.title,
-      morning: template.morning,
-      afternoon: template.afternoon,
-      evening: template.evening,
-      meals: template.meals,
-      estimatedBudgetINR: template.estimatedBudgetINR,
-      tips: template.tips,
+      day: dayNum,
+      title,
+      morning,
+      afternoon,
+      evening,
+      meals,
+      estimatedBudgetINR:
+        budget === "budget" ? "₹1,200 - ₹2,000" : budget === "luxury" ? "₹8,000 - ₹15,000" : "₹3,000 - ₹5,000",
+      tips,
     });
   }
 
@@ -88,7 +111,7 @@ const generateCuratedSingleFallback = ({ destination, days, budget, travelStyle 
   };
 };
 
-/* ─── 1. SINGLE CITY GENERATE (EXISTING ENDPOINT: POST /api/planner/generate) ─── */
+/* ─── 1. SINGLE CITY GENERATE (POST /api/planner/generate) ─── */
 export const generateItinerary = async (req, res) => {
   try {
     const body = req.body || {};
@@ -99,15 +122,23 @@ export const generateItinerary = async (req, res) => {
     }
     const numDays = Math.min(14, Math.max(1, parseInt(days, 10)));
 
+    // Fetch database destination knowledge to ground the prompt in real facts
+    const destRecord = await Destination.findOne({
+      $or: [
+        { name: new RegExp(`^${destination.trim()}$`, "i") },
+        { slug: destination.trim().toLowerCase() },
+      ],
+    });
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       console.warn("No GEMINI_API_KEY found, serving curated single-city itinerary.");
-      return res.status(200).json(generateCuratedSingleFallback({ destination, days: numDays, budget, travelStyle }));
+      return res.status(200).json(generateCuratedSingleFallback({ destination, days: numDays, budget, travelStyle, destData: destRecord }));
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7000);
+    const timeout = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -119,13 +150,13 @@ export const generateItinerary = async (req, res) => {
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: buildSingleCityPrompt({ destination, days: numDays, budget, interests, travelStyle }) }],
+              parts: [{ text: buildSingleCityPrompt({ destination, days: numDays, budget, interests, travelStyle, destData: destRecord }) }],
             },
           ],
           generationConfig: {
             responseMimeType: "application/json",
-            temperature: 0.7,
-            maxOutputTokens: 2500,
+            temperature: 0.5,
+            maxOutputTokens: 3500,
           },
         }),
       });
@@ -149,7 +180,7 @@ export const generateItinerary = async (req, res) => {
       console.warn("Gemini request timed out or failed:", aiErr.message);
     }
 
-    const fallbackPlan = generateCuratedSingleFallback({ destination, days: numDays, budget, travelStyle });
+    const fallbackPlan = generateCuratedSingleFallback({ destination, days: numDays, budget, travelStyle, destData: destRecord });
     return res.status(200).json(fallbackPlan);
   } catch (err) {
     console.error("Planner generation failed:", err.message);
@@ -159,23 +190,42 @@ export const generateItinerary = async (req, res) => {
 
 
 /* ─── MULTI-CITY PROMPT & CURATED FALLBACK ─── */
-const buildMultiCityPrompt = ({ cities, budget, interests, travelStyle }) => {
+const buildMultiCityPrompt = ({ cities, budget, interests, travelStyle, destRecords = {} }) => {
   const citySummary = cities.map((c, idx) => `${idx + 1}. ${c.destination} (${c.days} days)`).join(", ");
   const totalDays = cities.reduce((sum, c) => sum + c.days, 0);
 
+  let contextBlocks = "";
+  cities.forEach(({ destination }) => {
+    const destData = destRecords[destination.toLowerCase()];
+    if (destData) {
+      const attractionsStr = (destData.attractions || []).map(a => a.name).join(", ");
+      const foodStr = (destData.foodRecommendations || []).map(f => f.name).join(", ");
+      const actsStr = (destData.activities || []).map(act => act.name).join(", ");
+      contextBlocks += `
+FACTUAL KNOWLEDGE FOR ${destination}:
+- Major Monuments/Attractions: ${attractionsStr || "Prominent historic landmarks"}
+- Local Dishes: ${foodStr || "Local food specialties"}
+- Signature Activities: ${actsStr || "Heritage and cultural tours"}
+`;
+    }
+  });
+
   return `
-You are an expert Indian travel planner. Create a realistic, seamless ${totalDays}-day sequential multi-city travel itinerary across India.
+You are an expert Indian travel planner. Create an authentic, highly detailed, non-generic ${totalDays}-day sequential multi-city travel itinerary across India.
 Cities Sequence: ${citySummary}.
 Budget Tier: ${budget || "mid-range"}.
 Traveler Interests: ${interests || "sightseeing, food, culture"}.
 Style: ${travelStyle || "balanced"}.
 
-REQUIREMENTS:
-1. On the first day of arriving in each new city (from city 2 onward), explicitly include a travel & transition note detailing moving from the previous city to the next (e.g., transit method like train/flight/drive, checking in, and relaxing evening sights).
-2. Each day must specify the exact "city" field.
-3. Keep day numbers sequentially 1 to ${totalDays} matching the exact day allocation for each city in order.
+${contextBlocks}
 
-Respond with ONLY valid JSON without markdown fences formatted exactly as:
+CRITICAL RULES:
+1. DO NOT give generic placeholders. Use real, specific, famous landmark names, heritage forts, temples, markets, and regional street foods for each designated city.
+2. On the first day of arriving in each new city (from city 2 onward), explicitly include a realistic transit note (e.g. Vande Bharat train / short flight / private expressway cab), hotel check-in, and relaxed evening sights in that city.
+3. Every day MUST have the exact "city" field corresponding to that leg of the trip.
+4. Keep day numbers sequentially 1 to ${totalDays}.
+
+Respond with ONLY valid JSON without markdown fences formatted strictly as:
 {
   "cities": ${JSON.stringify(cities.map(c => c.destination))},
   "totalDays": ${totalDays},
@@ -183,86 +233,81 @@ Respond with ONLY valid JSON without markdown fences formatted exactly as:
     {
       "day": 1,
       "city": "${cities[0].destination}",
-      "title": "short theme for the day",
-      "morning": "morning activity with timing",
-      "afternoon": "afternoon activity with lunch",
-      "evening": "evening activity with dinner",
-      "meals": "authentic local food suggestions",
+      "title": "Specific day theme with real place names in ${cities[0].destination}",
+      "morning": "Specific morning landmark and activity with timing",
+      "afternoon": "Specific lunch recommendation, culinary specialty, and afternoon sight",
+      "evening": "Specific sunset viewpoint, cultural show, ghat/bazaar walk, and dinner",
+      "meals": "Named authentic local dishes of that city",
       "estimatedBudgetINR": "e.g. ₹2,500 - ₹4,000",
-      "tips": "practical advice or transit tips"
+      "tips": "Practical advice or transit tip specific to that city"
     }
   ]
 }
 Important: Return exactly ${totalDays} entries in the "days" array. Keep descriptions crisp and inspiring.`;
 };
 
-const generateCuratedMultiFallback = ({ cities, budget }) => {
+const generateCuratedMultiFallback = ({ cities, budget, destRecords = {} }) => {
   const cityNames = cities.map(c => c.destination);
   const totalDays = cities.reduce((sum, c) => sum + c.days, 0);
-
-  const fallbackTemplates = [
-    {
-      title: (city) => `Heritage & Historic Wonders of ${city}`,
-      morning: (city) => `Begin early at ${city}'s premier historic core and iconic monuments to beat afternoon crowds.`,
-      afternoon: (city) => `Enjoy authentic regional thali lunch followed by a visit to central artisan bazaars in ${city}.`,
-      evening: (city) => `Panoramic sunset views from a prominent viewpoint, followed by cultural music and dinner.`,
-      meals: "Local special breakfast & traditional regional dinner",
-      estimatedBudgetINR: budget === "budget" ? "₹1,200 - ₹2,000" : budget === "luxury" ? "₹8,000 - ₹15,000" : "₹3,000 - ₹5,000",
-      tips: "Wear comfortable walking shoes and carry cash for local craft shopping.",
-    },
-    {
-      title: (city) => `Cultural Immersion & Food Trail in ${city}`,
-      morning: (city) => `Explore sacred shrines and royal courtyards in ${city} with a local heritage guide.`,
-      afternoon: (city) => `Guided culinary tasting trail sampling ${city}'s century-old family recipes and street delicacies.`,
-      evening: (city) => `Twilight walk or scenic dinner overlooking the illuminated city skyline under the stars.`,
-      meals: "Culinary tasting tour with authentic regional dishes",
-      estimatedBudgetINR: budget === "budget" ? "₹1,500 - ₹2,200" : budget === "luxury" ? "₹9,000 - ₹18,000" : "₹3,500 - ₹5,500",
-      tips: "Book cultural shows or entry passes in advance.",
-    },
-    {
-      title: (city) => `Scenic Trails & Hidden Quarters of ${city}`,
-      morning: (city) => `Peaceful sunrise walk through scenic nature reserves or historic viewpoints around ${city}.`,
-      afternoon: (city) => `Visit local artisan craft workshops to observe traditional handicrafts and textiles.`,
-      evening: (city) => `Farewell dinner at an open-air rooftop restaurant with folk storytelling.`,
-      meals: "Organic farm-to-table lunch & celebrated dessert specialties",
-      estimatedBudgetINR: budget === "budget" ? "₹1,200 - ₹1,800" : budget === "luxury" ? "₹7,500 - ₹14,000" : "₹2,800 - ₹4,800",
-      tips: "Carry sunscreen, a reusable water bottle, and your camera.",
-    },
-  ];
 
   const days = [];
   let dayNum = 1;
 
   cities.forEach((cityObj, cityIdx) => {
+    const currentCity = cityObj.destination;
+    const prevCity = cityIdx > 0 ? cities[cityIdx - 1].destination : "";
+    const destData = destRecords[currentCity.toLowerCase()];
+
+    const attractions = destData?.attractions || [];
+    const food = destData?.foodRecommendations || [];
+    const activities = destData?.activities || [];
+    const gems = destData?.hiddenGems || [];
+
     for (let d = 0; d < cityObj.days; d++) {
       const isTransitionDay = cityIdx > 0 && d === 0;
-      const prevCity = cityIdx > 0 ? cities[cityIdx - 1].destination : "";
-      const currentCity = cityObj.destination;
+
+      const a1 = attractions[d % (attractions.length || 1)]?.name;
+      const a2 = attractions[(d + 1) % (attractions.length || 1)]?.name;
+      const f1 = food[d % (food.length || 1)]?.name;
+      const act = activities[d % (activities.length || 1)]?.name;
+      const gem = gems[d % (gems.length || 1)]?.name;
 
       if (isTransitionDay) {
         days.push({
           day: dayNum,
           city: currentCity,
-          title: `Journey from ${prevCity} to ${currentCity} & Evening Sights`,
-          morning: `Morning departure from ${prevCity}; scenic transit via train, private cab, or short flight to ${currentCity}.`,
-          afternoon: `Arrive in ${currentCity}, check in to your hotel, refresh, and enjoy a relaxed regional lunch.`,
-          evening: `Unwind with a golden-hour twilight stroll through ${currentCity}'s vibrant local promenade and lakeside or hilltop dinner.`,
-          meals: `Transit snacks & welcome dinner in ${currentCity}`,
+          title: `Transit from ${prevCity} to ${currentCity} & Evening Sights`,
+          morning: `Morning departure from ${prevCity}; scenic transit via train, expressway cab, or flight to ${currentCity}.`,
+          afternoon: `Arrive in ${currentCity}, check in to your stay, refresh, and enjoy ${f1 ? `a lunch featuring ${f1}` : "authentic regional thali lunch"}.`,
+          evening: `Golden-hour walk ${a1 ? `around ${a1}` : `along ${currentCity}'s central heritage promenade`} and welcome dinner.`,
+          meals: `Transit snacks, ${f1 || "local specials"} & welcome dinner in ${currentCity}`,
           estimatedBudgetINR: budget === "budget" ? "₹2,000 - ₹3,500" : budget === "luxury" ? "₹10,000 - ₹20,000" : "₹4,500 - ₹7,000",
           tips: "Pre-book intercity transit tickets and keep digital hotel vouchers handy.",
         });
       } else {
-        const tmpl = fallbackTemplates[(d) % fallbackTemplates.length];
+        const title = a1 && a2 ? `${a1}, ${a2} & Heritage Trails` : a1 ? `${a1} & Highlights of ${currentCity}` : `Cultural Discovery of ${currentCity}`;
+        const morning = a1
+          ? `Begin your day early at ${a1} to beat the crowds and enjoy quiet morning photography.`
+          : `Explore the prime historic landmarks and architectural center of ${currentCity}.`;
+        const afternoon = f1
+          ? `Savor ${f1} at a celebrated heritage eatery, then visit ${a2 || "traditional artisan markets"}.`
+          : `Enjoy an authentic regional thali lunch followed by visiting artisan craft bazaars.`;
+        const evening = act
+          ? `Experience ${act}, followed by evening tea and local dining.`
+          : gem
+          ? `Discover ${gem} at golden hour, followed by night market exploration and dinner.`
+          : `Scenic sunset viewpoint overlooking ${currentCity} with cultural folk dinner.`;
+
         days.push({
           day: dayNum,
           city: currentCity,
-          title: tmpl.title(currentCity),
-          morning: tmpl.morning(currentCity),
-          afternoon: tmpl.afternoon(currentCity),
-          evening: tmpl.evening(currentCity),
-          meals: tmpl.meals,
-          estimatedBudgetINR: tmpl.estimatedBudgetINR,
-          tips: tmpl.tips,
+          title,
+          morning,
+          afternoon,
+          evening,
+          meals: f1 ? `${f1} & authentic regional specialties` : `Authentic ${currentCity} regional delicacies & dinner`,
+          estimatedBudgetINR: budget === "budget" ? "₹1,500 - ₹2,500" : budget === "luxury" ? "₹8,000 - ₹16,000" : "₹3,500 - ₹5,500",
+          tips: destData?.tips?.[d % (destData.tips?.length || 1)]?.desc || `Carry small currency notes for local auto-rickshaws and craft shopping in ${currentCity}.`,
         });
       }
       dayNum++;
@@ -277,7 +322,7 @@ const generateCuratedMultiFallback = ({ cities, budget }) => {
   };
 };
 
-/* ─── 2. MULTI-CITY GENERATE (NEW ENDPOINT: POST /api/planner/generate-multi) ─── */
+/* ─── 2. MULTI-CITY GENERATE (POST /api/planner/generate-multi) ─── */
 export const generateMultiCityItinerary = async (req, res) => {
   try {
     const { cities: rawCities, budget, interests, travelStyle } = req.body || {};
@@ -309,15 +354,30 @@ export const generateMultiCityItinerary = async (req, res) => {
       });
     }
 
+    // Fetch destination documents from MongoDB for grounding
+    const cityQueryNames = sanitizedCities.map((c) => c.destination);
+    const destDocs = await Destination.find({
+      $or: [
+        { name: { $in: cityQueryNames.map((name) => new RegExp(`^${name}$`, "i")) } },
+        { slug: { $in: cityQueryNames.map((name) => name.toLowerCase()) } },
+      ],
+    });
+
+    const destRecords = {};
+    destDocs.forEach((doc) => {
+      destRecords[doc.name.toLowerCase()] = doc;
+      destRecords[doc.slug.toLowerCase()] = doc;
+    });
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       console.warn("No GEMINI_API_KEY configured, returning curated multi-city plan.");
-      return res.status(200).json(generateCuratedMultiFallback({ cities: sanitizedCities, budget }));
+      return res.status(200).json(generateCuratedMultiFallback({ cities: sanitizedCities, budget, destRecords }));
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 9000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -329,13 +389,13 @@ export const generateMultiCityItinerary = async (req, res) => {
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: buildMultiCityPrompt({ cities: sanitizedCities, budget, interests, travelStyle }) }],
+              parts: [{ text: buildMultiCityPrompt({ cities: sanitizedCities, budget, interests, travelStyle, destRecords }) }],
             },
           ],
           generationConfig: {
             responseMimeType: "application/json",
-            temperature: 0.7,
-            maxOutputTokens: 4000,
+            temperature: 0.5,
+            maxOutputTokens: 5000,
           },
         }),
       });
@@ -349,7 +409,6 @@ export const generateMultiCityItinerary = async (req, res) => {
         const parsed = JSON.parse(cleaned);
 
         if (parsed && Array.isArray(parsed.days) && parsed.days.length > 0) {
-          // Guarantee consistent output shape
           const result = {
             cities: parsed.cities || sanitizedCities.map(c => c.destination),
             totalDays: parsed.totalDays || parsed.days.length,
@@ -366,8 +425,8 @@ export const generateMultiCityItinerary = async (req, res) => {
       console.warn("Gemini multi-city request timed out or failed:", aiErr.message);
     }
 
-    // Seamless fallback
-    const fallbackPlan = generateCuratedMultiFallback({ cities: sanitizedCities, budget });
+    // Seamless fallback using real destination knowledge
+    const fallbackPlan = generateCuratedMultiFallback({ cities: sanitizedCities, budget, destRecords });
     return res.status(200).json(fallbackPlan);
   } catch (err) {
     console.error("Multi-city planner generation error:", err.message);

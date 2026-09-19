@@ -50,6 +50,8 @@ const callAI = async (prompt) => {
   }
 };
 
+import Destination from "../models/Destination.js";
+
 export const regenerateDay = async (req, res) => {
   try {
     const { destination, dayNumber, totalDays } = req.body || {};
@@ -58,19 +60,35 @@ export const regenerateDay = async (req, res) => {
       return res.status(400).json({ message: "destination, dayNumber, and totalDays are required" });
     }
 
-    const prompt = `You are a travel planning assistant. Regenerate ONLY day ${dayNumber} of a ${totalDays}-day itinerary for ${destination}, India. Give a fresh alternative plan for this day.
+    const destData = await Destination.findOne({
+      $or: [
+        { name: new RegExp(`^${destination.trim()}$`, "i") },
+        { slug: destination.trim().toLowerCase() },
+      ],
+    });
 
-Respond with ONLY valid JSON, no markdown code fences, no commentary. Use exactly this shape:
+    const attractionsStr = (destData?.attractions || []).map(a => a.name).join(", ");
+    const foodStr = (destData?.foodRecommendations || []).map(f => f.name).join(", ");
 
+    const prompt = `You are an expert Indian travel planner.
+Regenerate a rich, authentic alternative Day ${dayNumber} of a ${totalDays}-day travel itinerary for "${destination}, India".
+Destination Attractions: ${attractionsStr || "Major cultural and scenic landmarks"}
+Local Food Specialities: ${foodStr || "Authentic regional dishes"}
+
+CRITICAL RULES:
+1. Do not output generic placeholders. Use real, specific, famous monument, fort, bazaar, and food names in ${destination}.
+2. Respond with ONLY valid JSON, no markdown code fences.
+
+Shape:
 {
   "day": ${dayNumber},
-  "title": "short theme for the day",
-  "morning": "activity description",
-  "afternoon": "activity description",
-  "evening": "activity description",
-  "meals": "meal suggestions for the day",
+  "title": "Specific day theme with real place names in ${destination}",
+  "morning": "Specific morning landmark activity with timing",
+  "afternoon": "Specific afternoon sight, artisan market, and lunch recommendation",
+  "evening": "Specific sunset/night experience and dinner",
+  "meals": "Named authentic local dishes",
   "estimatedBudgetINR": "e.g. ₹2,000 - ₹3,500",
-  "tips": "one practical tip for this day"
+  "tips": "Practical local tip unique to ${destination}"
 }`;
 
     let dayPlan;
