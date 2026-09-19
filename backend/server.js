@@ -103,13 +103,27 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, server-to-server, or Postman)
       if (!origin) return callback(null, true);
+
+      // Normalize origin (remove trailing slashes)
+      const cleanOrigin = origin.replace(/\/+$/, "");
+
+      const isExplicitlyAllowed = allowedOrigins.some(
+        (allowed) => allowed && allowed.replace(/\/+$/, "") === cleanOrigin
+      );
+
+      // Also allow any *.vercel.app domain
+      const isVercelDomain = /^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(cleanOrigin);
+
       if (
-        allowedOrigins.includes(origin) ||
+        isExplicitlyAllowed ||
+        isVercelDomain ||
         process.env.NODE_ENV !== "production"
       ) {
         return callback(null, true);
       }
-      return callback(new Error(`CORS origin ${origin} not allowed`));
+
+      console.warn(`[CORS] Blocked request from origin: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
   })
