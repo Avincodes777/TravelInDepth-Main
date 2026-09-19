@@ -125,19 +125,21 @@ app.use(
         (allowed) => allowed && allowed.replace(/\/+$/, "") === cleanOrigin
       );
 
-      // Also allow any *.vercel.app domain
+      // Also allow any *.vercel.app and *.netlify.app domains
       const isVercelDomain = /^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(cleanOrigin);
+      const isNetlifyDomain = /^https:\/\/[a-zA-Z0-9_-]+\.netlify\.app$/.test(cleanOrigin);
 
       if (
         isExplicitlyAllowed ||
         isVercelDomain ||
+        isNetlifyDomain ||
         process.env.NODE_ENV !== "production"
       ) {
-        return callback(null, true);
+        return callback(null, origin);
       }
 
       console.warn(`[CORS] Blocked request from origin: ${origin}`);
-      return callback(null, false);
+      return callback(new Error("CORS origin not allowed"), false);
     },
     credentials: true,
   })
