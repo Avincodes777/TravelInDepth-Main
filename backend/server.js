@@ -72,7 +72,21 @@ import ecoRoutes from "./routes/ecoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { initEcoBackgroundWorker } from "./services/ecoFeedSync.js";
 
-connectDB();
+import Destination from "./models/Destination.js";
+import { citiesData } from "./seed/citiesData.js";
+
+connectDB().then(async () => {
+  try {
+    const count = await Destination.countDocuments();
+    if (count === 0) {
+      console.log("🌱 Database has 0 destinations. Auto-seeding initial destination catalog...");
+      await Destination.insertMany(citiesData);
+      console.log(`✅ Seeded ${citiesData.length} destinations.`);
+    }
+  } catch (seedErr) {
+    console.warn("⚠️ Destination auto-seed check skipped or encountered error:", seedErr.message);
+  }
+});
 initEcoBackgroundWorker();
 
 const app = express();
