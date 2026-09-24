@@ -39,36 +39,37 @@ function HeroSection() {
         return () => clearInterval(interval);
     }, [vid.length]);
 
-    // Ye effect ensure karega ki sirf CURRENT video hi play ho
+    // Ensure only the active video plays and transitions cleanly
     useEffect(() => {
-        videoRefs.current.forEach((video, index) => {
-            if (video) {
-                if (index === currentIndex) {
-                    video.play().catch(err => console.log("Auto-play blocked", err));
-                } else {
-                    video.pause();
-                    video.currentTime = 0; // Reset video for next time
-                }
-            }
-        });
+        const currentVideo = videoRefs.current[currentIndex];
+        if (currentVideo) {
+            currentVideo.play().catch(err => console.log("Auto-play blocked", err));
+        }
     }, [currentIndex]);
 
     return (
-        <div className='relative w-full h-screen overflow-hidden'>
-            {vid.map((videoPath, index) => (
-                <video
-                    key={index}
-                    ref={(el) => (videoRefs.current[index] = el)} // Har video ko ref se connect kiya
-                    src={videoPath}
-                    loop
-                    muted
-                    playsInline
-                    preload="metadata"
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-                        index === currentIndex ? 'opacity-100' : 'opacity-0'
-                    }`}
-                />
-            ))}
+        <div className='relative w-full h-screen overflow-hidden bg-black'>
+            {vid.map((videoPath, index) => {
+                const isActive = index === currentIndex;
+                const isNext = index === (currentIndex + 1) % vid.length;
+                // Only load media source for current and next upcoming video to save bandwidth
+                const shouldLoad = isActive || isNext;
+
+                return (
+                    <video
+                        key={index}
+                        ref={(el) => (videoRefs.current[index] = el)}
+                        src={shouldLoad ? videoPath : undefined}
+                        loop
+                        muted
+                        playsInline
+                        preload={isActive ? "auto" : isNext ? "metadata" : "none"}
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                            isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
+                    />
+                );
+            })}
 
             {/* Overlay Content */}
             <div className='inset-0 absolute z-10 bg-black/25'>

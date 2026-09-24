@@ -1035,7 +1035,7 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                   Day-by-Day AI Itinerary
                 </h4>
                 {selectedTrip.rawDays.map((d) => (
-                  <div key={d.day} className="bg-white/80 dark:bg-[#18233c] border border-[#E8DCC4] dark:border-[#273857] rounded-2xl p-4 space-y-2">
+                  <div key={d.day} className="bg-white/80 dark:bg-[#18233c] border border-[#E8DCC4] dark:border-[#273857] rounded-2xl p-4 space-y-3">
                     <div className="flex justify-between items-center font-bold text-[#8B1A1A] dark:text-white flex-wrap gap-2">
                       <span className="flex items-center gap-2">
                         <span>Day {d.day} — {d.title}</span>
@@ -1047,11 +1047,60 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                       </span>
                       <span className="text-xs text-[#138808] dark:text-[#4ade80] font-bold">{d.estimatedBudgetINR}</span>
                     </div>
-                    <div className="text-xs text-[#2D1B00]/80 dark:text-[#cbd5e1] space-y-1">
-                      <p><b>🌅 Morning:</b> {d.morning}</p>
-                      <p><b>☀️ Afternoon:</b> {d.afternoon}</p>
-                      <p><b>🌆 Evening:</b> {d.evening}</p>
-                      <p><b>🍛 Meals:</b> {d.meals}</p>
+
+                    {/* Structured Activities */}
+                    {Array.isArray(d.activities) && d.activities.length > 0 ? (
+                      <div className="space-y-2">
+                        {d.activities.map((act, actIdx) => (
+                          <React.Fragment key={actIdx}>
+                            {actIdx > 0 && act.travelFromPrevious && (
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FF6B1A]/10 text-[#FF6B1A] border border-[#FF6B1A]/20">
+                                <span>🚗</span>
+                                <span>
+                                  {act.travelFromPrevious.estimated ? '~' : ''}
+                                  {act.travelFromPrevious.travelMinutes} min · {act.travelFromPrevious.travelKm} km to next stop
+                                </span>
+                                {act.travelFromPrevious.estimated && (
+                                  <span className="opacity-70 text-[9px]">(~est.)</span>
+                                )}
+                              </div>
+                            )}
+                            <div className="bg-[#FFF8F0] dark:bg-[#121a2d] border border-[#E8DCC4] dark:border-[#23324d] rounded-xl p-3 text-xs space-y-1">
+                              <div className="flex items-center justify-between font-bold text-[#8B1A1A] dark:text-white">
+                                <span className="flex items-center gap-1.5">
+                                  {act.time && <span className="text-[10px] bg-[#FF6B1A]/15 text-[#FF6B1A] px-1.5 py-0.5 rounded font-bold">{act.time}</span>}
+                                  <span>{act.placeName}</span>
+                                </span>
+                                {act.estimatedDurationMinutes && (
+                                  <span className="text-[10px] text-[#8B1A1A]/60 dark:text-[#94a3b8]">⏱️ {act.estimatedDurationMinutes}m</span>
+                                )}
+                              </div>
+                              <p className="text-[#2D1B00]/80 dark:text-[#cbd5e1]">{act.activity}</p>
+                              {act.reason && (
+                                <p className="text-[#FF6B1A] dark:text-[#fb923c] italic text-[11px]">
+                                  💡 {act.reason}
+                                </p>
+                              )}
+                              {Boolean(act.lat && act.lng) && (
+                                <p className="text-[10px] text-[#8B1A1A]/50 dark:text-[#94a3b8]">
+                                  📍 {act.lat.toFixed(4)}, {act.lng.toFixed(4)}
+                                </p>
+                              )}
+                            </div>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Legacy Fallback */
+                      <div className="text-xs text-[#2D1B00]/80 dark:text-[#cbd5e1] space-y-1">
+                        {d.morning && <p><b>🌅 Morning:</b> {d.morning}</p>}
+                        {d.afternoon && <p><b>☀️ Afternoon:</b> {d.afternoon}</p>}
+                        {d.evening && <p><b>🌆 Evening:</b> {d.evening}</p>}
+                      </div>
+                    )}
+
+                    <div className="text-xs text-[#2D1B00]/80 dark:text-[#cbd5e1] space-y-1 pt-1 border-t border-[#E8DCC4]/60 dark:border-[#273857]">
+                      {d.meals && <p><b>🍛 Meals:</b> {d.meals}</p>}
                       {d.tips && <p className="text-[#FF6B1A] dark:text-[#fb923c]"><b>💡 Tip:</b> {d.tips}</p>}
                     </div>
                   </div>
@@ -2011,56 +2060,116 @@ const TripPlanner = ({ savedTrips, setSavedTrips }) => {
                 </div>
               </div>
 
-              {/* Day Breakdown Activities */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#FFF8F0] p-4 rounded-2xl border border-[#E8DCC4] space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B1A] flex items-center gap-1">
-                    <span>🌅</span> Morning
-                  </div>
-                  {isEditing ? (
-                    <textarea
-                      rows={3}
-                      value={current.morning}
-                      onChange={(e) => handleDayFieldChange(current.day, 'morning', e.target.value)}
-                      className="w-full bg-white border border-[#E8DCC4] rounded-xl p-2 text-xs text-[#2D1B00] outline-none"
-                    />
-                  ) : (
-                    <p className="text-xs text-[#2D1B00]/80 leading-relaxed">{current.morning}</p>
-                  )}
+              {/* Day Breakdown Activities (Structured activities with fallback) */}
+              {Array.isArray(current.activities) && current.activities.length > 0 ? (
+                <div className="space-y-3">
+                  {current.activities.map((act, actIdx) => (
+                    <React.Fragment key={actIdx}>
+                      {actIdx > 0 && act.travelFromPrevious && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FF6B1A]/10 text-[#FF6B1A] border border-[#FF6B1A]/20 ml-2">
+                          <span>🚗</span>
+                          <span>
+                            {act.travelFromPrevious.estimated ? '~' : ''}
+                            {act.travelFromPrevious.travelMinutes} min · {act.travelFromPrevious.travelKm} km to next stop
+                          </span>
+                          {act.travelFromPrevious.estimated && (
+                            <span className="opacity-70 text-[10px] italic">(~est.)</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="bg-[#FFF8F0] dark:bg-[#18233c] p-4 rounded-2xl border border-[#E8DCC4] dark:border-[#273857] space-y-2">
+                        <div className="flex justify-between items-center font-bold text-[#8B1A1A] dark:text-white flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            {act.time && (
+                              <span className="text-xs bg-[#FF6B1A]/10 dark:bg-[#FF6B1A]/20 text-[#FF6B1A] dark:text-[#fb923c] font-bold px-2 py-0.5 rounded-md border border-[#FF6B1A]/20">
+                                {act.time}
+                              </span>
+                            )}
+                            <span className="text-sm font-serif">{act.placeName}</span>
+                          </div>
+                          {act.estimatedDurationMinutes && (
+                            <span className="text-xs text-[#8B1A1A]/60 dark:text-[#94a3b8]">⏱️ {act.estimatedDurationMinutes} mins</span>
+                          )}
+                        </div>
+                        {isEditing ? (
+                          <textarea
+                            rows={2}
+                            value={act.activity}
+                            onChange={(e) => {
+                              const newActs = [...current.activities];
+                              newActs[actIdx] = { ...newActs[actIdx], activity: e.target.value };
+                              handleDayFieldChange(current.day, 'activities', newActs);
+                            }}
+                            className="w-full bg-white dark:bg-[#121a2d] border border-[#E8DCC4] dark:border-[#273857] rounded-xl p-2 text-xs text-[#2D1B00] dark:text-white outline-none"
+                          />
+                        ) : (
+                          <p className="text-xs text-[#2D1B00]/80 dark:text-[#cbd5e1] leading-relaxed">{act.activity}</p>
+                        )}
+                        {act.reason && (
+                          <div className="text-xs text-[#FF6B1A] dark:text-[#fb923c] italic flex items-center gap-1.5">
+                            <span>💡</span> {act.reason}
+                          </div>
+                        )}
+                        {Boolean(act.lat && act.lng) && (
+                          <div className="text-[10px] text-[#8B1A1A]/40 dark:text-[#94a3b8]">
+                            📍 Coordinates: {act.lat.toFixed(4)}, {act.lng.toFixed(4)}
+                          </div>
+                        )}
+                      </div>
+                    </React.Fragment>
+                  ))}
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-[#FFF8F0] p-4 rounded-2xl border border-[#E8DCC4] space-y-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B1A] flex items-center gap-1">
+                      <span>🌅</span> Morning
+                    </div>
+                    {isEditing ? (
+                      <textarea
+                        rows={3}
+                        value={current.morning || ''}
+                        onChange={(e) => handleDayFieldChange(current.day, 'morning', e.target.value)}
+                        className="w-full bg-white border border-[#E8DCC4] rounded-xl p-2 text-xs text-[#2D1B00] outline-none"
+                      />
+                    ) : (
+                      <p className="text-xs text-[#2D1B00]/80 leading-relaxed">{current.morning}</p>
+                    )}
+                  </div>
 
-                <div className="bg-[#FFF8F0] p-4 rounded-2xl border border-[#E8DCC4] space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B1A] flex items-center gap-1">
-                    <span>☀️</span> Afternoon
+                  <div className="bg-[#FFF8F0] p-4 rounded-2xl border border-[#E8DCC4] space-y-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B1A] flex items-center gap-1">
+                      <span>☀️</span> Afternoon
+                    </div>
+                    {isEditing ? (
+                      <textarea
+                        rows={3}
+                        value={current.afternoon || ''}
+                        onChange={(e) => handleDayFieldChange(current.day, 'afternoon', e.target.value)}
+                        className="w-full bg-white border border-[#E8DCC4] rounded-xl p-2 text-xs text-[#2D1B00] outline-none"
+                      />
+                    ) : (
+                      <p className="text-xs text-[#2D1B00]/80 leading-relaxed">{current.afternoon}</p>
+                    )}
                   </div>
-                  {isEditing ? (
-                    <textarea
-                      rows={3}
-                      value={current.afternoon}
-                      onChange={(e) => handleDayFieldChange(current.day, 'afternoon', e.target.value)}
-                      className="w-full bg-white border border-[#E8DCC4] rounded-xl p-2 text-xs text-[#2D1B00] outline-none"
-                    />
-                  ) : (
-                    <p className="text-xs text-[#2D1B00]/80 leading-relaxed">{current.afternoon}</p>
-                  )}
-                </div>
 
-                <div className="bg-[#FFF8F0] p-4 rounded-2xl border border-[#E8DCC4] space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B1A] flex items-center gap-1">
-                    <span>🌆</span> Evening
+                  <div className="bg-[#FFF8F0] p-4 rounded-2xl border border-[#E8DCC4] space-y-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#FF6B1A] flex items-center gap-1">
+                      <span>🌆</span> Evening
+                    </div>
+                    {isEditing ? (
+                      <textarea
+                        rows={3}
+                        value={current.evening || ''}
+                        onChange={(e) => handleDayFieldChange(current.day, 'evening', e.target.value)}
+                        className="w-full bg-white border border-[#E8DCC4] rounded-xl p-2 text-xs text-[#2D1B00] outline-none"
+                      />
+                    ) : (
+                      <p className="text-xs text-[#2D1B00]/80 leading-relaxed">{current.evening}</p>
+                    )}
                   </div>
-                  {isEditing ? (
-                    <textarea
-                      rows={3}
-                      value={current.evening}
-                      onChange={(e) => handleDayFieldChange(current.day, 'evening', e.target.value)}
-                      className="w-full bg-white border border-[#E8DCC4] rounded-xl p-2 text-xs text-[#2D1B00] outline-none"
-                    />
-                  ) : (
-                    <p className="text-xs text-[#2D1B00]/80 leading-relaxed">{current.evening}</p>
-                  )}
                 </div>
-              </div>
+              )}
 
               {/* Meals & Budget Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

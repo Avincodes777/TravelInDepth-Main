@@ -1494,7 +1494,7 @@ export default function ExperiencePage() {
                       controls={isPlaying}
                       controlsList="nodownload"
                       playsInline
-                      preload="metadata"
+                      preload="none"
                       onClick={() => handleReelToggle(index)}
                       onPause={() => handleNativePause(index)}
                       onEnded={() => setPlayingIndex(null)}

@@ -707,25 +707,107 @@ function PlannerSection({ city }) {
                               {d.estimatedBudgetINR}
                             </span>
                           </div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 15, color: S.textMid, lineHeight: 1.8 }}>
-                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                              <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🌅 Morning:</span>
-                              <span>{d.morning}</span>
+                          {Array.isArray(d.activities) && d.activities.length > 0 ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                              {d.activities.map((act, actIdx) => (
+                                <div key={actIdx}>
+                                  {actIdx > 0 && act.travelFromPrevious && (
+                                    <div style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: 6,
+                                      padding: "3px 12px",
+                                      borderRadius: 50,
+                                      background: "rgba(255, 107, 26, 0.12)",
+                                      border: "1px dashed rgba(255, 107, 26, 0.3)",
+                                      fontSize: 11.5,
+                                      fontWeight: 600,
+                                      color: S.orange,
+                                      marginBottom: 8,
+                                      marginLeft: 12
+                                    }}>
+                                      <span>🚗</span>
+                                      <span>
+                                        {act.travelFromPrevious.estimated ? '~' : ''}
+                                        {act.travelFromPrevious.travelMinutes} min · {act.travelFromPrevious.travelKm} km to next stop
+                                      </span>
+                                      {act.travelFromPrevious.estimated && (
+                                        <span style={{ fontSize: 10, opacity: 0.7 }}>(~est.)</span>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div style={{
+                                    background: S.cardBg,
+                                    border: `1px solid ${S.borderLight}`,
+                                    borderRadius: 14,
+                                    padding: "16px 20px",
+                                    boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
+                                  }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        {act.time && (
+                                          <span style={{ fontSize: 11, fontWeight: 800, color: S.orange, background: "rgba(255,107,26,0.12)", padding: "2px 8px", borderRadius: 6 }}>
+                                            {act.time}
+                                          </span>
+                                        )}
+                                        <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: S.darkBrown }}>
+                                          {act.placeName}
+                                        </span>
+                                      </div>
+                                      {act.estimatedDurationMinutes && (
+                                        <span style={{ fontSize: 11.5, color: S.textMid, opacity: 0.8 }}>⏱️ {act.estimatedDurationMinutes} mins</span>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: 14, color: S.textMid, lineHeight: 1.6, marginBottom: 6 }}>
+                                      {act.activity}
+                                    </div>
+                                    {act.reason && (
+                                      <div style={{ fontSize: 12.5, color: S.gold, fontStyle: "italic", display: "flex", alignItems: "center", gap: 6 }}>
+                                        <span>💡</span>
+                                        <span>{act.reason}</span>
+                                      </div>
+                                    )}
+                                    {Boolean(act.lat && act.lng) && (
+                                      <div style={{ fontSize: 11, color: S.textMid, opacity: 0.5, marginTop: 4 }}>
+                                        📍 Coordinates: {act.lat.toFixed(4)}, {act.lng.toFixed(4)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                              <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>☀️ Afternoon:</span>
-                              <span>{d.afternoon}</span>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 15, color: S.textMid, lineHeight: 1.8 }}>
+                              {d.morning && (
+                                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                                  <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🌅 Morning:</span>
+                                  <span>{d.morning}</span>
+                                </div>
+                              )}
+                              {d.afternoon && (
+                                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                                  <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>☀️ Afternoon:</span>
+                                  <span>{d.afternoon}</span>
+                                </div>
+                              )}
+                              {d.evening && (
+                                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                                  <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🌆 Evening:</span>
+                                  <span>{d.evening}</span>
+                                </div>
+                              )}
                             </div>
-                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                              <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🌆 Evening:</span>
-                              <span>{d.evening}</span>
-                            </div>
-                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                              <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🍛 Meals:</span>
-                              <span>{d.meals}</span>
-                            </div>
+                          )}
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: S.textMid, marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${S.borderLight}` }}>
+                            {d.meals && (
+                              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                                <span style={{ fontWeight: 800, color: S.darkBrown, flexShrink: 0 }}>🍛 Meals:</span>
+                                <span>{d.meals}</span>
+                              </div>
+                            )}
                             {d.tips && (
-                              <div style={{ marginTop: 10, padding: "14px 18px", background: S.chipBg, borderLeft: `4px solid ${S.orange}`, borderRadius: 10, fontSize: 14, color: S.textMid, border: `1px solid ${S.borderLight}`, borderLeftWidth: 4 }}>
+                              <div style={{ padding: "10px 14px", background: S.chipBg, borderLeft: `4px solid ${S.orange}`, borderRadius: 8, fontSize: 13, color: S.textMid, border: `1px solid ${S.borderLight}`, borderLeftWidth: 4 }}>
                                 <b>💡 Insider Tip:</b> {d.tips}
                               </div>
                             )}

@@ -282,7 +282,28 @@ const css = `
 .atp-day-block{display:flex;gap:16px;margin-bottom:14px;}
 .atp-day-block-label{width:96px;flex-shrink:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(245,166,35,.7);padding-top:2px;}
 .atp-day-tip{margin-top:18px;padding:14px 18px;background:rgba(255,107,26,.08);border:1px solid rgba(255,107,26,.2);border-radius:10px;font-size:13px;color:rgba(253,246,236,.75);}
-.atp-day-tip b{color:#F5A623;}
+.atp-activities-list{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.atp-activity-card{
+  background:rgba(253,246,236,.04);border:1px solid rgba(245,166,35,.15);
+  border-radius:12px;padding:14px 16px;transition:border-color .2s;
+}
+.atp-activity-card:hover{border-color:rgba(255,107,26,.3);}
+.atp-activity-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.atp-activity-time{font-size:11px;font-weight:700;color:#FF6B1A;background:rgba(255,107,26,.15);padding:2px 8px;border-radius:6px;letter-spacing:.05em;}
+.atp-activity-place{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#FDF6EC;}
+.atp-activity-dur{font-size:11px;color:rgba(253,246,236,.5);}
+.atp-activity-desc{font-size:13px;color:rgba(253,246,236,.85);margin-bottom:6px;line-height:1.6;}
+.atp-activity-reason{font-size:12px;color:#F5A623;font-style:italic;opacity:.9;display:flex;align-items:center;gap:6px;}
+.atp-activity-geo{font-size:10px;color:rgba(253,246,236,.4);margin-top:4px;}
+.atp-transit-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,107,26,.12);border:1px dashed rgba(255,107,26,.3);
+  padding:4px 12px;border-radius:99px;font-size:11px;font-weight:600;
+  color:#FFB347;margin:4px 0 10px 14px;
+}
+.atp-transit-badge .atp-transit-est{
+  font-size:10px;color:rgba(253,246,236,.55);font-style:italic;font-weight:400;margin-left:4px;
+}
 
 .atp-res-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
 .atp-act-btn{
@@ -784,47 +805,121 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
               </button>
             </div>
 
-            <div className="atp-day-block">
-              <div className="atp-day-block-label">Morning</div>
-              {isEditing ? (
-                <textarea
-                  className="atp-select"
-                  rows={2}
-                  value={current.morning}
-                  onChange={(e) => handleDayFieldChange(current.day, 'morning', e.target.value)}
-                />
-              ) : (
-                <div>{current.morning}</div>
-              )}
-            </div>
+            {/* Structured Activities (with reason, coordinates & travel times) */}
+            {Array.isArray(current.activities) && current.activities.length > 0 ? (
+              <div className="atp-activities-list">
+                {current.activities.map((act, actIdx) => (
+                  <React.Fragment key={actIdx}>
+                    {actIdx > 0 && act.travelFromPrevious && (
+                      <div className="atp-transit-badge">
+                        <span>🚗</span>
+                        <span>
+                          {act.travelFromPrevious.estimated ? '~' : ''}
+                          {act.travelFromPrevious.travelMinutes} min · {act.travelFromPrevious.travelKm} km to next stop
+                        </span>
+                        {act.travelFromPrevious.estimated && (
+                          <span
+                            className="atp-transit-est"
+                            title="Estimated based on road distance — live routing unavailable"
+                          >
+                            (~est.)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="atp-activity-card">
+                      <div className="atp-activity-top">
+                        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                          {act.time && <span className="atp-activity-time">{act.time}</span>}
+                          <span className="atp-activity-place">{act.placeName}</span>
+                        </div>
+                        {act.estimatedDurationMinutes && (
+                          <span className="atp-activity-dur">⏱️ {act.estimatedDurationMinutes} mins</span>
+                        )}
+                      </div>
+                      <div className="atp-activity-desc">
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            className="atp-select"
+                            value={act.activity}
+                            onChange={(e) => {
+                              const newActs = [...current.activities];
+                              newActs[actIdx] = { ...newActs[actIdx], activity: e.target.value };
+                              handleDayFieldChange(current.day, 'activities', newActs);
+                            }}
+                          />
+                        ) : (
+                          act.activity
+                        )}
+                      </div>
+                      {act.reason && (
+                        <div className="atp-activity-reason">
+                          <span>💡</span>
+                          <span>{act.reason}</span>
+                        </div>
+                      )}
+                      {Boolean(act.lat && act.lng) && (
+                        <div className="atp-activity-geo">
+                          📍 Coordinates: {act.lat.toFixed(4)}, {act.lng.toFixed(4)}
+                        </div>
+                      )}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              /* Backward Compatibility: Legacy Morning / Afternoon / Evening view */
+              <>
+                {(current.morning || isEditing) && (
+                  <div className="atp-day-block">
+                    <div className="atp-day-block-label">Morning</div>
+                    {isEditing ? (
+                      <textarea
+                        className="atp-select"
+                        rows={2}
+                        value={current.morning || ''}
+                        onChange={(e) => handleDayFieldChange(current.day, 'morning', e.target.value)}
+                      />
+                    ) : (
+                      <div>{current.morning}</div>
+                    )}
+                  </div>
+                )}
 
-            <div className="atp-day-block">
-              <div className="atp-day-block-label">Afternoon</div>
-              {isEditing ? (
-                <textarea
-                  className="atp-select"
-                  rows={2}
-                  value={current.afternoon}
-                  onChange={(e) => handleDayFieldChange(current.day, 'afternoon', e.target.value)}
-                />
-              ) : (
-                <div>{current.afternoon}</div>
-              )}
-            </div>
+                {(current.afternoon || isEditing) && (
+                  <div className="atp-day-block">
+                    <div className="atp-day-block-label">Afternoon</div>
+                    {isEditing ? (
+                      <textarea
+                        className="atp-select"
+                        rows={2}
+                        value={current.afternoon || ''}
+                        onChange={(e) => handleDayFieldChange(current.day, 'afternoon', e.target.value)}
+                      />
+                    ) : (
+                      <div>{current.afternoon}</div>
+                    )}
+                  </div>
+                )}
 
-            <div className="atp-day-block">
-              <div className="atp-day-block-label">Evening</div>
-              {isEditing ? (
-                <textarea
-                  className="atp-select"
-                  rows={2}
-                  value={current.evening}
-                  onChange={(e) => handleDayFieldChange(current.day, 'evening', e.target.value)}
-                />
-              ) : (
-                <div>{current.evening}</div>
-              )}
-            </div>
+                {(current.evening || isEditing) && (
+                  <div className="atp-day-block">
+                    <div className="atp-day-block-label">Evening</div>
+                    {isEditing ? (
+                      <textarea
+                        className="atp-select"
+                        rows={2}
+                        value={current.evening || ''}
+                        onChange={(e) => handleDayFieldChange(current.day, 'evening', e.target.value)}
+                      />
+                    ) : (
+                      <div>{current.evening}</div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             <div className="atp-day-block">
               <div className="atp-day-block-label">Meals</div>

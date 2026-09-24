@@ -1,15 +1,39 @@
 import mongoose from "mongoose";
 
+const travelInfoSchema = new mongoose.Schema(
+  {
+    travelMinutes: { type: Number },
+    travelKm: { type: Number },
+    estimated: { type: Boolean, default: false }
+  },
+  { _id: false }
+);
+
+const activitySchema = new mongoose.Schema(
+  {
+    time: { type: String },
+    placeName: { type: String, required: true },
+    activity: { type: String, required: true },
+    reason: { type: String },
+    estimatedDurationMinutes: { type: Number, default: 120 },
+    lat: { type: Number, default: 0 },
+    lng: { type: Number, default: 0 },
+    travelFromPrevious: { type: travelInfoSchema, default: null },
+  },
+  { _id: false }
+);
+
 const dayPlanSchema = new mongoose.Schema(
   {
     day: { type: Number, required: true },
     city: { type: String, default: "" },
     title: { type: String, required: true },
-    morning: { type: String, required: true },
-    afternoon: { type: String, required: true },
-    evening: { type: String, required: true },
-    meals: { type: String, required: true },
-    estimatedBudgetINR: { type: String, required: true },
+    activities: { type: [activitySchema], default: [] },
+    morning: { type: String },
+    afternoon: { type: String },
+    evening: { type: String },
+    meals: { type: String, default: "" },
+    estimatedBudgetINR: { type: String, default: "" },
     tips: { type: String },
   },
   { _id: false }

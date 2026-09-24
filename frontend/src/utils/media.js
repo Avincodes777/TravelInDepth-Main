@@ -44,7 +44,7 @@ export function getMediaUrl(localPath, options = {}) {
   if (localPath.startsWith("http://") || localPath.startsWith("https://")) {
     if (optimize && localPath.includes("res.cloudinary.com")) {
       const isVideo = /\.(mp4|webm|mov|mkv|avi)(\?.*)?$/i.test(localPath) || localPath.includes("/video/upload/");
-      const defaultTransform = isVideo ? "f_auto,q_auto" : "f_auto,q_auto";
+      const defaultTransform = isVideo ? "f_auto,q_auto:eco,w_1280,vc_auto" : "f_auto,q_auto:eco,w_1280,c_limit";
       return applyCloudinaryTransformations(localPath, transformations || defaultTransform);
     }
     return localPath;
@@ -65,7 +65,7 @@ export function getMediaUrl(localPath, options = {}) {
       /\.(mp4|webm|mov|mkv|avi)$/i.test(normalizedKey) ||
       rawUrl.includes("/video/upload/");
 
-    const defaultTransform = isVideo ? "f_auto,q_auto" : "f_auto,q_auto";
+    const defaultTransform = isVideo ? "f_auto,q_auto:eco,w_1280,vc_auto" : "f_auto,q_auto:eco,w_1280,c_limit";
     const appliedTransform = transformations || defaultTransform;
 
     return applyCloudinaryTransformations(rawUrl, appliedTransform);

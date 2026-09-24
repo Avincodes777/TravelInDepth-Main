@@ -1,5 +1,8 @@
 import Itinerary from "../models/Itinerary.js";
 import { createNotification } from "../utils/createNotification.js";
+import { getRouteDuration } from "../services/routingService.js";
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const GEMINI_API_MODELS = [
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
@@ -92,13 +95,43 @@ Local Food Specialities: ${foodStr || "Authentic regional dishes"}
 
 CRITICAL RULES:
 1. Do not output generic placeholders. Use real, specific, famous monument, fort, bazaar, and food names in ${targetPlace}.
-2. Respond with ONLY valid JSON, no markdown code fences.
+2. Every placeName, lat, and lng must come directly from authentic destination landmark data — never invented.
+3. Respond with ONLY valid JSON, no markdown code fences.
 
 Shape:
 {
   "day": ${dayNumber},
   ${city ? `"city": "${city}",` : ""}
   "title": "Specific day theme with real place names in ${targetPlace}",
+  "activities": [
+    {
+      "time": "09:00",
+      "placeName": "Real prominent landmark in ${targetPlace}",
+      "activity": "Specific morning landmark activity with timing",
+      "reason": "Why this fits the itinerary (1 concise sentence)",
+      "estimatedDurationMinutes": 120,
+      "lat": ${destData?.coordinates?.lat || 0},
+      "lng": ${destData?.coordinates?.lng || 0}
+    },
+    {
+      "time": "13:30",
+      "placeName": "Real afternoon sight or artisan bazaar in ${targetPlace}",
+      "activity": "Specific afternoon cultural or artisan discovery",
+      "reason": "Why this fits the itinerary (1 concise sentence)",
+      "estimatedDurationMinutes": 90,
+      "lat": ${destData?.coordinates?.lat || 0},
+      "lng": ${destData?.coordinates?.lng || 0}
+    },
+    {
+      "time": "17:30",
+      "placeName": "Real sunset or evening highlight in ${targetPlace}",
+      "activity": "Specific sunset/night experience and dinner",
+      "reason": "Why this fits the itinerary (1 concise sentence)",
+      "estimatedDurationMinutes": 120,
+      "lat": ${destData?.coordinates?.lat || 0},
+      "lng": ${destData?.coordinates?.lng || 0}
+    }
+  ],
   "morning": "Specific morning landmark activity with timing",
   "afternoon": "Specific afternoon sight, artisan market, and lunch recommendation",
   "evening": "Specific sunset/night experience and dinner",
@@ -126,10 +159,42 @@ Shape:
       const act = activities[(dayNumber + 1) % (activities.length || 1)] || `Guided walking tour through ${targetPlace} old quarters`;
       const gem = hiddenGems[(dayNumber + 1) % (hiddenGems.length || 1)] || `Scenic viewpoints of ${targetPlace}`;
 
+      const fallbackLat = destData?.coordinates?.lat || 0;
+      const fallbackLng = destData?.coordinates?.lng || 0;
+
       dayPlan = {
         day: Number(dayNumber),
         ...(city ? { city } : {}),
         title: `${a1}, ${a2} & Local Wonders`,
+        activities: [
+          {
+            time: "09:00",
+            placeName: a1,
+            activity: `Start your day early at ${a1} to enjoy quiet morning light.`,
+            reason: `Great time for calm exploration and photography in ${targetPlace}.`,
+            estimatedDurationMinutes: 120,
+            lat: fallbackLat,
+            lng: fallbackLng,
+          },
+          {
+            time: "13:30",
+            placeName: a2,
+            activity: `Afternoon visit to ${a2} and local craft spots after savoring ${f1}.`,
+            reason: `Experience local crafts and regional gastronomy.`,
+            estimatedDurationMinutes: 90,
+            lat: fallbackLat,
+            lng: fallbackLng,
+          },
+          {
+            time: "17:30",
+            placeName: act || gem,
+            activity: `Experience ${act} around ${gem} followed by traditional dinner.`,
+            reason: `Perfect evening sunset and regional dinner.`,
+            estimatedDurationMinutes: 120,
+            lat: fallbackLat,
+            lng: fallbackLng,
+          },
+        ],
         morning: `Start your day at ${a1} early in the morning to beat crowds and enjoy serene morning light.`,
         afternoon: `Enjoy lunch savoring ${f1}, then discover local art and architecture around ${a2}.`,
         evening: `Experience ${act}, followed by sunset vistas near ${gem} and traditional dinner.`,
@@ -137,6 +202,20 @@ Shape:
         estimatedBudgetINR: "₹2,000 - ₹3,500",
         tips: destData?.tips?.[0]?.desc || `Engage with licensed local guides for deeper storytelling in ${targetPlace}.`,
       };
+    }
+
+    if (dayPlan && Array.isArray(dayPlan.activities) && dayPlan.activities.length > 1) {
+      for (let i = 1; i < dayPlan.activities.length; i++) {
+        const prev = dayPlan.activities[i - 1];
+        const curr = dayPlan.activities[i];
+        if (prev && curr && prev.lat && prev.lng && curr.lat && curr.lng) {
+          const route = await getRouteDuration(prev.lat, prev.lng, curr.lat, curr.lng);
+          if (route) {
+            curr.travelFromPrevious = route;
+          }
+          await delay(120);
+        }
+      }
     }
 
     res.status(200).json(dayPlan);
