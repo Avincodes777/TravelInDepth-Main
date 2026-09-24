@@ -781,13 +781,21 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
     return () => { isMounted = false; };
   }, []);
 
-  const handleDeleteBackendTrip = async (id, e) => {
+  const handleDeleteTrip = async (trip, e) => {
     e.stopPropagation();
     if (!window.confirm("Are you sure you want to delete this itinerary?")) return;
+    const tripId = trip._id || trip.id;
     try {
-      await plannerApi.deleteItinerary(id);
-      setBackendTrips(prev => prev.filter(t => t._id !== id));
-      if (selectedTrip?._id === id) setSelectedTrip(null);
+      if (trip._id) {
+        await plannerApi.deleteItinerary(trip._id);
+        setBackendTrips(prev => prev.filter(t => t._id !== trip._id));
+      }
+      if (setSavedTrips) {
+        setSavedTrips(prev => prev.filter(t => (t._id || t.id) !== tripId));
+      }
+      if ((selectedTrip?._id || selectedTrip?.id) === tripId) {
+        setSelectedTrip(null);
+      }
     } catch (err) {
       alert("Failed to delete itinerary: " + err.message);
     }
@@ -826,7 +834,18 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
     };
   });
 
-  const allDisplayTrips = [...formattedBackendTrips, ...savedTrips].filter(
+  // Deduplicate display trips by id/_id so newly saved trips aren't duplicated
+  const seenTripIds = new Set();
+  const combinedTrips = [];
+  for (const t of [...formattedBackendTrips, ...savedTrips]) {
+    const key = t._id || t.id;
+    if (key && !seenTripIds.has(key)) {
+      seenTripIds.add(key);
+      combinedTrips.push(t);
+    }
+  }
+
+  const allDisplayTrips = combinedTrips.filter(
     (trip) => trip.status === tab
   );
 
@@ -913,7 +932,7 @@ const MyTrips = ({ savedTrips = [], setSavedTrips }) => {
                     </div>
                     {trip.isAiGenerated && (
                       <button
-                        onClick={(e) => handleDeleteBackendTrip(trip._id, e)}
+                        onClick={(e) => handleDeleteTrip(trip, e)}
                         title="Delete Itinerary"
                         className="absolute top-4 right-4 p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-all shadow-md cursor-pointer"
                       >
@@ -1412,8 +1431,10 @@ const TripPlanner = ({ savedTrips, setSavedTrips }) => {
   const regenerateDay = async (dayNumber) => {
     setRegenDay(dayNumber);
     try {
+      const targetDayObj = itinerary?.days?.find(d => d.day === dayNumber);
       const newDay = await plannerApi.regenerateDay({
         destination: itinerary.destination,
+        city: targetDayObj?.city || undefined,
         dayNumber,
         totalDays: itinerary.days.length,
       });
@@ -1422,7 +1443,7 @@ const TripPlanner = ({ savedTrips, setSavedTrips }) => {
         days: prev.days.map(d => d.day === dayNumber ? newDay : d),
       }));
     } catch (err) {
-      alert('Could not regenerate day. Please try again.');
+      alert(err?.message || 'Could not regenerate day. Please try again.');
     } finally {
       setRegenDay(null);
     }

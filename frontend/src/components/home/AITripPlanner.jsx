@@ -455,8 +455,10 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
   const regenerateDay = async (dayNumber) => {
     setRegenDay(dayNumber);
     try {
+      const targetDayObj = itinerary?.days?.find(d => d.day === dayNumber);
       const newDay = await plannerApi.regenerateDay({
         destination: itinerary.destination,
+        city: targetDayObj?.city || undefined,
         dayNumber,
         totalDays: itinerary.days.length,
       });
@@ -465,7 +467,7 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
         days: prev.days.map(d => d.day === dayNumber ? newDay : d),
       }));
     } catch (err) {
-      setError('Could not regenerate that day. Please try again.');
+      setError(err.message || 'Could not regenerate that day. Please try again.');
     } finally {
       setRegenDay(null);
     }
