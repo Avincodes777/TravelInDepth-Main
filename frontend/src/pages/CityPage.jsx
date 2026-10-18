@@ -496,34 +496,83 @@ function PlannerSection({ city }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [days, setDays] = useState(3);
-  const [style, setStyle] = useState("Couple / Honeymoon");
+  const [style, setStyle] = useState("cultural");
   const [budget, setBudget] = useState("mid-range");
+  const [interests, setInterests] = useState(["Heritage", "Food & Cuisine"]);
   const [itinerary, setItinerary] = useState(null);
+  const [activeDay, setActiveDay] = useState(1);
+  const [isEditing, setIsEditing] = useState(false);
+  const [regenDay, setRegenDay] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const interestOptions = [
+    { icon: "🏛️", label: "Heritage" },
+    { icon: "🍛", label: "Food & Cuisine" },
+    { icon: "📸", label: "Photography" },
+    { icon: "🌿", label: "Nature & Eco" },
+    { icon: "🏄", label: "Adventure" },
+    { icon: "🎭", label: "Culture" },
+    { icon: "🧘", label: "Wellness" },
+    { icon: "🎨", label: "Arts & Craft" },
+  ];
+
+  const toggleInterest = (label) => {
+    setInterests((prev) =>
+      prev.includes(label) ? prev.filter((i) => i !== label) : [...prev, label]
+    );
+  };
 
   const generate = async () => {
     setLoading(true);
     setItinerary(null);
     setError(null);
     setSavedSuccess(false);
+    setIsEditing(false);
     try {
       const data = await plannerApi.generateItinerary({
         destination: city.name,
         days: days,
         budget: budget,
         travelStyle: style,
-        interests: "Sightseeing, Local Food, Culture",
+        interests: interests.join(", "),
       });
       setItinerary(data);
+      setActiveDay(1);
     } catch (err) {
       console.error("Planner generation failed:", err);
       setError(err.message || "Failed to generate itinerary. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const regenerateDay = async (dayNumber) => {
+    setRegenDay(dayNumber);
+    try {
+      const newDay = await plannerApi.regenerateDay({
+        destination: city.name,
+        dayNumber,
+        totalDays: itinerary?.days?.length || days,
+      });
+      setItinerary((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => (d.day === dayNumber ? newDay : d)),
+      }));
+    } catch (err) {
+      alert(err.message || "Could not regenerate that day. Please try again.");
+    } finally {
+      setRegenDay(null);
+    }
+  };
+
+  const handleDayFieldChange = (dayNumber, field, value) => {
+    setItinerary((prev) => ({
+      ...prev,
+      days: prev.days.map((d) => (d.day === dayNumber ? { ...d, [field]: value } : d)),
+    }));
   };
 
   const handleSave = async () => {
@@ -584,89 +633,180 @@ function PlannerSection({ city }) {
             )}
           </div>
           {/* Controls */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 32,
-            padding: "36px 36px 28px",
-            alignItems: "start",
-          }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>NUMBER OF DAYS</span>
-                <span style={{ background: S.orange, color: "white", fontSize: 13, fontWeight: 700, borderRadius: 50, padding: "4px 16px" }}>{days} Days</span>
+          <div style={{ padding: "36px 36px 24px", display: "flex", flexDirection: "column", gap: 28 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 28 }}>
+              {/* Days Slider */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>
+                    TRIP DURATION
+                  </span>
+                  <span style={{ background: S.orange, color: "white", fontSize: 13, fontWeight: 700, borderRadius: 50, padding: "3px 14px" }}>
+                    {days} {days === 1 ? "Day" : "Days"}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={7}
+                  value={days}
+                  onChange={(e) => setDays(+e.target.value)}
+                  style={{ width: "100%", accentColor: S.orange, cursor: "pointer", marginTop: 4 }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: S.textMuted }}>
+                  <span>1 Day</span>
+                  <span>4 Days</span>
+                  <span>7 Days</span>
+                </div>
               </div>
-              <input type="range" min={1} max={7} value={days} onChange={e => setDays(+e.target.value)}
-                style={{ width: "100%", accentColor: S.orange, cursor: "pointer", marginTop: 6 }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: S.textMuted }}>
-                <span>1 Day</span><span>7 Days</span>
+
+              {/* Travel Style */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>
+                  TRAVEL STYLE
+                </div>
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    border: `1.5px solid ${S.border}`,
+                    fontSize: 14,
+                    fontFamily: "'DM Sans', sans-serif",
+                    background: S.chipBg,
+                    color: S.darkBrown,
+                    cursor: "pointer",
+                    outline: "none",
+                    fontWeight: 600,
+                  }}
+                >
+                  <option value="cultural">Cultural Immersion 🏛️</option>
+                  <option value="adventure">Adventure & Outdoors 🧗</option>
+                  <option value="luxury">Luxury & Leisure 👑</option>
+                  <option value="family">Family-Friendly 👨‍👩‍👧‍👦</option>
+                  <option value="solo">Solo Explorer 🎒</option>
+                  <option value="romantic">Couple / Honeymoon 💑</option>
+                </select>
+              </div>
+
+              {/* Budget */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>
+                  BUDGET TIER
+                </div>
+                <select
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    border: `1.5px solid ${S.border}`,
+                    fontSize: 14,
+                    fontFamily: "'DM Sans', sans-serif",
+                    background: S.chipBg,
+                    color: S.darkBrown,
+                    cursor: "pointer",
+                    outline: "none",
+                    fontWeight: 600,
+                  }}
+                >
+                  <option value="budget">Budget (₹2,000–4,000/day) 💰</option>
+                  <option value="mid-range">Mid-Range (₹5,000–10,000/day) 💳</option>
+                  <option value="luxury">Luxury (₹15,000+/day) 👑</option>
+                </select>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>TRAVEL STYLE</div>
-              <select value={style} onChange={e => setStyle(e.target.value)} style={{
-                width: "100%", padding: "13px 16px", borderRadius: 12, border: `1.5px solid ${S.border}`,
-                fontSize: 14, fontFamily: "'DM Sans', sans-serif", background: S.chipBg,
-                color: S.darkBrown, cursor: "pointer", outline: "none", fontWeight: 500,
-              }}>
-                {["Couple / Honeymoon", "Solo Explorer", "Family with Kids", "Friends Group", "Cultural Enthusiast"].map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted }}>BUDGET LEVEL</div>
-              <select value={budget} onChange={e => setBudget(e.target.value)} style={{
-                width: "100%", padding: "13px 16px", borderRadius: 12, border: `1.5px solid ${S.border}`,
-                fontSize: 14, fontFamily: "'DM Sans', sans-serif", background: S.chipBg,
-                color: S.darkBrown, cursor: "pointer", outline: "none", fontWeight: 500,
-              }}>
-                <option value="budget">Budget (₹2,000–4,000/day) 💰</option>
-                <option value="mid-range">Mid-range (₹5,000–10,000/day) 💳</option>
-                <option value="luxury">Luxury (₹15,000+/day) 👑</option>
-              </select>
+
+            {/* Interest Chips */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: S.textMuted, marginBottom: 10 }}>
+                PERSONALIZED INTERESTS
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {interestOptions.map(({ icon, label }) => {
+                  const sel = interests.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleInterest(label)}
+                      style={{
+                        padding: "7px 16px",
+                        borderRadius: 50,
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        border: `1px solid ${sel ? S.orange : S.border}`,
+                        background: sel ? "rgba(255, 107, 26, 0.15)" : S.chipBg,
+                        color: sel ? S.orange : S.darkBrown,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <span>{icon}</span>
+                      <span>{label}</span>
+                      {sel && <span style={{ fontSize: 10 }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-          <div style={{ padding: "0 36px 44px", textAlign: "center" }}>
-            <button onClick={generate} disabled={loading} style={{
-              background: loading ? "#ccc" : S.orange, color: "white", border: "none", borderRadius: 50,
-              padding: "16px 48px", fontSize: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-              display: "inline-flex", alignItems: "center", gap: 10, boxShadow: "0 8px 24px rgba(255,107,26,0.35)",
-              transition: "transform 0.2s ease",
-            }}>
-              {loading ? "⏳ Crafting Itinerary with AI…" : "✦ Generate My Itinerary"}
+
+          {/* Action Button */}
+          <div style={{ padding: "0 36px 36px", textAlign: "center" }}>
+            <button
+              onClick={generate}
+              disabled={loading}
+              style={{
+                background: loading ? "#ccc" : S.orange,
+                color: "white",
+                border: "none",
+                borderRadius: 50,
+                padding: "16px 48px",
+                fontSize: 15.5,
+                fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                boxShadow: "0 8px 24px rgba(255,107,26,0.35)",
+                transition: "transform 0.2s ease",
+              }}
+            >
+              {loading ? "⏳ Crafting Authentic Itinerary with AI…" : `✦ Generate ${days}-Day Itinerary for ${city.name}`}
             </button>
 
             {error && (
-              <div style={{ marginTop: 24, color: "#c0392b", fontSize: 14, background: "#fde8e8", padding: "14px 24px", borderRadius: 12, display: "inline-block" }}>
+              <div style={{ marginTop: 20, color: "#c0392b", fontSize: 14, background: "#fde8e8", padding: "12px 20px", borderRadius: 12, display: "inline-block" }}>
                 ⚠️ {error}
               </div>
             )}
 
-            {itinerary && (itinerary.days || Array.isArray(itinerary)) && (() => {
-              const daysList = itinerary.days || itinerary;
-              const isFallback = Boolean(itinerary.isFallback);
-              return (
-                <div style={{ marginTop: 44, textAlign: "left", borderTop: `1.5px solid ${S.border}`, paddingTop: 36 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                      <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, color: S.darkBrown, margin: 0, fontWeight: 800 }}>
-                        Your {daysList.length}-Day {city.name} Itinerary
+            {/* Results Display */}
+            {itinerary && current && (
+              <div style={{ marginTop: 40, textAlign: "left", borderTop: `1.5px solid ${S.border}`, paddingTop: 32 }}>
+                {/* Result header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, color: S.darkBrown, margin: 0, fontWeight: 800 }}>
+                        Your {itinerary.days.length}-Day Expedition: {itinerary.destination}
                       </h3>
-                      {isFallback && (
-                        <span style={{
-                          padding: "5px 16px",
-                          background: "rgba(255,107,26,0.1)",
-                          border: "1px solid rgba(255,107,26,0.25)",
-                          borderRadius: 50,
-                          fontSize: 12.5,
-                          fontWeight: 700,
-                          color: S.orange,
-                        }}>
-                          ✦ Curated Pick
+                      {itinerary.isFallback && (
+                        <span style={{ padding: "4px 14px", background: "rgba(255,107,26,0.12)", border: "1px solid rgba(255,107,26,0.3)", borderRadius: 50, fontSize: 12, fontWeight: 700, color: S.orange }}>
+                          ✦ Curated Authentic Route
                         </span>
                       )}
                     </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                     <button
                       onClick={handleSave}
                       disabled={saving}
@@ -675,150 +815,290 @@ function PlannerSection({ city }) {
                         color: "white",
                         border: "none",
                         borderRadius: 50,
-                        padding: "12px 28px",
-                        fontSize: 13.5,
+                        padding: "10px 24px",
+                        fontSize: 13,
                         fontWeight: 700,
                         cursor: saving ? "not-allowed" : "pointer",
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: 8,
+                        gap: 7,
                         boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
                         transition: "all 0.25s ease",
                       }}
                     >
-                      {savedSuccess ? "✓ Saved to My Dashboard!" : saving ? "Saving…" : "💾 Save This Trip"}
+                      {savedSuccess ? "✓ Saved to My Dashboard!" : saving ? "Saving…" : "💾 Save Trip"}
                     </button>
                   </div>
-                  <div style={{ display: "grid", gap: 28 }}>
-                    {daysList.map(d => {
-                      // Clean title to strip duplicate "Day 1:" prefixes from AI output if present
-                      const cleanTitle = (d.title || "")
-                        .replace(new RegExp(`^Day\\s*${d.day}\\s*:\\s*`, "i"), "")
-                        .replace(/^Day\s*\d+\s*:\s*/i, "")
-                        .trim();
+                </div>
 
-                      return (
-                        <div key={d.day} style={{ background: S.cardAlt, border: `1.5px solid ${S.border}`, borderRadius: 20, padding: "32px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12, borderBottom: `1px solid ${S.borderLight}`, paddingBottom: 16 }}>
-                            <h4 style={{ fontFamily: "'Playfair Display', serif", color: S.orange, fontSize: 20, fontWeight: 800, margin: 0 }}>
-                              Day {d.day}: {cleanTitle || `Exploring ${city.name}`}
-                            </h4>
-                            <span style={{ fontSize: 13.5, color: "#138808", fontWeight: 800, background: "rgba(34, 197, 94, 0.15)", border: "1px solid rgba(34, 197, 94, 0.3)", padding: "5px 14px", borderRadius: 50 }}>
-                              {d.estimatedBudgetINR}
-                            </span>
-                          </div>
-                          {Array.isArray(d.activities) && d.activities.length > 0 ? (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                              {d.activities.map((act, actIdx) => (
-                                <div key={actIdx}>
-                                  {actIdx > 0 && act.travelFromPrevious && (
-                                    <div style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: 6,
-                                      padding: "3px 12px",
-                                      borderRadius: 50,
-                                      background: "rgba(255, 107, 26, 0.12)",
-                                      border: "1px dashed rgba(255, 107, 26, 0.3)",
-                                      fontSize: 11.5,
-                                      fontWeight: 600,
-                                      color: S.orange,
-                                      marginBottom: 8,
-                                      marginLeft: 12
-                                    }}>
-                                      <span>🚗</span>
-                                      <span>
-                                        {act.travelFromPrevious.estimated ? '~' : ''}
-                                        {act.travelFromPrevious.travelMinutes} min · {act.travelFromPrevious.travelKm} km to next stop
-                                      </span>
-                                      {act.travelFromPrevious.estimated && (
-                                        <span style={{ fontSize: 10, opacity: 0.7 }}>(~est.)</span>
-                                      )}
-                                    </div>
-                                  )}
-                                  <div style={{
-                                    background: S.cardBg,
-                                    border: `1px solid ${S.borderLight}`,
-                                    borderRadius: 14,
-                                    padding: "16px 20px",
-                                    boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
-                                  }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
-                                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        {act.time && (
-                                          <span style={{ fontSize: 11, fontWeight: 800, color: S.orange, background: "rgba(255,107,26,0.12)", padding: "2px 8px", borderRadius: 6 }}>
-                                            {act.time}
-                                          </span>
-                                        )}
-                                        <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: S.darkBrown }}>
-                                          {act.placeName}
-                                        </span>
-                                      </div>
-                                      {act.estimatedDurationMinutes && (
-                                        <span style={{ fontSize: 11.5, color: S.textMid, opacity: 0.8 }}>⏱️ {act.estimatedDurationMinutes} mins</span>
-                                      )}
-                                    </div>
-                                    <div style={{ fontSize: 14, color: S.textMid, lineHeight: 1.6, marginBottom: 6 }}>
-                                      {act.activity}
-                                    </div>
-                                    {act.reason && (
-                                      <div style={{ fontSize: 12.5, color: S.gold, fontStyle: "italic", display: "flex", alignItems: "center", gap: 6 }}>
-                                        <span>💡</span>
-                                        <span>{act.reason}</span>
-                                      </div>
-                                    )}
-                                    {Boolean(act.lat && act.lng) && (
-                                      <div style={{ fontSize: 11, color: S.textMid, opacity: 0.5, marginTop: 4 }}>
-                                        📍 Coordinates: {act.lat.toFixed(4)}, {act.lng.toFixed(4)}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 15, color: S.textMid, lineHeight: 1.8 }}>
-                              {d.morning && (
-                                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                  <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🌅 Morning:</span>
-                                  <span>{d.morning}</span>
-                                </div>
-                              )}
-                              {d.afternoon && (
-                                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                  <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>☀️ Afternoon:</span>
-                                  <span>{d.afternoon}</span>
-                                </div>
-                              )}
-                              {d.evening && (
-                                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                  <span style={{ fontWeight: 800, color: S.darkBrown, minWidth: 110, flexShrink: 0 }}>🌆 Evening:</span>
-                                  <span>{d.evening}</span>
-                                </div>
+                {/* Day Tabs */}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+                  {itinerary.days.map((d) => (
+                    <button
+                      key={d.day}
+                      type="button"
+                      onClick={() => setActiveDay(d.day)}
+                      style={{
+                        padding: "8px 20px",
+                        borderRadius: 50,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        border: d.day === activeDay ? "none" : `1px solid ${S.border}`,
+                        background: d.day === activeDay ? S.orange : S.cardBg,
+                        color: d.day === activeDay ? "#fff" : S.darkBrown,
+                        boxShadow: d.day === activeDay ? "0 4px 12px rgba(255,107,26,0.3)" : "none",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      Day {d.day}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Current Active Day Card */}
+                <div style={{ background: S.cardAlt, border: `1.5px solid ${S.border}`, borderRadius: 20, padding: "28px 32px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12, borderBottom: `1px solid ${S.borderLight}`, paddingBottom: 16 }}>
+                    <div>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={current.title}
+                          onChange={(e) => handleDayFieldChange(current.day, "title", e.target.value)}
+                          style={{
+                            padding: "8px 14px",
+                            borderRadius: 10,
+                            border: `1.5px solid ${S.orange}`,
+                            fontSize: 18,
+                            fontWeight: 700,
+                            fontFamily: "'Playfair Display', serif",
+                            color: S.darkBrown,
+                            width: "100%",
+                            maxWidth: 400,
+                            outline: "none",
+                          }}
+                        />
+                      ) : (
+                        <h4 style={{ fontFamily: "'Playfair Display', serif", color: S.orange, fontSize: 20, fontWeight: 800, margin: 0 }}>
+                          Day {current.day} — {current.title}
+                        </h4>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 13, color: "#138808", fontWeight: 800, background: "rgba(34, 197, 94, 0.15)", border: "1px solid rgba(34, 197, 94, 0.3)", padding: "4px 12px", borderRadius: 50 }}>
+                        {current.estimatedBudgetINR}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(!isEditing)}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 8,
+                          border: `1px solid ${S.border}`,
+                          background: S.cardBg,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: S.darkBrown,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {isEditing ? "✓ Done Editing" : "✏️ Edit Day"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => regenerateDay(current.day)}
+                        disabled={regenDay === current.day}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 8,
+                          border: `1px solid ${S.orange}`,
+                          background: "rgba(255,107,26,0.1)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: S.orange,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🔄 {regenDay === current.day ? "Regenerating…" : "Regenerate Day"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Activities List */}
+                  {Array.isArray(current.activities) && current.activities.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+                      {current.activities.map((act, actIdx) => (
+                        <div key={actIdx}>
+                          {actIdx > 0 && act.travelFromPrevious && (
+                            <div
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "4px 14px",
+                                borderRadius: 50,
+                                background: "rgba(255, 107, 26, 0.12)",
+                                border: "1px dashed rgba(255, 107, 26, 0.3)",
+                                fontSize: 11.5,
+                                fontWeight: 600,
+                                color: S.orange,
+                                margin: "4px 0 10px 14px",
+                              }}
+                            >
+                              <span>🚗</span>
+                              <span>
+                                {act.travelFromPrevious.estimated ? "~" : ""}
+                                {act.travelFromPrevious.travelMinutes} min · {act.travelFromPrevious.travelKm} km to next stop
+                              </span>
+                              {act.travelFromPrevious.estimated && (
+                                <span style={{ fontSize: 10, opacity: 0.7 }}>(~est.)</span>
                               )}
                             </div>
                           )}
-
-                          <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: S.textMid, marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${S.borderLight}` }}>
-                            {d.meals && (
-                              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                                <span style={{ fontWeight: 800, color: S.darkBrown, flexShrink: 0 }}>🍛 Meals:</span>
-                                <span>{d.meals}</span>
+                          <div
+                            style={{
+                              background: S.cardBg,
+                              border: `1px solid ${S.borderLight}`,
+                              borderRadius: 14,
+                              padding: "16px 20px",
+                              boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 8 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {act.time && (
+                                  <span style={{ fontSize: 11, fontWeight: 800, color: S.orange, background: "rgba(255,107,26,0.12)", padding: "2px 8px", borderRadius: 6 }}>
+                                    {act.time}
+                                  </span>
+                                )}
+                                <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, color: S.darkBrown }}>
+                                  {act.placeName}
+                                </span>
+                              </div>
+                              {act.estimatedDurationMinutes && (
+                                <span style={{ fontSize: 11.5, color: S.textMid, opacity: 0.8 }}>
+                                  ⏱️ {act.estimatedDurationMinutes} mins
+                                </span>
+                              )}
+                            </div>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={act.activity}
+                                onChange={(e) => {
+                                  const newActs = [...current.activities];
+                                  newActs[actIdx] = { ...newActs[actIdx], activity: e.target.value };
+                                  handleDayFieldChange(current.day, "activities", newActs);
+                                }}
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: 8,
+                                  border: `1px solid ${S.border}`,
+                                  fontSize: 13,
+                                  outline: "none",
+                                  marginBottom: 6,
+                                }}
+                              />
+                            ) : (
+                              <div style={{ fontSize: 14, color: S.textMid, lineHeight: 1.6, marginBottom: 6 }}>
+                                {act.activity}
                               </div>
                             )}
-                            {d.tips && (
-                              <div style={{ padding: "10px 14px", background: S.chipBg, borderLeft: `4px solid ${S.orange}`, borderRadius: 8, fontSize: 13, color: S.textMid, border: `1px solid ${S.borderLight}`, borderLeftWidth: 4 }}>
-                                <b>💡 Insider Tip:</b> {d.tips}
+                            {act.reason && (
+                              <div style={{ fontSize: 12.5, color: S.gold, fontStyle: "italic", display: "flex", alignItems: "center", gap: 6 }}>
+                                <span>💡</span>
+                                <span>{act.reason}</span>
+                              </div>
+                            )}
+                            {Boolean(act.lat && act.lng) && (
+                              <div style={{ fontSize: 11, color: S.textMid, opacity: 0.5, marginTop: 4 }}>
+                                📍 Coordinates: {act.lat.toFixed(4)}, {act.lng.toFixed(4)}
                               </div>
                             )}
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 14.5, color: S.textMid, lineHeight: 1.8, marginBottom: 18 }}>
+                      {current.morning && (
+                        <div>
+                          <b>🌅 Morning: </b> {current.morning}
+                        </div>
+                      )}
+                      {current.afternoon && (
+                        <div>
+                          <b>☀️ Afternoon: </b> {current.afternoon}
+                        </div>
+                      )}
+                      {current.evening && (
+                        <div>
+                          <b>🌆 Evening: </b> {current.evening}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Meals & Budget Row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, borderTop: `1px dashed ${S.borderLight}`, paddingTop: 16 }}>
+                    <div>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: S.textMuted, display: "block", marginBottom: 4 }}>
+                        🍛 CURATED LOCAL MEALS:
+                      </span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={current.meals || ""}
+                          onChange={(e) => handleDayFieldChange(current.day, "meals", e.target.value)}
+                          style={{ width: "100%", padding: "6px 12px", borderRadius: 8, border: `1px solid ${S.border}`, fontSize: 13 }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 13.5, fontWeight: 600, color: S.darkBrown }}>
+                          {current.meals}
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: S.textMuted, display: "block", marginBottom: 4 }}>
+                        💰 ESTIMATED DAY COST:
+                      </span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={current.estimatedBudgetINR || ""}
+                          onChange={(e) => handleDayFieldChange(current.day, "estimatedBudgetINR", e.target.value)}
+                          style={{ width: "100%", padding: "6px 12px", borderRadius: 8, border: `1px solid ${S.border}`, fontSize: 13 }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 13.5, fontWeight: 700, color: "#138808" }}>
+                          {current.estimatedBudgetINR}
+                        </span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Local Tip */}
+                  {current.tips && (
+                    <div style={{ marginTop: 16, padding: "12px 18px", background: S.chipBg, borderLeft: `4px solid ${S.orange}`, borderRadius: 10, fontSize: 13, color: S.textMid, border: `1px solid ${S.borderLight}`, borderLeftWidth: 4 }}>
+                      <b style={{ color: S.orange }}>💡 Insider Tip: </b>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={current.tips || ""}
+                          onChange={(e) => handleDayFieldChange(current.day, "tips", e.target.value)}
+                          style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: `1px solid ${S.border}`, fontSize: 13, marginTop: 4 }}
+                        />
+                      ) : (
+                        current.tips
+                      )}
+                    </div>
+                  )}
                 </div>
-              );
-            })()}
+              </div>
+            )}
           </div>
         </div>
       </div>

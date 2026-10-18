@@ -64,12 +64,12 @@ function Footer() {
                     </h3>
                     <ul className='space-y-2.5 text-sm text-stone-300'>
                         <li>
-                            <a href="mailto:av6821246@gmail.com" className='hover:text-[#FF6B1A] transition-colors duration-200'>
-                                av6821246@gmail.com
+                            <a href="mailto:2k24.csaiml1a.2413616@gmail.com" className='hover:text-[#FF6B1A] transition-colors duration-200'>
+                                2k24.csaiml1a.2413616@gmail.com
                             </a>
                         </li>
-                        <li className='text-stone-300'>+91 7052501218</li>
-                        <li className='text-stone-300'>Kanpur, Uttar Pradesh</li>
+                        <li className='text-stone-300'>+91 8957565316</li>
+                        <li className='text-stone-300'>Prayagraj , India</li>
                     </ul>
                 </div>
             </div>

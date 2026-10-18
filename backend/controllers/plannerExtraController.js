@@ -1,13 +1,13 @@
 import Itinerary from "../models/Itinerary.js";
+import Destination from "../models/Destination.js";
 import { createNotification } from "../utils/createNotification.js";
 import { getRouteDuration } from "../services/routingService.js";
+import { getCuratedDestination } from "../services/destinationKnowledge.js";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const GEMINI_API_MODELS = [
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
 ];
 
@@ -19,7 +19,7 @@ const callAI = async (prompt) => {
 
   for (const modelUrl of GEMINI_API_MODELS) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 14000);
 
     try {
       const response = await fetch(`${modelUrl}?key=${apiKey}`, {
@@ -36,7 +36,8 @@ const callAI = async (prompt) => {
           ],
           generationConfig: {
             responseMimeType: "application/json",
-            temperature: 0.5,
+            temperature: 0.4,
+            maxOutputTokens: 3500,
           },
         }),
       });
@@ -62,8 +63,6 @@ const callAI = async (prompt) => {
   throw new Error("AI service temporarily unavailable across all models");
 };
 
-import Destination from "../models/Destination.js";
-
 export const regenerateDay = async (req, res) => {
   try {
     const { destination, dayNumber, totalDays, city } = req.body || {};
@@ -73,30 +72,53 @@ export const regenerateDay = async (req, res) => {
       return res.status(400).json({ message: "destination/city and dayNumber are required" });
     }
 
-    const destData = await Destination.findOne({
-      $or: [
-        { name: new RegExp(`^${targetPlace.trim()}$`, "i") },
-        { slug: targetPlace.trim().toLowerCase() },
-      ],
-    }).lean();
+    let destData = null;
+    try {
+      destData = await Destination.findOne({
+        $or: [
+          { name: new RegExp(`^${targetPlace.trim()}$`, "i") },
+          { slug: targetPlace.trim().toLowerCase() },
+        ],
+      }).lean();
+    } catch (dbErr) {
+      console.warn("DB lookup warning in regenerateDay:", dbErr.message);
+    }
 
-    const attractions = (destData?.attractions || []).map(a => a.name);
-    const food = (destData?.foodRecommendations || []).map(f => f.name);
-    const activities = (destData?.activities || []).map(act => act.name);
-    const hiddenGems = (destData?.hiddenGems || []).map(g => g.name);
+    const curated = getCuratedDestination(targetPlace);
+    if (curated) {
+      if (!destData) {
+        destData = curated;
+      } else {
+        destData = {
+          ...curated,
+          ...destData,
+          attractions: (destData.attractions && destData.attractions.length > 0) ? destData.attractions : curated.attractions,
+          foodRecommendations: (destData.foodRecommendations && destData.foodRecommendations.length > 0) ? destData.foodRecommendations : curated.foodRecommendations,
+          activities: (destData.activities && destData.activities.length > 0) ? destData.activities : curated.activities,
+          hiddenGems: (destData.hiddenGems && destData.hiddenGems.length > 0) ? destData.hiddenGems : curated.hiddenGems,
+          tips: (destData.tips && destData.tips.length > 0) ? destData.tips : curated.tips,
+        };
+      }
+    }
+
+    const attractions = (destData?.attractions || []).map(a => (typeof a === 'string' ? a : a.name));
+    const food = (destData?.foodRecommendations || []).map(f => (typeof f === 'string' ? f : f.name));
+    const activities = (destData?.activities || []).map(act => (typeof act === 'string' ? act : act.name));
+    const hiddenGems = (destData?.hiddenGems || []).map(g => (typeof g === 'string' ? g : g.name));
 
     const attractionsStr = attractions.join(", ");
     const foodStr = food.join(", ");
 
     const prompt = `You are an expert Indian travel planner.
-Regenerate a rich, authentic alternative Day ${dayNumber} of a ${totalDays || 1}-day travel itinerary for "${targetPlace}, India".
+Regenerate a rich, authentic, and non-generic alternative Day ${dayNumber} of a ${totalDays || 1}-day travel itinerary for "${targetPlace}, India".
 Destination Attractions: ${attractionsStr || "Major cultural and scenic landmarks"}
 Local Food Specialities: ${foodStr || "Authentic regional dishes"}
 
-CRITICAL RULES:
-1. Do not output generic placeholders. Use real, specific, famous monument, fort, bazaar, and food names in ${targetPlace}.
-2. Every placeName, lat, and lng must come directly from authentic destination landmark data — never invented.
-3. Respond with ONLY valid JSON, no markdown code fences.
+CRITICAL AUTHENTICITY RULES:
+1. Do NOT output generic placeholders or filler (e.g. NEVER say "visit local market", "have traditional lunch", or "explore city center").
+2. YOU MUST explicitly specify real, famous monument, fort, bazaar, and food names in ${targetPlace}.
+3. Every placeName, lat, and lng must come directly from authentic destination landmark data.
+4. Respond with ONLY valid JSON, no markdown code fences.
 
 Shape:
 {
@@ -110,8 +132,8 @@ Shape:
       "activity": "Specific morning landmark activity with timing",
       "reason": "Why this fits the itinerary (1 concise sentence)",
       "estimatedDurationMinutes": 120,
-      "lat": ${destData?.coordinates?.lat || 0},
-      "lng": ${destData?.coordinates?.lng || 0}
+      "lat": ${destData?.lat || destData?.coordinates?.lat || 0},
+      "lng": ${destData?.lng || destData?.coordinates?.lng || 0}
     },
     {
       "time": "13:30",
@@ -119,8 +141,8 @@ Shape:
       "activity": "Specific afternoon cultural or artisan discovery",
       "reason": "Why this fits the itinerary (1 concise sentence)",
       "estimatedDurationMinutes": 90,
-      "lat": ${destData?.coordinates?.lat || 0},
-      "lng": ${destData?.coordinates?.lng || 0}
+      "lat": ${destData?.lat || destData?.coordinates?.lat || 0},
+      "lng": ${destData?.lng || destData?.coordinates?.lng || 0}
     },
     {
       "time": "17:30",
@@ -128,8 +150,8 @@ Shape:
       "activity": "Specific sunset/night experience and dinner",
       "reason": "Why this fits the itinerary (1 concise sentence)",
       "estimatedDurationMinutes": 120,
-      "lat": ${destData?.coordinates?.lat || 0},
-      "lng": ${destData?.coordinates?.lng || 0}
+      "lat": ${destData?.lat || destData?.coordinates?.lat || 0},
+      "lng": ${destData?.lng || destData?.coordinates?.lng || 0}
     }
   ],
   "morning": "Specific morning landmark activity with timing",
@@ -149,18 +171,18 @@ Shape:
         if (city) dayPlan.city = city;
       }
     } catch (parseErr) {
-      console.warn("AI generation failed for regenerateDay, using curated fallback:", parseErr.message);
+      console.warn("AI generation failed for regenerateDay, using curated authentic fallback:", parseErr.message);
     }
 
     if (!dayPlan || !dayPlan.title) {
-      const a1 = attractions[(dayNumber + 1) % (attractions.length || 1)] || `${targetPlace} Cultural Heritage`;
-      const a2 = attractions[(dayNumber + 2) % (attractions.length || 1)] || `${targetPlace} Traditional Bazaars`;
+      const a1 = attractions[(dayNumber + 1) % (attractions.length || 1)] || `${targetPlace} Historic Landmark`;
+      const a2 = attractions[(dayNumber + 2) % (attractions.length || 1)] || `${targetPlace} Artisan Bazaar`;
       const f1 = food[(dayNumber + 1) % (food.length || 1)] || `Authentic ${targetPlace} Cuisine`;
-      const act = activities[(dayNumber + 1) % (activities.length || 1)] || `Guided walking tour through ${targetPlace} old quarters`;
+      const act = activities[(dayNumber + 1) % (activities.length || 1)] || `Guided walking tour through ${targetPlace} heritage quarters`;
       const gem = hiddenGems[(dayNumber + 1) % (hiddenGems.length || 1)] || `Scenic viewpoints of ${targetPlace}`;
 
-      const fallbackLat = destData?.coordinates?.lat || 0;
-      const fallbackLng = destData?.coordinates?.lng || 0;
+      const fallbackLat = destData?.lat || destData?.coordinates?.lat || 0;
+      const fallbackLng = destData?.lng || destData?.coordinates?.lng || 0;
 
       dayPlan = {
         day: Number(dayNumber),
@@ -170,7 +192,7 @@ Shape:
           {
             time: "09:00",
             placeName: a1,
-            activity: `Start your day early at ${a1} to enjoy quiet morning light.`,
+            activity: `Start your day early at ${a1} to enjoy quiet morning light and architectural details.`,
             reason: `Great time for calm exploration and photography in ${targetPlace}.`,
             estimatedDurationMinutes: 120,
             lat: fallbackLat,
@@ -200,7 +222,7 @@ Shape:
         evening: `Experience ${act}, followed by sunset vistas near ${gem} and traditional dinner.`,
         meals: `${f1} & regional culinary delights`,
         estimatedBudgetINR: "₹2,000 - ₹3,500",
-        tips: destData?.tips?.[0]?.desc || `Engage with licensed local guides for deeper storytelling in ${targetPlace}.`,
+        tips: destData?.tips?.[0]?.desc || destData?.tips?.[0] || `Engage with licensed local guides for deeper storytelling in ${targetPlace}.`,
       };
     }
 
@@ -233,7 +255,6 @@ export const saveItinerary = async (req, res) => {
       return res.status(400).json({ message: "A valid destination and days array are required" });
     }
 
-    // Determine cities array: either explicit cities array, or parsed from "City1 → City2", or single city
     let parsedCities = [];
     if (Array.isArray(cities) && cities.length > 0) {
       parsedCities = cities.map((c) => (typeof c === "string" ? c.trim() : (c.destination || c.name || "").trim())).filter(Boolean);

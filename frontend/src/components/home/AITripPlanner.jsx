@@ -329,10 +329,22 @@ const css = `
 
 /* ─── Data ─────────────────────────────────────────────────────────────────── */
 const DESTINATIONS = [
-  { e:'🏔️', n:'Ladakh' },{ e:'🌴', n:'Kerala' },{ e:'🏰', n:'Rajasthan' },
-  { e:'🌊', n:'Goa' },{ e:'⛰️', n:'Himachal' },{ e:'🕌', n:'Varanasi' },
-  { e:'🐯', n:'Jim Corbett' },{ e:'🌺', n:'Meghalaya' },{ e:'🏛️', n:'Hampi' },{ e:'🎭', n:'Kolkata' },
-  { e:'🛕', n:'Jaipur' },{ e:'🌅', n:'Udaipur' },{ e:'🏜️', n:'Jodhpur' },{ e:'⛵', n:'Rishikesh' },
+  { e:'🛕', n:'Jaipur' },
+  { e:'🏰', n:'Agra' },
+  { e:'🕌', n:'Varanasi' },
+  { e:'🌊', n:'Goa' },
+  { e:'🌅', n:'Udaipur' },
+  { e:'⛰️', n:'Manali' },
+  { e:'🏔️', n:'Ladakh' },
+  { e:'🌴', n:'Kerala' },
+  { e:'⛵', n:'Rishikesh' },
+  { e:'🌸', n:'Prayagraj' },
+  { e:'✨', n:'Amritsar' },
+  { e:'🏛️', n:'Hampi' },
+  { e:'🎭', n:'Kolkata' },
+  { e:'🏙️', n:'Mumbai' },
+  { e:'🏜️', n:'Jodhpur' },
+  { e:'🌺', n:'Meghalaya' },
 ];
 
 const INTERESTS = [
@@ -375,8 +387,9 @@ function LockedPlanner({ onLogin }) {
 function UnlockedPlanner({ userName = 'Traveller' }) {
   // Ordered city queue: Array of { id, name, emoji, days }
   const [cityQueue, setCityQueue] = useState([
-    { id: 1, name: 'Rajasthan', emoji: '🏰', days: 4 },
+    { id: 1, name: 'Jaipur', emoji: '🛕', days: 3 },
   ]);
+  const [customCityInput, setCustomCityInput] = useState('');
   const [budget, setBudget] = useState('mid-range');
   const [style, setStyle]   = useState('cultural');
   const [interests, setInterests] = useState(['Heritage','Food & Cuisine']);
@@ -414,6 +427,20 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
       ...prev,
       { id: Date.now() + Math.random(), name: cityName, emoji, days: 3 },
     ]);
+  };
+
+  const handleAddCustomCity = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = customCityInput.trim();
+    if (!trimmed) return;
+    handleAddCity(trimmed, '📍');
+    setCustomCityInput('');
+  };
+
+  const handleCityNameChange = (id, newName) => {
+    setCityQueue((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, name: newName } : c))
+    );
   };
 
   const handleCityDaysChange = (id, newDays) => {
@@ -526,10 +553,33 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
         </div>
       </div>
 
-      {/* Destination Quick-Picks */}
-      <label className="atp-label">
-        Select Destinations (Click to add to your route)
-      </label>
+      {/* Destination Quick-Picks & Custom Search */}
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10, marginBottom:10}}>
+        <label className="atp-label" style={{marginBottom:0}}>
+          Select Destinations or Enter Any Place
+        </label>
+        <span style={{fontSize:12, color:'rgba(245,166,35,0.8)'}}>✦ Tailored to exact landmarks & authentic food</span>
+      </div>
+
+      {/* Custom Destination Input */}
+      <form onSubmit={handleAddCustomCity} style={{display:'flex', gap:'10px', marginBottom:'16px'}}>
+        <input
+          type="text"
+          placeholder="Type any destination (e.g. Prayagraj, Agra, Manali, Shimla, Varanasi...)"
+          value={customCityInput}
+          onChange={(e) => setCustomCityInput(e.target.value)}
+          className="atp-select"
+          style={{flex: 1, background: 'rgba(253,246,236,0.07)', backgroundImage: 'none', padding: '12px 16px'}}
+        />
+        <button
+          type="submit"
+          className="atp-act-btn pri"
+          style={{whiteSpace: 'nowrap', padding: '12px 22px', borderRadius: '12px'}}
+        >
+          + Add Place
+        </button>
+      </form>
+
       <div className="atp-dest-grid">
         {DESTINATIONS.map(d => {
           const inQueue = cityQueue.some(c => c.name.toLowerCase() === d.n.toLowerCase());
@@ -570,7 +620,22 @@ function UnlockedPlanner({ userName = 'Traveller' }) {
                 <span className="atp-queue-order">{idx + 1}</span>
                 <span style={{fontSize:18}}>{c.emoji || '📍'}</span>
                 <div>
-                  <div className="atp-queue-cityname">{c.name}</div>
+                  <input
+                    type="text"
+                    value={c.name}
+                    onChange={(e) => handleCityNameChange(c.id, e.target.value)}
+                    className="atp-queue-cityname"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: '1px dashed rgba(245,166,35,0.4)',
+                      color: '#FDF6EC',
+                      outline: 'none',
+                      width: '100%',
+                      maxWidth: '180px'
+                    }}
+                    title="Click to edit destination name"
+                  />
                   <div style={{fontSize:11, color:'rgba(245,166,35,0.7)'}}>Stop #{idx + 1}</div>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import {
   mapInterestsToCategories,
 } from "../services/placesService.js";
 import { getRouteDuration } from "../services/routingService.js";
+import { getCuratedDestination } from "../services/destinationKnowledge.js";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -27,7 +28,6 @@ async function attachTravelTimesToDays(days) {
         if (route) {
           curr.travelFromPrevious = route;
         }
-        // Sequential fair-use delay of 120ms
         await delay(120);
       }
     }
@@ -38,8 +38,6 @@ async function attachTravelTimesToDays(days) {
 
 const GEMINI_API_MODELS = [
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
 ];
 
@@ -57,44 +55,41 @@ const buildSingleCityPrompt = ({
   if (destData) {
     const attractionsStr = (destData.attractions || []).map((a) => a.name).join(", ");
     const foodStr = (destData.foodRecommendations || []).map((f) => f.name).join(", ");
-    const activitiesStr = (destData.activities || []).map((act) => act.name).join(", ");
-    const gemsStr = (destData.hiddenGems || []).map((g) => g.name).join(", ");
+    const activitiesStr = (destData.activities || []).map((act) => act.name || act).join(", ");
+    const gemsStr = (destData.hiddenGems || []).map((g) => g.name || g).join(", ");
+    const tipsStr = (destData.tips || []).map((t) => t.desc || t).join(" ");
 
     contextSnippet = `
-DESTINATION KNOWLEDGE FOR ${destination}:
-- State / Region: ${destData.state || ""}, ${destData.region || ""}
-- Famous Landmarks & Attractions: ${attractionsStr || "Major cultural landmarks"}
-- Local Cuisines & Specialities: ${foodStr || "Authentic local dishes"}
-- Top Activities & Experiences: ${activitiesStr || "Guided heritage and nature walks"}
-- Hidden Gems / Offbeat Spots: ${gemsStr || "Quaint courtyard spots and local quarters"}
+AUTHENTIC DESTINATION KNOWLEDGE FOR ${destination}:
+- State / Region: ${destData.state || "India"}, ${destData.region || "India"}
+- Real Iconic Landmarks & Attractions: ${attractionsStr || "Prominent cultural landmarks"}
+- Signature Local Cuisines & Eateries: ${foodStr || "Authentic regional culinary dishes"}
+- Real Activities & Cultural Experiences: ${activitiesStr || "Guided heritage and nature explorations"}
+- Authentic Offbeat Spots: ${gemsStr || "Quaint courtyard spots and heritage quarters"}
+- Insider Tips: ${tipsStr || "Engage with licensed local guides and respect temple customs"}
 `;
   }
 
   let placesSnippet = "";
-  let placesRule = "";
-
   if (realPlaces && realPlaces.length > 0) {
     placesSnippet = `
 VERIFIED REAL ATTRACTION & PLACE DATA FOR ${destination} (FROM GEOLOCATION & GEODATABASE):
-${JSON.stringify(realPlaces, null, 2)}
-`;
-    placesRule = `
-CRITICAL ATTRACTION GROUNDING RULE:
-You may only recommend attractions from the supplied place data below. Every placeName, lat, and lng must come directly from the supplied place data — never invented. Do not invent place names, coordinates, addresses, or facts not present in the data. If the data doesn't cover something relevant to the user's interests, say so rather than inventing a plausible-sounding place.
+${JSON.stringify(realPlaces.slice(0, 15), null, 2)}
 `;
   }
 
   return `
-You are a deeply knowledgeable Indian travel expert and itinerary planner.
-Create an authentic, non-generic, highly realistic ${days}-day itinerary specifically for "${destination}, India".
+You are a top-tier Indian travel connoisseur and bespoke trip planner.
+Generate a comprehensive, non-generic, deeply authentic ${days}-day itinerary specifically for "${destination}, India".
 
-CRITICAL INSTRUCTIONS:
-1. DO NOT give generic advice. YOU MUST explicitly name real, authentic, specific monuments, ghats, forts, temples, markets, bazaars, cafes, and street food dishes found in "${destination}".
-2. Every placeName, lat, and lng MUST come directly from the supplied place data — never invented.
-${placesRule}
+CRITICAL AUTHENTICITY MANDATES:
+1. NEVER USE GENERIC FILLER OR PLACEHOLDERS. Do NOT say "visit local market", "have traditional lunch", "explore city center", or "heritage walk".
+2. YOU MUST NAME REAL, FAMOUS, SPECIFIC PLACES, MONUMENTS, TEMPLES, GHATS, FORTS, BAZAARS, CAFES, AND STREET FOODS SPECIFIC TO "${destination}".
+3. Every single placeName, lat, and lng MUST be grounded in real geography for "${destination}". If real place data is provided below, prioritize those verified landmarks and coordinates.
+4. Each activity MUST have an insightful, concrete "reason" explaining why it matches the traveler's pacing and interests.
 ${contextSnippet}
 ${placesSnippet}
-3. Tailor the activities to:
+5. Tailor the itinerary to:
    - Budget Tier: ${budget || "mid-range"}
    - Traveler Interests: ${interests || "sightseeing, food, culture"}
    - Travel Style: ${travelStyle || "balanced"}
@@ -105,108 +100,124 @@ Respond with ONLY valid JSON without markdown code fences in this exact shape:
   "days": [
     {
       "day": 1,
-      "title": "Specific day theme with real place names in ${destination}",
+      "title": "Specific day theme featuring real landmarks in ${destination}",
       "activities": [
         {
           "time": "09:00",
-          "placeName": "Exact name from supplied place data or prominent destination landmark",
-          "activity": "Specific activity description and morning exploration details",
-          "reason": "Why this fits the user's interests (1 concise sentence)",
+          "placeName": "Real prominent landmark in ${destination}",
+          "activity": "Detailed morning activity description with specific architecture or cultural focus",
+          "reason": "Why this landmark is essential for the traveler's interests (1 concise sentence)",
           "estimatedDurationMinutes": 120,
           "lat": 0.0,
           "lng": 0.0
         },
         {
           "time": "13:30",
-          "placeName": "Exact name from supplied place data or prominent food/artisan landmark",
-          "activity": "Afternoon cultural, culinary, or artisan exploration details",
-          "reason": "Why this fits the user's interests (1 concise sentence)",
+          "placeName": "Real afternoon sight, bazaar, or heritage eatery in ${destination}",
+          "activity": "Afternoon exploration of craftsmanship, cuisine, or museum exhibits",
+          "reason": "Why this fits the user's travel style (1 concise sentence)",
           "estimatedDurationMinutes": 90,
           "lat": 0.0,
           "lng": 0.0
         },
         {
           "time": "17:30",
-          "placeName": "Exact name from supplied place data or scenic evening spot",
-          "activity": "Sunset vistas, cultural show, or evening bazaar walk",
-          "reason": "Why this fits the user's interests (1 concise sentence)",
+          "placeName": "Real sunset viewpoint, evening ghat, or cultural show in ${destination}",
+          "activity": "Sunset vistas, evening aarti, folk dance, or night market discovery",
+          "reason": "Why this creates a memorable evening experience (1 concise sentence)",
           "estimatedDurationMinutes": 120,
           "lat": 0.0,
           "lng": 0.0
         }
       ],
-      "morning": "Specific morning landmark activity with timing",
-      "afternoon": "Specific afternoon sight, artisan market, and lunch recommendation",
-      "evening": "Specific sunset/night experience and dinner",
-      "meals": "Named authentic local dishes and recommended food spots in ${destination}",
+      "morning": "Detailed morning landmark activity with timing",
+      "afternoon": "Detailed afternoon sight, artisan market, and named lunch spot",
+      "evening": "Detailed sunset/night experience, cultural show, and dinner",
+      "meals": "Named authentic local dishes and signature eateries in ${destination}",
       "estimatedBudgetINR": "e.g. ₹2,500 - ₹3,800",
-      "tips": "Specific insider tip unique to ${destination}"
+      "tips": "Practical local insider tip unique to ${destination}"
     }
   ]
 }
-Include exactly ${days} entries in "days" array numbered 1 to ${days}. Keep descriptions vivid, accurate, and grounded in real coordinates.`;
+Include exactly ${days} entries in "days" array numbered 1 to ${days}. Ensure all descriptions are vivid, authentic, and grounded in real ${destination} heritage.`;
 };
 
 const generateCuratedSingleFallback = ({ destination, days, budget, travelStyle, destData, realPlaces = [] }) => {
-  // Extract verified real place names and coordinates
+  // 1. Gather curated real attractions
   const dbAttractions = (destData?.attractions || []).map((a) => ({
     name: a.name,
-    lat: destData?.coordinates?.lat || 0,
-    lng: destData?.coordinates?.lng || 0,
+    lat: a.lat || destData?.lat || destData?.coordinates?.lat || 0,
+    lng: a.lng || destData?.lng || destData?.coordinates?.lng || 0,
     category: "attraction",
+    reason: a.reason || `Prime historic landmark in ${destination}.`,
+    time: a.time,
+    duration: a.duration || 120,
   }));
 
-  const placesList = realPlaces.length > 0 ? realPlaces : dbAttractions;
-  const food = (destData?.foodRecommendations || []).map((f) => f.name);
-  const hiddenGems = (destData?.hiddenGems || []).map((g) => g.name);
+  const placesList = dbAttractions.length > 0 ? dbAttractions : realPlaces;
+
+  // Curated food and gems
+  const food = (destData?.foodRecommendations || []).map((f) => (typeof f === "string" ? f : f.name));
+  const hiddenGems = (destData?.hiddenGems || []).map((g) => (typeof g === "string" ? g : g.name));
+  const tipsList = (destData?.tips || []).map((t) => (typeof t === "string" ? t : t.desc || t.title));
+  const activitiesList = (destData?.activities || []).map((act) => (typeof act === "string" ? act : act.name));
+
+  const fallbackLat = destData?.lat || destData?.coordinates?.lat || (realPlaces[0]?.lat) || 26.9124;
+  const fallbackLng = destData?.lng || destData?.coordinates?.lng || (realPlaces[0]?.lng) || 75.7873;
 
   const generatedDays = [];
   for (let i = 0; i < days; i++) {
     const dayNum = i + 1;
-    const p1 = placesList[i % (placesList.length || 1)] || { name: `${destination} Heritage Center`, lat: 0, lng: 0 };
-    const p2 = placesList[(i + 1) % (placesList.length || 1)] || { name: `${destination} Promenade`, lat: 0, lng: 0 };
-    const p3 = placesList[(i + 2) % (placesList.length || 1)] || { name: `${destination} Cultural Quarter`, lat: 0, lng: 0 };
 
-    const f1 = food[i % (food.length || 1)] || `Authentic ${destination} Delicacies`;
-    const gem = hiddenGems[i % (hiddenGems.length || 1)] || `Scenic quarters of ${destination}`;
+    // Pick 3 distinct real places for the day
+    let p1 = placesList[i % (placesList.length || 1)];
+    let p2 = placesList[(i + 1) % (placesList.length || 1)];
+    let p3 = placesList[(i + 2) % (placesList.length || 1)];
 
-    const title = `${p1.name}, ${p2.name} & Local Quarters`;
-    const morning = `Start your morning exploring ${p1.name} early to beat the crowds and capture scenic sunrise lighting.`;
-    const afternoon = `Savor authentic cuisine featuring ${f1} for lunch, followed by a visit to ${p2.name} to observe local craftsmanship and architecture.`;
-    const evening = `Experience evening cultural discovery around ${p3.name}, followed by tea and traditional dining near ${gem}.`;
-    const meals = `${f1}, local morning specialties & regional dinner`;
+    if (!p1 || !p1.name) p1 = { name: `${destination} Heritage Promenade`, lat: fallbackLat, lng: fallbackLng, duration: 120 };
+    if (!p2 || !p2.name) p2 = { name: `${destination} Traditional Bazaar`, lat: fallbackLat, lng: fallbackLng, duration: 90 };
+    if (!p3 || !p3.name) p3 = { name: `${destination} Sunset Point`, lat: fallbackLat, lng: fallbackLng, duration: 120 };
+
+    const f1 = food[i % (food.length || 1)] || `Authentic regional ${destination} specialties`;
+    const gem = hiddenGems[i % (hiddenGems.length || 1)] || `${destination} old quarter artisan trails`;
+    const act = activitiesList[i % (activitiesList.length || 1)] || `Heritage architectural exploration in ${destination}`;
+    const tip = tipsList[i % (tipsList.length || 1)] || `Engage with licensed local guides for deep cultural storytelling in ${destination}.`;
+
+    const title = `${p1.name}, ${p2.name} & ${p3.name}`;
+    const morning = `Begin early with a guided exploration of ${p1.name} to beat crowds and capture soft morning lighting.`;
+    const afternoon = `Savor authentic regional dishes featuring ${f1} for lunch, followed by cultural immersion at ${p2.name}.`;
+    const evening = `Experience golden-hour atmosphere around ${p3.name}, followed by tea and traditional dining near ${gem}.`;
+    const meals = `${f1}, local breakfast delicacies & traditional dinner`;
 
     const activities = [
       {
         time: "09:00",
         placeName: p1.name,
-        activity: `Morning guided exploration of ${p1.name} with architecture walk.`,
-        reason: `Ideal for experiencing ${destination}'s signature heritage at optimal morning lighting.`,
-        estimatedDurationMinutes: 120,
-        lat: p1.lat || 0,
-        lng: p1.lng || p1.lon || 0,
+        activity: `Morning exploration of ${p1.name} with architectural tour.`,
+        reason: p1.reason || `Prime morning heritage landmark in ${destination}.`,
+        estimatedDurationMinutes: p1.duration || 120,
+        lat: p1.lat || fallbackLat,
+        lng: p1.lng || p1.lon || fallbackLng,
       },
       {
         time: "13:30",
         placeName: p2.name,
-        activity: `Afternoon visit to ${p2.name} and local craft centers following a regional lunch.`,
-        reason: `Provides an immersive look into regional artistry and local traditions.`,
-        estimatedDurationMinutes: 90,
-        lat: p2.lat || 0,
-        lng: p2.lng || p2.lon || 0,
+        activity: `Afternoon visit to ${p2.name} following a lunch featuring ${f1}.`,
+        reason: p2.reason || `Vibrant artisan and cultural discovery in ${destination}.`,
+        estimatedDurationMinutes: p2.duration || 90,
+        lat: p2.lat || fallbackLat,
+        lng: p2.lng || p2.lon || fallbackLng,
       },
       {
         time: "17:30",
         placeName: p3.name,
-        activity: `Sunset viewpoint and vibrant bazaar walk around ${p3.name}.`,
-        reason: `Offers picturesque dusk vistas and vibrant street atmosphere.`,
-        estimatedDurationMinutes: 120,
-        lat: p3.lat || 0,
-        lng: p3.lng || p3.lon || 0,
+        activity: `Sunset viewpoint and vibrant evening atmosphere around ${p3.name}.`,
+        reason: p3.reason || `Scenic golden-hour vistas and cultural dining in ${destination}.`,
+        estimatedDurationMinutes: p3.duration || 120,
+        lat: p3.lat || fallbackLat,
+        lng: p3.lng || p3.lon || fallbackLng,
       },
     ];
-
-    const tips = destData?.tips?.[i % (destData.tips?.length || 1)]?.desc || `Hire a licensed local storyteller or walking guide for deeper insights in ${destination}.`;
 
     generatedDays.push({
       day: dayNum,
@@ -217,8 +228,8 @@ const generateCuratedSingleFallback = ({ destination, days, budget, travelStyle,
       evening,
       meals,
       estimatedBudgetINR:
-        budget === "budget" ? "₹1,200 - ₹2,000" : budget === "luxury" ? "₹8,000 - ₹15,000" : "₹3,000 - ₹5,000",
-      tips,
+        budget === "budget" ? "₹1,500 - ₹2,500" : budget === "luxury" ? "₹8,000 - ₹16,000" : "₹3,500 - ₹5,500",
+      tips: tip,
     });
   }
 
@@ -240,7 +251,7 @@ export const generateItinerary = async (req, res) => {
     }
     const numDays = Math.min(14, Math.max(1, parseInt(days, 10)));
 
-    // 1. Fetch database destination knowledge if available
+    // 1. Fetch database destination knowledge & curated knowledge
     let destRecord = null;
     try {
       const mongoose = (await import("mongoose")).default;
@@ -256,6 +267,34 @@ export const generateItinerary = async (req, res) => {
       console.warn("DB lookup warning in planner:", dbErr.message);
     }
 
+    // Merge with curated authentic destination knowledge if DB has limited data
+    const curated = getCuratedDestination(destination);
+    if (curated) {
+      if (!destRecord) {
+        destRecord = curated;
+      } else {
+        destRecord = {
+          ...curated,
+          ...destRecord,
+          attractions: (destRecord.attractions && destRecord.attractions.length > 0)
+            ? destRecord.attractions
+            : curated.attractions,
+          foodRecommendations: (destRecord.foodRecommendations && destRecord.foodRecommendations.length > 0)
+            ? destRecord.foodRecommendations
+            : curated.foodRecommendations,
+          activities: (destRecord.activities && destRecord.activities.length > 0)
+            ? destRecord.activities
+            : curated.activities,
+          hiddenGems: (destRecord.hiddenGems && destRecord.hiddenGems.length > 0)
+            ? destRecord.hiddenGems
+            : curated.hiddenGems,
+          tips: (destRecord.tips && destRecord.tips.length > 0)
+            ? destRecord.tips
+            : curated.tips,
+        };
+      }
+    }
+
     // 2. Fetch real attraction data via OpenTripMap, Nominatim & Wikipedia GeoSearch
     let realPlaces = [];
     try {
@@ -263,12 +302,10 @@ export const generateItinerary = async (req, res) => {
       if (coords && coords.lat && coords.lon) {
         const categories = mapInterestsToCategories(interests);
         
-        // Run radius searches concurrently based on user's interests
         const searchResults = await Promise.all(
           categories.map((cat) => searchNearbyPlaces(coords.lat, coords.lon, cat))
         );
 
-        // Deduplicate nearby places by xid and normalized name
         const seenXids = new Set();
         const seenNames = new Set();
         const combinedPlaces = [];
@@ -284,13 +321,9 @@ export const generateItinerary = async (req, res) => {
           }
         }
 
-        // Sort by popularity / rate descending
         combinedPlaces.sort((a, b) => (b.rate || 0) - (a.rate || 0));
-
-        // Cap at top 14 places
         const topPlaces = combinedPlaces.slice(0, 14);
 
-        // Fetch rich place details in parallel
         const detailPromises = topPlaces.map(async (p) => {
           const details = await getPlaceDetails(p.xid);
           if (details) {
@@ -315,8 +348,8 @@ export const generateItinerary = async (req, res) => {
             if (!details || !details.name) return null;
             return {
               ...details,
-              lat: raw?.point?.lat ?? 0,
-              lng: raw?.point?.lon ?? 0,
+              lat: raw?.point?.lat ?? coords.lat,
+              lng: raw?.point?.lon ?? coords.lon,
             };
           })
           .filter(Boolean);
@@ -329,11 +362,13 @@ export const generateItinerary = async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      console.warn("No GEMINI_API_KEY found, serving curated single-city itinerary.");
-      return res.status(200).json(generateCuratedSingleFallback({ destination, days: numDays, budget, travelStyle, destData: destRecord, realPlaces }));
+      console.warn("No GEMINI_API_KEY found, serving curated authentic itinerary.");
+      const curatedPlan = generateCuratedSingleFallback({ destination, days: numDays, budget, travelStyle, destData: destRecord, realPlaces });
+      curatedPlan.days = await attachTravelTimesToDays(curatedPlan.days);
+      return res.status(200).json(curatedPlan);
     }
 
-    // Attempt generation with Gemini models with resilience fallback
+    // Attempt generation with Gemini models
     const promptText = buildSingleCityPrompt({
       destination,
       days: numDays,
@@ -346,7 +381,7 @@ export const generateItinerary = async (req, res) => {
 
     for (const modelUrl of GEMINI_API_MODELS) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), 14000);
 
       try {
         const response = await fetch(`${modelUrl}?key=${apiKey}`, {
@@ -364,7 +399,7 @@ export const generateItinerary = async (req, res) => {
             generationConfig: {
               responseMimeType: "application/json",
               temperature: 0.4,
-              maxOutputTokens: 3500,
+              maxOutputTokens: 4000,
             },
           }),
         });
@@ -381,12 +416,11 @@ export const generateItinerary = async (req, res) => {
             return res.status(200).json(parsed);
           }
         } else {
-          const errStatus = response.status;
-          console.warn(`Gemini model (${modelUrl}) returned status ${errStatus}`);
+          console.warn(`Gemini model (${modelUrl}) returned status ${response.status}`);
         }
       } catch (aiErr) {
         clearTimeout(timeout);
-        console.warn(`Gemini model attempt failed: ${aiErr.message}`);
+        console.warn(`Gemini model attempt failed on ${modelUrl}:`, aiErr.message);
       }
     }
 
@@ -408,22 +442,22 @@ const buildMultiCityPrompt = ({ cities, budget, interests, travelStyle, destReco
 
   let contextBlocks = "";
   cities.forEach(({ destination }) => {
-    const destData = destRecords[destination.toLowerCase()];
+    const destData = destRecords[destination.toLowerCase()] || getCuratedDestination(destination);
     if (destData) {
       const attractionsStr = (destData.attractions || []).map(a => a.name).join(", ");
-      const foodStr = (destData.foodRecommendations || []).map(f => f.name).join(", ");
-      const actsStr = (destData.activities || []).map(act => act.name).join(", ");
+      const foodStr = (destData.foodRecommendations || []).map(f => (typeof f === 'string' ? f : f.name)).join(", ");
+      const actsStr = (destData.activities || []).map(act => (typeof act === 'string' ? act : act.name)).join(", ");
       contextBlocks += `
-FACTUAL KNOWLEDGE FOR ${destination}:
-- Major Monuments/Attractions: ${attractionsStr || "Prominent historic landmarks"}
-- Local Dishes: ${foodStr || "Local food specialties"}
+REAL DESTINATION DATA FOR ${destination}:
+- Real Landmarks & Forts: ${attractionsStr || "Major historic monuments"}
+- Real Local Cuisine: ${foodStr || "Authentic local dishes"}
 - Signature Activities: ${actsStr || "Heritage and cultural tours"}
 `;
     }
   });
 
   return `
-You are an expert Indian travel planner. Create an authentic, highly detailed, non-generic ${totalDays}-day sequential multi-city travel itinerary across India.
+You are an expert Indian travel planner creating a bespoke ${totalDays}-day sequential multi-city journey across India.
 Cities Sequence: ${citySummary}.
 Budget Tier: ${budget || "mid-range"}.
 Traveler Interests: ${interests || "sightseeing, food, culture"}.
@@ -431,12 +465,13 @@ Style: ${travelStyle || "balanced"}.
 
 ${contextBlocks}
 
-CRITICAL RULES:
-1. DO NOT give generic placeholders. Use real, specific, famous landmark names, heritage forts, temples, markets, and regional street foods for each designated city.
-2. Every placeName, lat, and lng must come directly from real geographic data for each designated city — never invented.
-3. On the first day of arriving in each new city (from city 2 onward), explicitly include a realistic transit note (e.g. Vande Bharat train / short flight / private expressway cab), hotel check-in, and relaxed evening sights in that city.
-4. Every day MUST have the exact "city" field corresponding to that leg of the trip.
-5. Keep day numbers sequentially 1 to ${totalDays}.
+CRITICAL AUTHENTICITY MANDATES:
+1. NEVER USE GENERIC FILLER. Do NOT say "visit local market", "have traditional lunch", or "explore city center".
+2. YOU MUST use real, specific, famous landmark names, heritage forts, temples, markets, and regional street foods for each designated city.
+3. Every placeName, lat, and lng must come directly from real geographic data for each designated city.
+4. On the first day of arriving in each new city (from city 2 onward), explicitly include a realistic transit note (e.g. Vande Bharat Express / short flight / private expressway cab), hotel check-in, and relaxed evening sights in that city.
+5. Every day MUST have the exact "city" field corresponding to that leg of the trip.
+6. Keep day numbers sequentially 1 to ${totalDays}.
 
 Respond with ONLY valid JSON without markdown fences formatted strictly as:
 {
@@ -485,7 +520,7 @@ Respond with ONLY valid JSON without markdown fences formatted strictly as:
     }
   ]
 }
-Important: Return exactly ${totalDays} entries in the "days" array. Keep descriptions crisp and inspiring.`;
+Include exactly ${totalDays} entries in the "days" array. Keep descriptions crisp, authentic, and inspiring.`;
 };
 
 const generateCuratedMultiFallback = ({ cities, budget, destRecords = {} }) => {
@@ -498,25 +533,27 @@ const generateCuratedMultiFallback = ({ cities, budget, destRecords = {} }) => {
   cities.forEach((cityObj, cityIdx) => {
     const currentCity = cityObj.destination;
     const prevCity = cityIdx > 0 ? cities[cityIdx - 1].destination : "";
-    const destData = destRecords[currentCity.toLowerCase()];
+    const destData = destRecords[currentCity.toLowerCase()] || getCuratedDestination(currentCity);
 
     const attractions = destData?.attractions || [];
     const food = destData?.foodRecommendations || [];
     const activitiesList = destData?.activities || [];
     const gems = destData?.hiddenGems || [];
+    const fallbackLat = destData?.lat || destData?.coordinates?.lat || 26.9124;
+    const fallbackLng = destData?.lng || destData?.coordinates?.lng || 75.7873;
 
     for (let d = 0; d < cityObj.days; d++) {
       const isTransitionDay = cityIdx > 0 && d === 0;
 
-      const a1 = attractions[d % (attractions.length || 1)]?.name;
-      const a2 = attractions[(d + 1) % (attractions.length || 1)]?.name;
-      const f1 = food[d % (food.length || 1)]?.name;
-      const act = activitiesList[d % (activitiesList.length || 1)]?.name;
-      const gem = gems[d % (gems.length || 1)]?.name;
+      const a1 = (typeof attractions[d % (attractions.length || 1)] === 'object' ? attractions[d % (attractions.length || 1)]?.name : attractions[d % (attractions.length || 1)]);
+      const a2 = (typeof attractions[(d + 1) % (attractions.length || 1)] === 'object' ? attractions[(d + 1) % (attractions.length || 1)]?.name : attractions[(d + 1) % (attractions.length || 1)]);
+      const f1 = (typeof food[d % (food.length || 1)] === 'object' ? food[d % (food.length || 1)]?.name : food[d % (food.length || 1)]);
+      const act = (typeof activitiesList[d % (activitiesList.length || 1)] === 'object' ? activitiesList[d % (activitiesList.length || 1)]?.name : activitiesList[d % (activitiesList.length || 1)]);
+      const gem = (typeof gems[d % (gems.length || 1)] === 'object' ? gems[d % (gems.length || 1)]?.name : gems[d % (gems.length || 1)]);
 
-      const p1Name = a1 || `${currentCity} Central Heritage`;
-      const p2Name = a2 || `${currentCity} Artisan Bazaar`;
-      const p3Name = act || gem || `${currentCity} Viewpoint`;
+      const p1Name = a1 || `${currentCity} Heritage Landmark`;
+      const p2Name = a2 || `${currentCity} Traditional Market`;
+      const p3Name = act || gem || `${currentCity} Sunset Point`;
 
       const dayActivities = [
         {
@@ -524,33 +561,33 @@ const generateCuratedMultiFallback = ({ cities, budget, destRecords = {} }) => {
           placeName: isTransitionDay ? `${prevCity} Station / Departure` : p1Name,
           activity: isTransitionDay
             ? `Morning departure from ${prevCity}; scenic transit to ${currentCity}.`
-            : `Morning exploration of ${p1Name} to enjoy quiet sightseeing.`,
+            : `Morning exploration of ${p1Name} to enjoy serene sightseeing.`,
           reason: `Optimal start for smooth transit and morning photography.`,
           estimatedDurationMinutes: isTransitionDay ? 180 : 120,
-          lat: destData?.coordinates?.lat || 0,
-          lng: destData?.coordinates?.lng || 0,
+          lat: fallbackLat,
+          lng: fallbackLng,
         },
         {
           time: "13:30",
           placeName: p2Name,
           activity: isTransitionDay
-            ? `Arrive in ${currentCity}, hotel check-in, and local lunch.`
+            ? `Arrive in ${currentCity}, hotel check-in, and local lunch featuring ${f1 || 'regional cuisine'}.`
             : `Afternoon culinary and craft walk around ${p2Name}.`,
           reason: `Experience authentic local cuisine and traditional markets.`,
           estimatedDurationMinutes: 90,
-          lat: destData?.coordinates?.lat || 0,
-          lng: destData?.coordinates?.lng || 0,
+          lat: fallbackLat,
+          lng: fallbackLng,
         },
         {
           time: "17:30",
           placeName: p3Name,
           activity: isTransitionDay
-            ? `Golden-hour walk along ${currentCity}'s central promenade and dinner.`
+            ? `Golden-hour walk along ${currentCity}'s central promenade and welcome dinner.`
             : `Sunset vista near ${p3Name} followed by evening cultural dinner.`,
           reason: `Perfect evening wind-down in ${currentCity}.`,
           estimatedDurationMinutes: 120,
-          lat: destData?.coordinates?.lat || 0,
-          lng: destData?.coordinates?.lng || 0,
+          lat: fallbackLat,
+          lng: fallbackLng,
         },
       ];
 
@@ -630,7 +667,6 @@ export const generateMultiCityItinerary = async (req, res) => {
       return res.status(400).json({ message: "No valid city destinations provided." });
     }
 
-    // Enforce overall combined days max limit (e.g. max 21 total days)
     const totalDays = sanitizedCities.reduce((sum, c) => sum + c.days, 0);
     if (totalDays > 21) {
       return res.status(400).json({
@@ -638,14 +674,19 @@ export const generateMultiCityItinerary = async (req, res) => {
       });
     }
 
-    // Fetch destination documents from MongoDB for grounding
+    // Fetch destination documents from MongoDB and curated knowledge for grounding
     const cityQueryNames = sanitizedCities.map((c) => c.destination);
-    const destDocs = await Destination.find({
-      $or: [
-        { name: { $in: cityQueryNames.map((name) => new RegExp(`^${name}$`, "i")) } },
-        { slug: { $in: cityQueryNames.map((name) => name.toLowerCase()) } },
-      ],
-    });
+    let destDocs = [];
+    try {
+      destDocs = await Destination.find({
+        $or: [
+          { name: { $in: cityQueryNames.map((name) => new RegExp(`^${name}$`, "i")) } },
+          { slug: { $in: cityQueryNames.map((name) => name.toLowerCase()) } },
+        ],
+      }).lean();
+    } catch (dbErr) {
+      console.warn("DB multi-city lookup warning:", dbErr.message);
+    }
 
     const destRecords = {};
     destDocs.forEach((doc) => {
@@ -653,61 +694,76 @@ export const generateMultiCityItinerary = async (req, res) => {
       destRecords[doc.slug.toLowerCase()] = doc;
     });
 
+    sanitizedCities.forEach((c) => {
+      const lower = c.destination.toLowerCase();
+      if (!destRecords[lower]) {
+        const curated = getCuratedDestination(c.destination);
+        if (curated) {
+          destRecords[lower] = curated;
+        }
+      }
+    });
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       console.warn("No GEMINI_API_KEY configured, returning curated multi-city plan.");
-      return res.status(200).json(generateCuratedMultiFallback({ cities: sanitizedCities, budget, destRecords }));
+      const fallback = generateCuratedMultiFallback({ cities: sanitizedCities, budget, destRecords });
+      fallback.days = await attachTravelTimesToDays(fallback.days);
+      return res.status(200).json(fallback);
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const promptText = buildMultiCityPrompt({ cities: sanitizedCities, budget, interests, travelStyle, destRecords });
 
-    try {
-      const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: buildMultiCityPrompt({ cities: sanitizedCities, budget, interests, travelStyle, destRecords }) }],
-            },
-          ],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.5,
-            maxOutputTokens: 5000,
+    for (const modelUrl of GEMINI_API_MODELS) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 16000);
+
+      try {
+        const response = await fetch(`${modelUrl}?key=${apiKey}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: promptText }],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.4,
+              maxOutputTokens: 5000,
+            },
+          }),
+        });
 
-      clearTimeout(timeout);
+        clearTimeout(timeout);
 
-      if (response.ok) {
-        const data = await response.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const cleaned = rawText.replace(/```json|```/g, "").trim();
-        const parsed = JSON.parse(cleaned);
+        if (response.ok) {
+          const data = await response.json();
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          const cleaned = rawText.replace(/```json|```/g, "").trim();
+          const parsed = JSON.parse(cleaned);
 
-        if (parsed && Array.isArray(parsed.days) && parsed.days.length > 0) {
-          const enrichedDays = await attachTravelTimesToDays(parsed.days);
-          const result = {
-            cities: parsed.cities || sanitizedCities.map(c => c.destination),
-            totalDays: parsed.totalDays || parsed.days.length,
-            days: enrichedDays,
-          };
-          return res.status(200).json(result);
+          if (parsed && Array.isArray(parsed.days) && parsed.days.length > 0) {
+            const enrichedDays = await attachTravelTimesToDays(parsed.days);
+            const result = {
+              cities: parsed.cities || sanitizedCities.map(c => c.destination),
+              totalDays: parsed.totalDays || parsed.days.length,
+              days: enrichedDays,
+            };
+            return res.status(200).json(result);
+          }
+        } else {
+          console.warn(`Gemini model ${modelUrl} returned status ${response.status} in multi-city generator`);
         }
-      } else {
-        const errText = await response.text();
-        console.warn("Gemini API error in multi-city generator:", response.status, errText);
+      } catch (aiErr) {
+        clearTimeout(timeout);
+        console.warn(`Gemini model attempt failed on ${modelUrl}:`, aiErr.message);
       }
-    } catch (aiErr) {
-      clearTimeout(timeout);
-      console.warn("Gemini multi-city request timed out or failed:", aiErr.message);
     }
 
     // Seamless fallback using real destination knowledge
@@ -721,4 +777,4 @@ export const generateMultiCityItinerary = async (req, res) => {
       error: err.message,
     });
   }
-};
+};

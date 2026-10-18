@@ -108,8 +108,22 @@ const AppRouter=()=>{
                 </ProtectedRoute>
               }
             />
-            <Route path="/destinations" element={<DestinationPage />} />
-            <Route path="/destinations/:slug" element={<CityPage />} />
+            <Route
+              path="/destinations"
+              element={
+                <ProtectedRoute>
+                  <DestinationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/destinations/:slug"
+              element={
+                <ProtectedRoute>
+                  <CityPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route
@@ -124,10 +138,38 @@ const AppRouter=()=>{
             <Route path="/forgot-password" element={<ForgotPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/experience" element={<ExperiencePage />} />
-            <Route path="/book-trip" element={<BookTripPage />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/coming-soon" element={<ComingSoonPage />} />
+            <Route
+              path="/experience"
+              element={
+                <ProtectedRoute>
+                  <ExperiencePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/book-trip"
+              element={
+                <ProtectedRoute>
+                  <BookTripPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reviews"
+              element={
+                <ProtectedRoute>
+                  <ReviewsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coming-soon"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage />
+                </ProtectedRoute>
+              }
+            />
             {/* 404 Page for error*/}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
