@@ -7,7 +7,7 @@ import { getCuratedDestination } from "../services/destinationKnowledge.js";
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const GEMINI_API_MODELS = [
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
 ];
 
@@ -19,7 +19,7 @@ const callAI = async (prompt) => {
 
   for (const modelUrl of GEMINI_API_MODELS) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 14000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
       const response = await fetch(`${modelUrl}?key=${apiKey}`, {

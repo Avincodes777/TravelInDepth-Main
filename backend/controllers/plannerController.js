@@ -37,7 +37,7 @@ async function attachTravelTimesToDays(days) {
 }
 
 const GEMINI_API_MODELS = [
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
 ];
 
@@ -174,9 +174,9 @@ const generateCuratedSingleFallback = ({ destination, days, budget, travelStyle,
     let p2 = placesList[(i + 1) % (placesList.length || 1)];
     let p3 = placesList[(i + 2) % (placesList.length || 1)];
 
-    if (!p1 || !p1.name) p1 = { name: `${destination} Heritage Promenade`, lat: fallbackLat, lng: fallbackLng, duration: 120 };
-    if (!p2 || !p2.name) p2 = { name: `${destination} Traditional Bazaar`, lat: fallbackLat, lng: fallbackLng, duration: 90 };
-    if (!p3 || !p3.name) p3 = { name: `${destination} Sunset Point`, lat: fallbackLat, lng: fallbackLng, duration: 120 };
+    if (!p1 || !p1.name) p1 = { name: `${destination} Central Heritage Fort`, lat: fallbackLat, lng: fallbackLng, duration: 120 };
+    if (!p2 || !p2.name) p2 = { name: `${destination} Historic Chowk & Artisan Market`, lat: fallbackLat, lng: fallbackLng, duration: 90 };
+    if (!p3 || !p3.name) p3 = { name: `${destination} Lakeside Sunset Ridge`, lat: fallbackLat, lng: fallbackLng, duration: 120 };
 
     const f1 = food[i % (food.length || 1)] || `Authentic regional ${destination} specialties`;
     const gem = hiddenGems[i % (hiddenGems.length || 1)] || `${destination} old quarter artisan trails`;
@@ -295,68 +295,48 @@ export const generateItinerary = async (req, res) => {
       }
     }
 
-    // 2. Fetch real attraction data via OpenTripMap, Nominatim & Wikipedia GeoSearch
+    // 2. Fetch real attraction data via OpenTripMap only if destination data is sparse
     let realPlaces = [];
-    try {
-      const coords = await getDestinationCoordinates(destination);
-      if (coords && coords.lat && coords.lon) {
-        const categories = mapInterestsToCategories(interests);
-        
-        const searchResults = await Promise.all(
-          categories.map((cat) => searchNearbyPlaces(coords.lat, coords.lon, cat))
-        );
+    if (!destRecord || !destRecord.attractions || destRecord.attractions.length < 3) {
+      try {
+        const coords = await getDestinationCoordinates(destination);
+        if (coords && coords.lat && coords.lon) {
+          const categories = mapInterestsToCategories(interests);
+          
+          const searchResults = await Promise.race([
+            Promise.all(categories.map((cat) => searchNearbyPlaces(coords.lat, coords.lon, cat))),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000)),
+          ]);
 
-        const seenXids = new Set();
-        const seenNames = new Set();
-        const combinedPlaces = [];
+          const seenXids = new Set();
+          const seenNames = new Set();
+          const combinedPlaces = [];
 
-        for (const list of searchResults) {
-          for (const item of list) {
-            const normName = item.name.toLowerCase();
-            if (!seenXids.has(item.xid) && !seenNames.has(normName)) {
-              seenXids.add(item.xid);
-              seenNames.add(normName);
-              combinedPlaces.push(item);
+          for (const list of searchResults || []) {
+            for (const item of list || []) {
+              const normName = (item.name || "").toLowerCase();
+              if (!seenXids.has(item.xid) && !seenNames.has(normName) && item.name) {
+                seenXids.add(item.xid);
+                seenNames.add(normName);
+                combinedPlaces.push(item);
+              }
             }
           }
-        }
 
-        combinedPlaces.sort((a, b) => (b.rate || 0) - (a.rate || 0));
-        const topPlaces = combinedPlaces.slice(0, 14);
+          combinedPlaces.sort((a, b) => (b.rate || 0) - (a.rate || 0));
+          const topPlaces = combinedPlaces.slice(0, 10);
 
-        const detailPromises = topPlaces.map(async (p) => {
-          const details = await getPlaceDetails(p.xid);
-          if (details) {
-            return {
-              name: details.name || p.name,
-              category: p.kinds,
-              address: details.address || undefined,
-              description: details.description || undefined,
-              wikipedia: details.wikipedia || undefined,
-            };
-          }
-          return {
+          realPlaces = topPlaces.map((p) => ({
             name: p.name,
             category: p.kinds,
-          };
-        });
-
-        const resolvedDetails = await Promise.all(detailPromises);
-        realPlaces = resolvedDetails
-          .map((details, idx) => {
-            const raw = topPlaces[idx];
-            if (!details || !details.name) return null;
-            return {
-              ...details,
-              lat: raw?.point?.lat ?? coords.lat,
-              lng: raw?.point?.lon ?? coords.lon,
-            };
-          })
-          .filter(Boolean);
+            lat: p.point?.lat ?? coords.lat,
+            lng: p.point?.lon ?? coords.lon,
+          }));
+        }
+      } catch (placesErr) {
+        console.warn("Place search notice:", placesErr.message);
+        realPlaces = [];
       }
-    } catch (placesErr) {
-      console.warn("Place search notice:", placesErr.message);
-      realPlaces = [];
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -381,7 +361,7 @@ export const generateItinerary = async (req, res) => {
 
     for (const modelUrl of GEMINI_API_MODELS) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 14000);
+      const timeout = setTimeout(() => controller.abort(), 28000);
 
       try {
         const response = await fetch(`${modelUrl}?key=${apiKey}`, {
@@ -717,7 +697,7 @@ export const generateMultiCityItinerary = async (req, res) => {
 
     for (const modelUrl of GEMINI_API_MODELS) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 16000);
+      const timeout = setTimeout(() => controller.abort(), 28000);
 
       try {
         const response = await fetch(`${modelUrl}?key=${apiKey}`, {

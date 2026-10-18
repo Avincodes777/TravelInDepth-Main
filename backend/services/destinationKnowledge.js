@@ -436,6 +436,115 @@ export const DESTINATION_KNOWLEDGE = {
       "Negotiate boat fares to Sangam at the official boatman stands; morning visits between 06:00 and 08:30 AM offer the calmest waters and migratory Siberian gulls (winter).",
       "Civil Lines offers clean modern dining and broad tree-lined avenues, while Old Chowk offers authentic culinary heritage."
     ]
+  },
+
+  rajasthan: {
+    name: "Rajasthan (Jaipur & Royal Heritage)",
+    state: "Rajasthan",
+    region: "North",
+    tagline: "The Land of Kings, Forts & Desert Romance",
+    lat: 26.9124,
+    lng: 75.7873,
+    attractions: [
+      { name: "Amber Fort (Jaipur)", lat: 26.9855, lng: 75.8513, duration: 150, time: "08:30", reason: "Iconic hilltop fortress with Sheesh Mahal mirror mosaics and Maota lake views." },
+      { name: "Hawa Mahal (Jaipur)", lat: 26.9239, lng: 75.8267, duration: 60, time: "11:30", reason: "Honeycomb pink sandstone palace of 953 jharokhas." },
+      { name: "City Palace (Jaipur)", lat: 26.9258, lng: 75.8237, duration: 90, time: "13:30", reason: "Royal residence showcasing courtyards, textiles, and armor galleries." },
+      { name: "Nahargarh Fort Sunset Point", lat: 26.9373, lng: 75.8155, duration: 120, time: "17:30", reason: "Breathtaking Aravalli ridge fort overlooking the Pink City." },
+      { name: "City Palace & Lake Pichola (Udaipur)", lat: 24.5764, lng: 73.6835, duration: 180, time: "10:00", reason: "Grand lakeside palace complex with ornate balconies and boat cruises." },
+      { name: "Mehrangarh Fort (Jodhpur)", lat: 26.2980, lng: 73.0189, duration: 150, time: "14:00", reason: "Towering cliffside fort overlooking the Blue City." },
+      { name: "Chokhi Dhani Heritage Village", lat: 26.7725, lng: 75.8340, duration: 180, time: "19:00", reason: "Live Kalbelia folk dance, puppet shows, and royal thali dining." }
+    ],
+    foodRecommendations: [
+      { name: "Dal Baati Churma with pure desi ghee", desc: "Authentic wood-fired baatis with spicy panchmel dal and sweet churma." },
+      { name: "Pyaaz Kachori at Rawat Mishthan Bhandar", desc: "Crispy flaky kachori stuffed with spiced onions." },
+      { name: "Laal Maas (Smoky Mathania chilli mutton curry)", desc: "Royal Rajasthani delicacy cooked with Mathania red chillies." },
+      { name: "Makhaniya Lassi in earthen kulhads", desc: "Thick sweet curd with saffron and clotted malai." }
+    ],
+    activities: [
+      "Guided heritage tour of Amber Fort and the geometric stepwell of Panna Meena Kund",
+      "Sunset chai and skyline viewing at Padao Cafe atop Nahargarh Fort",
+      "Traditional Rajasthani folk dance and puppet performance at Bagore Ki Haveli or Chokhi Dhani"
+    ],
+    hiddenGems: [
+      "Panna Meena Ka Kund ancient stepwell near Amer",
+      "Galtaji Temple (Monkey Temple) nestled in the Aravalli hills"
+    ],
+    tips: [
+      "Visit forts in the early morning (before 9:30 AM) to avoid midday heat and tour bus crowds.",
+      "A composite monument ticket in Jaipur gives access to Amber Fort, Hawa Mahal, Jantar Mantar, and Nahargarh Fort."
+    ]
+  },
+
+  kerala: {
+    name: "Kerala (God's Own Country)",
+    state: "Kerala",
+    region: "South",
+    tagline: "Serene Backwaters, Spice Hills & Coastal Soul",
+    lat: 9.9312,
+    lng: 76.2673,
+    attractions: [
+      { name: "Alleppey (Alappuzha) Backwaters & Houseboat", lat: 9.4981, lng: 76.3388, duration: 240, time: "09:00", reason: "Cruise along palm-fringed canals, paddy fields, and lagoons on a traditional kettuvallam." },
+      { name: "Fort Kochi & Chinese Fishing Nets", lat: 9.9658, lng: 76.2421, duration: 90, time: "16:00", reason: "Colonial maritime heritage, iconic cantilevered fishing nets, and seaside promenade." },
+      { name: "Mattancherry Palace (Dutch Palace) & Jewish Synagogue", lat: 9.9583, lng: 76.2594, duration: 75, time: "11:30", reason: "Fascinating Hindu murals and the 1568 Paradesi Synagogue in Jew Town." },
+      { name: "Munnar Tea Plantations & Eravikulam National Park", lat: 10.0889, lng: 77.0595, duration: 180, time: "10:00", reason: "Endless rolling emerald tea gardens and home to the endangered Nilgiri Tahr." },
+      { name: "Marari Beach", lat: 9.6000, lng: 76.2970, duration: 120, time: "17:30", reason: "Pristine white sand fishing village beach renowned for peaceful sunsets." },
+      { name: "Kathakali & Kalaripayattu Cultural Center", lat: 9.9670, lng: 76.2440, duration: 90, time: "18:30", reason: "Ancient classical dance drama makeup demonstration and Kerala martial arts." }
+    ],
+    foodRecommendations: [
+      { name: "Kerala Sadhya on Banana Leaf", desc: "Traditional feast with red rice, avial, sambar, olan, thoran, and payasam." },
+      { name: "Karimeen Pollichathu (Pearl Spot Fish)", desc: "Fresh backwater fish marinated in shallots, ginger, curry leaves, and slow-roasted in a banana leaf." },
+      { name: "Appam with Vegetable or Chicken Stew", desc: "Lacy fermented rice pancakes with coconut milk spiced stew." },
+      { name: "Malabar Dum Biryani with pickled lemon", desc: "Fragrant Kaima rice cooked with tender spiced chicken and fried onions." }
+    ],
+    activities: [
+      "Overnight or day backwater cruise on a traditional thatched houseboat in Punnamada Lake",
+      "Walking heritage tour through Jew Town spice markets and antique warehouses in Fort Kochi",
+      "Witnessing live Kathakali facial expression (Navarasas) and martial Kalaripayattu show"
+    ],
+    hiddenGems: [
+      "Kumarakom Bird Sanctuary along Vembanad Lake",
+      "Kodanad Elephant Training Sanctuary along the Periyar River"
+    ],
+    tips: [
+      "Book government-approved DTPC houseboats to ensure ethical standards and safe navigation.",
+      "The best backwater light for photography is between 6:30 AM and 8:30 AM."
+    ]
+  },
+
+  himachal: {
+    name: "Himachal Pradesh (Manali & Shimla)",
+    state: "Himachal Pradesh",
+    region: "North",
+    tagline: "The Land of Snow Peaks & Pine Valleys",
+    lat: 32.2432,
+    lng: 77.1892,
+    attractions: [
+      { name: "Hadimba Devi Temple (Manali)", lat: 32.2483, lng: 77.1706, duration: 90, time: "09:00", reason: "Historic 1553 pagoda-style wooden temple nestled in towering cedar forests." },
+      { name: "Solang Valley", lat: 32.3166, lng: 77.1575, duration: 180, time: "11:30", reason: "Renowned alpine adventure hub for paragliding, zorbing, and snow vistas." },
+      { name: "Atal Tunnel & Sissu (Lahaul Valley)", lat: 32.4900, lng: 77.1200, duration: 240, time: "08:30", reason: "World's longest highway tunnel opening into dramatic snow-covered Lahaul landscapes and Sissu waterfall." },
+      { name: "Old Manali Heritage Village", lat: 32.2530, lng: 77.1750, duration: 120, time: "16:00", reason: "Rustic apple orchards, wooden Kathkuni houses, and riverside live music cafes." },
+      { name: "Vashisht Temple & Hot Sulphur Springs", lat: 32.2612, lng: 77.1878, duration: 75, time: "14:30", reason: "Ancient cedar-carved temple with natural therapeutic thermal springs." },
+      { name: "Mall Road & The Ridge (Shimla)", lat: 31.1048, lng: 77.1734, duration: 120, time: "18:00", reason: "Pedestrian boulevard featuring Neo-Gothic Christ Church and mountain views." }
+    ],
+    foodRecommendations: [
+      { name: "Himachali Siddu with melted desi ghee and walnut chutney", desc: "Steamed fermented wheat bun stuffed with spiced poppy seeds and nuts." },
+      { name: "Fresh Himalayan Trout fish at Johnson's Cafe", desc: "Pan-fried river trout prepared with herbs and lemon butter sauce." },
+      { name: "Himachali Dham (Traditional festive feast)", desc: "Festive vegetarian feast featuring Madra (chickpeas in spiced yogurt), Mah ki Dal, and Khatta." },
+      { name: "Hot Tibetan Thukpa and steamed momos in Old Manali", desc: "Hearty noodle broth and dumplings for chilly mountain evenings." }
+    ],
+    activities: [
+      "Scenic high-altitude drive through Atal Tunnel to the cascading Sissu Waterfall",
+      "Trekking through alpine pine trails towards Jogini Waterfall",
+      "Riverside evening coffee and acoustic folk sessions along the Manalsu stream in Old Manali"
+    ],
+    hiddenGems: [
+      "Jogini Waterfall pine trail starting from Vashisht village",
+      "Naggar Castle - medieval wood-and-stone fortress with panoramic views of the Beas River"
+    ],
+    tips: [
+      "Start early morning (by 7:30 AM) when visiting Atal Tunnel and Solang to avoid mountain traffic jams.",
+      "Carry warm layers even in summer, as temperatures drop quickly at high altitudes."
+    ]
   }
 };
 
